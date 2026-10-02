@@ -12,6 +12,7 @@ import type { Agent, AgentMessage, StreamFn } from "@earendil-works/pi-agent-cor
 import { errMessage, swallow } from "../../chassis/src/errors.ts";
 import { userFacingFailureText } from "../../chassis/src/failure-copy.ts";
 import { groupDmText } from "./group-dm-label.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { base64ToBytes } from "./paste-text.ts";
 import { defaultEffortForModel, harnessSupportsEffort } from "./runtime-capabilities.ts";
 import { SIGNIN_REQUIRED_EVENT, signinRedirect } from "./signin-return.ts";
@@ -269,7 +270,7 @@ export function slackThreadUrl(workspaceUrl: string | null, threadRef: string): 
 
 export function sharedContextLabel(scopeId: string | null, name: string | null): string | null {
   if (!scopeId) return null;
-  if (scopeId.startsWith("channel:")) return name ? `#${name.replace(/^#/, "")}` : "Shared channel";
+  if (scopeId.startsWith("channel:")) return name ? `#${name.replace(/^#/, "")}` : t("Shared channel");
   if (scopeId.startsWith("group:")) return groupDmText(name) ?? name ?? "Group";
   return null;
 }
@@ -875,7 +876,7 @@ export async function signalLiveRun(
   queuedRunId?: string,
 ): Promise<SignalOutcome> {
   const run = slot.runId !== null ? { runId: slot.runId } : null;
-  if (!run) throw new Error("No active run to signal.");
+  if (!run) throw new Error(t("No active run to signal."));
   const steerContext =
     kind === "steer" && context.threadRef
       ? {
@@ -957,8 +958,8 @@ export async function queueTurn(
       turnRequestBody(threadRef, text, agent.state.model, agent, getTurnOptions, { idempotencyKey, attachments }),
     ),
   });
-  if (submit.status === "pending_approval") throw new Error(submit.reason ?? PENDING_APPROVAL_REASON);
-  if (!submit.runId) throw new Error("Could not queue the message.");
+  if (submit.status === "pending_approval") throw new Error(submit.reason ?? t(PENDING_APPROVAL_REASON));
+  if (!submit.runId) throw new Error(t("Could not queue the message."));
   return { runId: submit.runId, text, ...(attachments.length ? { hasAttachments: true } : {}) };
 }
 
@@ -1001,7 +1002,7 @@ export async function resolveApproval(decision: ApprovalDecision): Promise<strin
       body: JSON.stringify({ decision: choice }),
     });
     if (!["approved", "declined", "expired"].includes(result.ask?.status))
-      throw new Error("The credential request is still pending. Please try again.");
+      throw new Error(t("The credential request is still pending. Please try again."));
     resolvedCredentialApprovals.add(decision.requestId);
     return "";
   }
@@ -1013,7 +1014,7 @@ export async function resolveApproval(decision: ApprovalDecision): Promise<strin
     throw err;
   });
   if (!submit) return null;
-  if (!submit.runId) throw new Error("Could not continue after the approval.");
+  if (!submit.runId) throw new Error(t("Could not continue after the approval."));
   return submit.runId;
 }
 
@@ -1030,7 +1031,7 @@ export async function runApprovalTurn(
   const stream = createAssistantMessageEventStream();
   await driveApproval(stream, agent.state.model, decision, onWork, slot);
   const outcome = await stream.result();
-  if (outcome.stopReason === "error") throw new Error(outcome.errorMessage || "Could not send the approval.");
+  if (outcome.stopReason === "error") throw new Error(outcome.errorMessage || t("Could not send the approval."));
 }
 
 const APPROVAL_GONE_MESSAGE = "This approval is no longer available — it may have expired or already been handled.";
@@ -1069,7 +1070,7 @@ async function driveApproval(
       return;
     }
     if (submit.status === "pending_approval") {
-      throw new Error(submit.reason?.trim() ? submit.reason : APPROVAL_NOT_APPLIED_MESSAGE);
+      throw new Error(submit.reason?.trim() ? submit.reason : t(APPROVAL_NOT_APPLIED_MESSAGE));
     }
     work.status = "complete";
     work.finishedAt = Date.now();
@@ -1087,7 +1088,7 @@ async function driveApproval(
 
 function approvalFailureMessage(e: unknown): string {
   if (e instanceof ApiError) {
-    if (e.status === 404) return APPROVAL_GONE_MESSAGE;
+    if (e.status === 404) return t(APPROVAL_GONE_MESSAGE);
     const reason = (e.body as { reason?: unknown } | null)?.reason;
     if (typeof reason === "string" && reason.trim()) return reason;
   }
@@ -1203,7 +1204,7 @@ async function drive(
         (partial as AssistantWork).sendFailed = "attachments";
         (partial as AssistantWork).droppedAttachmentIds = droppedIds;
       }
-      fail(stream, partial, issues.join(" ") || "Nothing to send.");
+      fail(stream, partial, issues.join(" ") || t("Nothing to send."));
       return;
     }
     if (issues.length) onSendIssues?.(issues, retryable);
@@ -1236,7 +1237,7 @@ async function drive(
       work.finishedAt = Date.now();
       notify();
       (partial as AssistantWork).sendBlocked = "pending_approval";
-      fail(stream, partial, submit.reason ?? PENDING_APPROVAL_REASON);
+      fail(stream, partial, submit.reason ?? t(PENDING_APPROVAL_REASON));
       return;
     }
 
@@ -1249,7 +1250,7 @@ async function drive(
     work.finishedAt = Date.now();
     notify();
     if (e instanceof TypeError) {
-      const errorMessage = "Message wasn’t sent. Check your connection and try again.";
+      const errorMessage = t("Message wasn’t sent. Check your connection and try again.");
       const message = latestUserMessage(agent);
       if (message) message.sendFailure = errorMessage;
       fail(stream, partial, errorMessage, true);
@@ -1317,7 +1318,7 @@ async function followRun(
       void signalLiveRun(slot, "abort", undefined, { threadRef: null }).catch(() => {
         if (slot.generation !== gen || slot.stopGeneration !== gen) return;
         slot.stopGeneration = null;
-        slot.onStopError?.("Could not request stop. Try again.");
+        slot.onStopError?.(t("Could not request stop. Try again."));
         notify?.();
       });
     }
@@ -1462,7 +1463,7 @@ export async function pollRun(
 ): Promise<void> {
   const failIdle = (): void => {
     (partial as AssistantWork).interruptedRunId = runId;
-    fail(stream, partial, "Timed out waiting for the agent to respond.");
+    fail(stream, partial, t("Timed out waiting for the agent to respond."));
   };
   let consecutiveFailures = 0;
   for (;;) {

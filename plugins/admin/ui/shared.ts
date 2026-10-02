@@ -1,5 +1,31 @@
 import { html, render, nothing } from "lit";
 import { ifDefined } from "lit/directives/if-defined.js";
+import { onLocaleChange } from "../../chassis/src/i18n.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
+
+type Producer = () => unknown;
+type Slot = { end: Comment; unsubscribe: (() => void) | undefined };
+
+function slotFor(root: HTMLElement | DocumentFragment): Slot {
+  const end = document.createComment("");
+  root.append(end);
+  return { end, unsubscribe: undefined };
+}
+
+function paint(slot: Slot, template: unknown): void {
+  const host = slot.end.parentNode;
+  if (!host) return;
+  if (typeof template !== "function") {
+    render(template, host as HTMLElement, { renderBefore: slot.end });
+    return;
+  }
+  const produce = template as Producer;
+  slot.unsubscribe?.();
+  slot.unsubscribe = onLocaleChange(() => {
+    if (slot.end.parentNode) render(produce(), slot.end.parentNode as HTMLElement, { renderBefore: slot.end });
+  });
+  render(produce(), host as HTMLElement, { renderBefore: slot.end });
+}
 
 export function node(template: unknown): HTMLElement {
   const fragment = document.createDocumentFragment();
@@ -86,29 +112,27 @@ export function pager(total: number, limit: number, offset: number, go: (page: n
   if (total <= limit) return nothing;
   const current = Math.floor(offset / limit) + 1;
   return html`<div class="pager">
-    <button type="button" class="page" ?disabled=${current <= 1} @click=${() => go(current - 1)}>← Prev</button
-    ><span class="pageinfo">${offset + 1}–${Math.min(offset + limit, total)} of ${total}</span
+    <button type="button" class="page" ?disabled=${current <= 1} @click=${() => go(current - 1)}>${t("← Prev")}</button
+    ><span class="pageinfo"
+      >${t("{from}–{to} of {total}", { from: offset + 1, to: Math.min(offset + limit, total), total })}</span
     ><button
       type="button"
       class="page"
       ?disabled=${current >= Math.ceil(total / limit)}
       @click=${() => go(current + 1)}
     >
-      Next →
+      ${t("Next →")}
     </button>
   </div>`;
 }
 
 export function mount(root: HTMLElement, template: unknown) {
-  const end = root.appendChild(document.createComment(""));
-  render(template, root, { renderBefore: end });
+  paint(slotFor(root), template);
 }
 
 export function renderer(root: HTMLElement) {
-  const end = root.appendChild(document.createComment(""));
-  return (template: unknown) => {
-    if (end.parentNode === root) render(template, root, { renderBefore: end });
-  };
+  const slot = slotFor(root);
+  return (template: unknown) => paint(slot, template);
 }
 
 export function denseList(items: any[], rowOf: (item: any) => any, open: (item: any) => void, empty: string) {
@@ -149,12 +173,11 @@ export function denseList(items: any[], rowOf: (item: any) => any, open: (item: 
   </div>`;
 }
 
-export function mountTemplate(selector: string, template: () => unknown) {
+export function mountTemplate(selector: string, template: Producer) {
   const placeholder = document.querySelector(selector);
   if (!placeholder) return () => {};
-  const root = document.createDocumentFragment();
-  const draw = () => render(template(), root);
-  draw();
-  placeholder.replaceWith(root);
-  return draw;
+  const slot = slotFor(document.createDocumentFragment());
+  paint(slot, template);
+  placeholder.replaceWith(slot.end.parentNode!);
+  return () => paint(slot, template);
 }

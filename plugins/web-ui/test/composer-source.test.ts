@@ -27,7 +27,7 @@ test("compact and full composers share one left-side picker with Fast inside its
   assert.ok(composer.slice(leftStart, rightStart).includes("${runtimeControls}"));
   assert.ok(/class="composer-right">\$\{sendControls\(agent\)\}<\/div>/.test(composer));
   const loadout = picker.slice(picker.indexOf("function render"), picker.indexOf("function menuArrowKeys"));
-  assert.ok(/role="menuitemcheckbox"\s+aria-label="Fast"/.test(loadout));
+  assert.ok(/role="menuitemcheckbox"\s+aria-label=\$\{t\("Fast"\)\}/.test(loadout));
   assert.equal((picker.match(/@click=\$\{\(\) => toggleFastMode\(agent\)\}/g) ?? []).length, 1);
 });
 
@@ -73,7 +73,7 @@ test("attaching files is allowed while a turn is streaming", () => {
 });
 
 test("a mid-turn submit queues — attachments cannot ride a queued message and stay for the next", () => {
-  assert.match(composer, /\$\{tip\("Queue for after this turn"\)\}/);
+  assert.match(composer, /\$\{tip\(t\("Queue for after this turn"\)\)\}/);
   assert.doesNotMatch(composer, /attachments stay for your next message/);
 });
 

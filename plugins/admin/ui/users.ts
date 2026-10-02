@@ -1,5 +1,7 @@
 import { html } from "lit";
 import { table, card, renderer } from "./shared.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { formatDate, formatNumber } from "../../chassis/src/i18n.ts";
 
 type Services = Record<string, any>;
 export class UsersView {
@@ -48,12 +50,12 @@ export class UsersView {
     const focused = !!active && !!previous?.contains(active);
     this.services.defaultShell({
       stats: [
-        [(this.data.users || []).length, "Users"],
-        [(this.data.grants || []).length, "Admins"],
+        [(this.data.users || []).length, t("Users")],
+        [(this.data.grants || []).length, t("Admins")],
       ],
       search: {
         value: this.filter,
-        placeholder: "principal, role, or scope",
+        placeholder: t("principal, role, or scope"),
         onInput: (value: string) => {
           this.filter = value;
           this.draw();
@@ -75,7 +77,7 @@ export class UsersView {
     try {
       await work();
     } catch {
-      this.feedback("Network error. Try again.", "err", external);
+      this.feedback(t("Network error. Try again."), "err", external);
     } finally {
       this.pending.delete(key);
       if (this.root.isConnected) this.draw();
@@ -102,9 +104,9 @@ export class UsersView {
   }
   confirmAdmin(principalId: string) {
     return this.services.confirm(
-      "Make " +
-        principalId +
-        " an org admin?\n\nThey will be able to manage users, permissions, and organization settings.",
+      t("Make {who} an org admin?\n\nThey will be able to manage users, permissions, and organization settings.", {
+        who: principalId,
+      }),
     );
   }
   async admin(user: any, event: Event) {
@@ -112,7 +114,7 @@ export class UsersView {
     const revoke = user.admin?.isAdmin;
     if (
       !(revoke
-        ? this.services.confirm("Revoke admin access for " + user.principalId + "?")
+        ? this.services.confirm(t("Revoke admin access for {who}?", { who: user.principalId }))
         : this.confirmAdmin(user.principalId))
     )
       return;
@@ -133,15 +135,15 @@ export class UsersView {
             scopeId: this.services.orgScope,
           });
       if (r.ok) await this.refresh();
-      else this.feedback(r.data?.message || "Could not update admin access.", "err");
+      else this.feedback(r.data?.message || t("Could not update admin access."), "err");
     });
   }
   async revoke(member: any) {
     if (
       !this.services.confirm(
         member.status === "active"
-          ? 'Revoke access for "' + member.email + '"? They will no longer be able to sign in.'
-          : 'Remove "' + member.email + '" from the list?',
+          ? t('Revoke access for "{email}"? They will no longer be able to sign in.', { email: member.email })
+          : t('Remove "{email}" from the list?', { email: member.email }),
       )
     )
       return;
@@ -152,7 +154,7 @@ export class UsersView {
         if (r.ok) await this.refresh();
         else
           this.feedback(
-            r.status === 403 ? "Only an admin may revoke." : r.data?.message || "Revoke failed.",
+            r.status === 403 ? t("Only an admin may revoke.") : r.data?.message || t("Revoke failed."),
             "err",
             true,
           );
@@ -163,7 +165,7 @@ export class UsersView {
   async invite() {
     const body = { email: this.email.trim(), role: this.role };
     if (!body.email) {
-      this.feedback("Email required.", "err", true);
+      this.feedback(t("Email required."), "err", true);
       this.draw();
       return;
     }
@@ -177,19 +179,25 @@ export class UsersView {
         const r = await this.services.api("POST", "/api/users/invite", body);
         if (!r.ok)
           return this.feedback(
-            r.status === 403 ? "Only an admin may invite." : r.data?.message || "Invite failed.",
+            r.status === 403 ? t("Only an admin may invite.") : r.data?.message || t("Invite failed."),
             "err",
             true,
           );
         const member = r.data.member;
         await this.refresh();
-        this.feedback(r.data.emailSent ? "Invite sent to " + member.email : "Added " + member.email + ".", "ok", true);
+        this.feedback(
+          r.data.emailSent
+            ? t("Invite sent to {email}", { email: member.email })
+            : t("Added {email}.", { email: member.email }),
+          "ok",
+          true,
+        );
         if (!r.data.emailSent && r.data.signInUrl) {
           this.inviteLink = r.data.signInUrl;
           this.inviteWarning =
             this.data.inviteEmail?.configured === false
-              ? "You'll need to configure RESEND_API_KEY to send magic link emails. Otherwise, share the link directly:"
-              : "Email couldn't be sent. Share the invite link directly.";
+              ? t("You'll need to configure RESEND_API_KEY to send magic link emails. Otherwise, share the link directly:")
+              : t("Email couldn't be sent. Share the invite link directly.");
         }
         if (this.email.trim() === body.email && this.role === body.role) this.inviteOpen = false;
       },
@@ -214,7 +222,7 @@ export class UsersView {
     const invite = html`<div class=${this.inviteOpen ? "" : "hidden"} style="margin:0 0 14px">
       <div class="grant-form">
         ${field(
-          "Email",
+          t("Email"),
           html`<input
             id="users-email"
             type="email"
@@ -228,7 +236,7 @@ export class UsersView {
           />`,
           "grow",
         )}${field(
-          "Role",
+          t("Role"),
           html`<select
             id="users-role"
             .value=${this.role}
@@ -236,28 +244,30 @@ export class UsersView {
               this.role = (e.target as HTMLSelectElement).value;
             }}
           >
-            <option value="member">Member</option>
-            <option value="org_admin">Admin</option>
+            <option value="member">${t("Member")}</option>
+            <option value="org_admin">${t("Administrator")}</option>
           </select>`,
         )}<button type="button" class="primary" ?disabled=${this.pending.has("invite")} @click=${() => this.invite()}>
-          Send invite
+          ${t("Send invite")}
         </button>
       </div>
     </div>`;
     const externalTable = table(
-      ["Email", "Role", "Expires", "Invited by", "Status", ""],
+      [t("Email"), t("Role"), t("Expires"), t("Invited by"), t("Status"), ""],
       externals.map((m: any) => [
         { text: m.email, cls: "mono" },
         { node: html`<span class="subline">${s.labelRole(m.role)}</span>` },
         m.expiresAt === null
-          ? "No expiration"
-          : (m.status === "active" ? "Ends " : "Ended ") + new Date(m.expiresAt).toISOString().slice(0, 10) + " (UTC)",
+          ? t("No expiration")
+          : t(m.status === "active" ? "Ends {when} (UTC)" : "Ended {when} (UTC)", {
+              when: formatDate(m.expiresAt, { dateStyle: "short", timeZone: "UTC" }),
+            }),
         m.invitedBy || "-",
-        { badge: m.status === "active" ? "Active" : "Expired", kind: m.status === "active" ? "ok" : "warn" },
+        { badge: m.status === "active" ? t("Active") : t("Expired"), kind: m.status === "active" ? "ok" : "warn" },
         m.status === "active" || (m.kind !== "teammate" && Date.now() - m.expiresAt >= 86400000)
           ? {
               action: {
-                label: m.status === "active" ? "Revoke" : "Remove",
+                label: m.status === "active" ? t("Revoke") : t("Remove"),
                 danger: m.status === "active",
                 disabled: this.pending.has(m.email),
                 run: () => this.revoke(m),
@@ -265,25 +275,27 @@ export class UsersView {
             }
           : "",
       ]),
-      this.data.externalUsers?.length ? "No invitations match." : "No invitations yet. Invite a teammate above.",
+      this.data.externalUsers?.length
+        ? t("No invitations match.")
+        : t("No invitations yet. Invite a teammate above."),
     );
     const roster = table(
-      ["Principal", "Role", "Last seen", "Sessions", "Turns", "Credentials", "Grants", "", ""],
+      [t("Principal"), t("Role"), t("Last seen"), t("Sessions"), t("Turns"), t("Credentials"), t("Grants"), "", ""],
       users.map((u: any) => [
         { text: u.principalId, cls: "mono" },
-        { node: html`<span class="subline">${u.admin?.isAdmin ? s.labelRole(u.admin.role) : "member"}</span>` },
+        { node: html`<span class="subline">${u.admin?.isAdmin ? s.labelRole(u.admin.role) : t("member")}</span>` },
         u.lastSeenAt
           ? { node: html`<span title=${s.fmtTime(u.lastSeenAt)}>${s.relTime(u.lastSeenAt)}</span>`, cls: "num" }
           : { text: "-", cls: "num" },
-        { text: String(u.sessionCount), cls: "num" },
-        { text: String(u.turnCount), cls: "num" },
+        { text: formatNumber(u.sessionCount), cls: "num" },
+        { text: formatNumber(u.turnCount), cls: "num" },
         ...[0, 1].map((i) => ({
-          text: this.counts.has(u.principalId) ? String(this.counts.get(u.principalId)![i]) : "-",
+          text: this.counts.has(u.principalId) ? formatNumber(this.counts.get(u.principalId)![i]) : "-",
           cls: "num",
         })),
         {
           action: {
-            label: "Impersonate ↗",
+            label: t("Impersonate ↗"),
             run: (event: Event) => {
               event.stopPropagation();
               s.openWebUiAs(u.principalId);
@@ -292,28 +304,28 @@ export class UsersView {
         },
         {
           action: {
-            label: u.admin?.isAdmin ? "Revoke" : "Make admin",
+            label: u.admin?.isAdmin ? t("Revoke") : t("Make admin"),
             danger: !!u.admin?.isAdmin,
             disabled: this.pending.has(u.principalId) || (u.admin?.isAdmin && admins <= 1),
-            title: u.admin?.isAdmin && admins <= 1 ? "The last admin cannot be revoked." : "",
+            title: u.admin?.isAdmin && admins <= 1 ? t("The last admin cannot be revoked.") : "",
             run: (event: Event) => this.admin(u, event),
           },
         },
       ]),
-      "No users match.",
+      t("No users match."),
       (i) => s.openUser(users[i].principalId),
     );
-    this.paint(
+    this.paint(() =>
       html`<div class="users-layout">
         <div class="list-root">
           <section class="card users-roster">
             <div class="head">
-              <h2>Users</h2>
+              <h2>${t("Users")}</h2>
               <button
                 type="button"
                 class="primary"
-                title="Invite teammate"
-                aria-label="Invite teammate"
+                title=${t("Invite teammate")}
+                aria-label=${t("Invite teammate")}
                 aria-expanded=${String(this.inviteOpen)}
                 @click=${() => {
                   this.inviteOpen = !this.inviteOpen;
@@ -321,7 +333,7 @@ export class UsersView {
                   if (this.inviteOpen) this.root.querySelector<HTMLInputElement>("#users-email")?.focus();
                 }}
               >
-                Invite teammate
+                ${t("Invite teammate")}
               </button>
             </div>
             <div class="body">
@@ -344,39 +356,43 @@ export class UsersView {
                           this.draw();
                         }}
                       >
-                        ${this.copyLabel}
+                        ${t(this.copyLabel)}
                       </button>`
                   : ""
               }
             </div>
           </section>
-          ${card("Invitations", "Access granted by email. Revoking ends access to this instance.", externalTable)}
           ${card(
-            "Company access",
+            t("Invitations"),
+            t("Access granted by email. Revoking ends access to this instance."),
+            externalTable,
+          )}
+          ${card(
+            t("Company access"),
             "",
             table(
-              ["Rule", "Value", "Purpose"],
+              [t("Rule"), t("Value"), t("Purpose")],
               [
                 [
-                  "Email domain allowlist",
+                  t("Email domain allowlist"),
                   this.data.access?.emailDomain
                     ? "@" + this.data.access.emailDomain
-                    : { node: html`<span class="subline">Not configured</span>` },
+                    : { node: html`<span class="subline">${t("Not configured")}</span>` },
                   {
-                    node: html`Controls who can create an account at
+                    node: html`${t("Controls who can create an account at")}
                       <a href=${(inviteEmail.signInUrl || "/auth/login") + "?provider=primary"}
                         >${inviteEmail.signInUrl || "/auth/login"}</a
                       >.`,
                   },
                 ],
                 [
-                  "Slack email allowlist",
+                  t("Slack email allowlist"),
                   this.data.access?.slackAllowFrom?.length
                     ? this.data.access.slackAllowFrom
                         .map((rule: string) => (rule.includes("@") ? rule : "@" + rule))
                         .join(", ")
-                    : { node: html`<span class="subline">Not configured</span>` },
-                  "Controls who the bot treats as an internal employee in shared Slack workspaces.",
+                    : { node: html`<span class="subline">${t("Not configured")}</span>` },
+                  t("Controls who the bot treats as an internal employee in shared Slack workspaces."),
                 ],
               ],
               "",

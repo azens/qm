@@ -1,4 +1,5 @@
 import { LitElement, css, html, type PropertyValues } from "lit";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 let sequence = 0;
 let renderQueue: Promise<unknown> = Promise.resolve();
@@ -56,7 +57,7 @@ export async function renderMermaid(
   staging: HTMLElement,
   dark = false,
 ): Promise<{ svg: string }> {
-  if (source.length > 50000) throw new Error("Diagram is too large");
+  if (source.length > 50000) throw new Error(t("Diagram is too large"));
   const mermaid = await loadMermaid();
   const operation = renderQueue.then(async () => {
     mermaid.initialize({
@@ -82,7 +83,7 @@ export async function renderMermaid(
       const db = diagram.db as unknown as { getData(): { nodes: Array<{ img?: string; shape?: string }> } };
       const data = db.getData();
       if (data.nodes.some((node) => node.img !== undefined || node.shape?.startsWith("image")))
-        throw new Error("Images are not supported in chat diagrams");
+        throw new Error(t("Images are not supported in chat diagrams"));
     }
     return mermaid.render(id, source, staging);
   });
@@ -194,7 +195,7 @@ export class MermaidBlock extends LitElement {
       const viewBox = document.documentElement.getAttribute("viewBox")?.split(/[ ,]+/).map(Number);
       this.width = viewBox?.[2] || 640;
       this.height = viewBox?.[3] || 480;
-      if (this.height > 12000 || this.width > 20000) throw new Error("Diagram dimensions are too large");
+      if (this.height > 12000 || this.width > 20000) throw new Error(t("Diagram dimensions are too large"));
       this.image = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
     } catch {
       if (revision === this.revision) this.error = true;
@@ -207,13 +208,13 @@ export class MermaidBlock extends LitElement {
   }
 
   protected render() {
-    let status = "Rendering diagram…";
-    if (this.pending) status = "Diagram will render when the reply finishes.";
-    else if (this.error) status = "Unable to render this diagram. Its source is shown below.";
+    let status = t("Rendering diagram…");
+    if (this.pending) status = t("Diagram will render when the reply finishes.");
+    else if (this.error) status = t("Unable to render this diagram. Its source is shown below.");
     return html`
-      ${this.image ? html`<div class="viewport"><img src=${this.image} width=${this.width} height=${this.height} alt="Mermaid diagram. Diagram source is available below." /></div>` : html`<p role="status">${status}</p>`}
+      ${this.image ? html`<div class="viewport"><img src=${this.image} width=${this.width} height=${this.height} alt=${t("Mermaid diagram. Diagram source is available below.")} /></div>` : html`<p role="status">${status}</p>`}
       <details ?open=${!this.image}>
-        <summary>Source</summary>
+        <summary>${t("Source")}</summary>
         <pre><code>${this.code}</code></pre>
       </details>
     `;

@@ -36,7 +36,7 @@ class RenderNode {
 }
 
 function render(text: string) {
-  const context = vm.createContext({
+  const context = vm.createContext({ _t: (key: string, vars?: Record<string, string | number>) => key.replace(/\{(\w+)\}/g, (m, name) => String(vars?.[name] ?? m)),
     SLACK_EMOJI: { wave: "👋" },
     document: {
       createElement: (tag: string) => new RenderNode(tag),

@@ -3,6 +3,7 @@ import { html, nothing, type TemplateResult } from "lit";
 import { live } from "lit/directives/live.js";
 import { tip } from "./tooltip.ts";
 import { Check, ChevronDown, Download, createElement, type IconNode } from "lucide";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 export function brandName(): string {
   if (typeof document === "undefined") return "QM";
@@ -30,7 +31,7 @@ export function waveLoader(
     class="wl wl-swell ${o.cls ?? ""}"
     style=${`width:${width}px;height:${height}px;--wl-shift:${shift}px`}
     role="img"
-    aria-label=${o.label ?? "Loading"}
+    aria-label=${o.label ?? t("Loading")}
   >
     <svg
       class="wl-row"
@@ -57,7 +58,7 @@ export function workingWave(): TemplateResult {
     width: 13.6,
     height: 5.7,
     viewBox: "0 16 38.4 16",
-    label: "Agent is working",
+    label: t("Agent is working"),
     cls: "working-wave",
   });
 }
@@ -338,16 +339,16 @@ export function initials(s: string): string {
 
 export function relTime(ms: number): string {
   const s = Math.max(0, Math.floor((Date.now() - ms) / 1000));
-  if (s < 60) return "just now";
-  if (s < 3600) return `${Math.floor(s / 60)}m ago`;
-  if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
-  return `${Math.floor(s / 86400)}d ago`;
+  if (s < 60) return t("just now");
+  if (s < 3600) return t("{minutes}m ago", { minutes: Math.floor(s / 60) });
+  if (s < 86400) return t("{hours}h ago", { hours: Math.floor(s / 3600) });
+  return t("{days}d ago", { days: Math.floor(s / 86400) });
 }
 
 export function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  if (bytes < 1024) return t("{value} B", { value: bytes });
+  if (bytes < 1024 * 1024) return t("{value} KB", { value: Math.round(bytes / 1024) });
+  return t("{value} MB", { value: (bytes / 1024 / 1024).toFixed(1) });
 }
 
 const RENDERABLE_IMAGE_TYPES = new Set([
@@ -402,7 +403,7 @@ export async function copyText(text: string, btn?: HTMLButtonElement): Promise<v
 
 export function actionSnippet(action: string): string {
   const s = action.trim().replace(/\s+/g, " ");
-  return s.length > 48 ? `${s.slice(0, 47)}…` : s || "(no action)";
+  return s.length > 48 ? `${s.slice(0, 47)}…` : s || t("(no action)");
 }
 
 export function closeFormMenus(): boolean {
@@ -486,7 +487,7 @@ export function chipBadge(
   if (download) return html`<a class="file-chip" href=${href} download=${name}>${inner}</a>`;
   return html`<span class="file-chip-group"
     ><a class="file-chip" href=${href} target="_blank" rel="noreferrer">${inner}</a
-    ><a class="file-chip-download" href=${href} download=${name} title="Download ${name}" aria-label="Download ${name}"
+    ><a class="file-chip-download" href=${href} download=${name} title=${t("Download {name}", { name })} aria-label=${t("Download {name}", { name })}
       >${icon(Download, 14)}</a
     ></span
   >`;

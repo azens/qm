@@ -137,6 +137,8 @@ test("confirmation shows added/removed members, unique total, and returns the us
     const result = await vm.runInNewContext(
       review + '\ngovernanceSaveReview("internal-member-overrides", {members:["NEW@example.com", "new@example.com"]})',
       {
+        _t: (key: string, vars?: Record<string, string | number>) =>
+          key.replace(/\{(\w+)\}/g, (m, name) => String(vars?.[name] ?? m)),
         sectionSnapshots: new Map([["internal-member-overrides", JSON.stringify({ members: ["old@example.com"] })]]),
         governanceScopeName: () => "Acme",
         reviewGovernanceChange: (options: typeof shown) => {
@@ -161,7 +163,7 @@ test("confirmation shows added/removed members, unique total, and returns the us
 test("clearing reviews removals, while a normalized unchanged list needs no review", async () => {
   const review = slice("      function governanceSaveReview(", '      $("sharing-posture-inherit").onclick');
   let reviews = 0;
-  const context = vm.createContext({
+  const context = vm.createContext({ _t: (key: string, vars?: Record<string, string | number>) => key.replace(/\{(\w+)\}/g, (m, name) => String(vars?.[name] ?? m)),
     sectionSnapshots: new Map([["internal-member-overrides", JSON.stringify({ members: ["colleague@example.com"] })]]),
     governanceScopeName: () => "Acme",
     reviewGovernanceChange: (options: { danger: boolean; facts: [string, string][] }) => {

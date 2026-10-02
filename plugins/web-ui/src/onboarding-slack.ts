@@ -3,6 +3,7 @@ import "./slack-account.css";
 import { LitElement, html, nothing } from "lit";
 import { ArrowUpRight, Check } from "lucide";
 import { icon, slackMark } from "./ui";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 export class OnboardingSlack extends LitElement {
   static properties = {
@@ -65,7 +66,7 @@ export class OnboardingSlack extends LitElement {
     } catch {
       if (this.isConnected) {
         this.connected = false;
-        this.error = "Could not check the Slack installation. Try again.";
+        this.error = t("Could not check the Slack installation. Try again.");
       }
     } finally {
       clearTimeout(timeout);
@@ -87,12 +88,12 @@ export class OnboardingSlack extends LitElement {
         return;
       }
     } catch {
-      this.error = "Could not open your browser. Please try again.";
+      this.error = t("Could not open your browser. Please try again.");
       return;
     }
     const popup = window.open("", "_blank");
     if (!popup) {
-      this.error = "Allow a new tab to install QM, then try again.";
+      this.error = t("Allow a new tab to install QM, then try again.");
       return;
     }
     popup.opener = null;
@@ -100,8 +101,8 @@ export class OnboardingSlack extends LitElement {
       popup.location.href = `${this.adminBase}/slack-settings?setup=slack`;
       return;
     }
-    popup.document.title = "Connecting Slack";
-    popup.document.body.textContent = "Opening Slack…";
+    popup.document.title = t("Connecting Slack");
+    popup.document.body.textContent = t("Opening Slack…");
     this.busy = true;
     this.error = "";
     try {
@@ -126,18 +127,18 @@ export class OnboardingSlack extends LitElement {
       void this.refresh();
     } catch {
       popup.close();
-      this.error = "Could not start Slack installation. Please try again.";
+      this.error = t("Could not start Slack installation. Please try again.");
     } finally {
       this.busy = false;
     }
   }
 
   protected render() {
-    let label = this.busy ? "Opening Slack…" : "Add to Slack";
-    if (this.installAvailable === undefined) label = "Checking Slack…";
+    let label = this.busy ? t("Opening Slack…") : t("Add to Slack");
+    if (this.installAvailable === undefined) label = t("Checking Slack…");
     return html`${
       this.connected
-        ? html`<div class="slack-connected" role="status">${icon(Check, 14)} QM added to Slack</div>`
+        ? html`<div class="slack-connected" role="status">${icon(Check, 14)} ${t("QM added to Slack")}</div>`
         : html`<button
             class="welcome-slack"
             type="button"
@@ -145,11 +146,11 @@ export class OnboardingSlack extends LitElement {
             @click=${() => void this.install()}
           >
             ${slackMark(24)}<span
-              ><strong>${label}</strong><small>Work with QM where your team already talks.</small></span
+              ><strong>${label}</strong><small>${t("Work with QM where your team already talks.")}</small></span
             >${icon(ArrowUpRight, 16)}
           </button>`
     }
-    ${this.error ? html`<p role="status">${this.error} <button type="button" @click=${() => void this.refresh()}>Check again</button></p>` : nothing}`;
+    ${this.error ? html`<p role="status">${this.error} <button type="button" @click=${() => void this.refresh()}>${t("Check again")}</button></p>` : nothing}`;
   }
 }
 

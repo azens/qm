@@ -17,6 +17,7 @@ import {
 import { api, fileContentUrl, webFetch, withBase } from "./core-bridge";
 import { errMessage } from "../../chassis/src/errors";
 import { browserRenderableImage, fieldSelect, formatBytes, icon, relTime } from "./ui";
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { contextsState, ensureContexts, personalScopeId, scopeTitle } from "./contexts";
 import { appState } from "./shell";
 import { fileListNeedsAllPages } from "./file-list";
@@ -139,23 +140,23 @@ function drawFiles(loading = false): void {
   const visible = visibleFiles();
   const groups = groupFilesByScope(visible);
   const filtered = Boolean(filesScope || filesQuery.trim() || filesType !== "all" || filesOwnership !== "all");
-  let dropLabel = isTouch() ? "Choose files to upload" : "Drop files here or choose files";
-  if (filesDragActive) dropLabel = "Drop files";
-  else if (filesUploading) dropLabel = "Uploading…";
-  const status = filesNotice || (loading && !fileRows.length ? "Loading files…" : "");
+  let dropLabel = isTouch() ? t("Choose files to upload") : t("Drop files here or choose files");
+  if (filesDragActive) dropLabel = t("Drop files");
+  else if (filesUploading) dropLabel = t("Uploading…");
+  const status = filesNotice || (loading && !fileRows.length ? t("Loading files…") : "");
   const scoped = Boolean(scopedSession.active);
   filesHost.classList.toggle("scoped-view", scoped);
   render(
     html`
       ${scopedViewTopbar("files", drawFiles)}
       <div class="list-page-head">
-        <h1 class="pane-title">Files</h1>
+        <h1 class="pane-title">${t("Files")}</h1>
         <label class="list-search"
-          >${icon(Search, 16)}<span class="sr-only">Search files</span
+          >${icon(Search, 16)}<span class="sr-only">${t("Search files")}</span
           ><input
             type="search"
-            aria-label="Search files"
-            placeholder="Search file names and types…"
+            aria-label=${t("Search files")}
+            placeholder=${t("Search file names and types…")}
             .value=${filesQuery}
             @input=${(e: Event) => {
               filesQuery = (e.currentTarget as HTMLInputElement).value;
@@ -166,12 +167,12 @@ function drawFiles(loading = false): void {
       </div>
       <div class="list-toolbar">
         ${selectControl(
-          "Ownership",
+          t("Ownership"),
           filesOwnership,
           [
-            ["all", "All files"],
-            ["owned", "Yours"],
-            ["shared", "Shared"],
+            ["all", t("All files")],
+            ["owned", t("Yours")],
+            ["shared", t("Shared")],
           ],
           (v) => {
             filesOwnership = v as typeof filesOwnership;
@@ -180,13 +181,13 @@ function drawFiles(loading = false): void {
           },
         )}
         ${selectControl(
-          "Type",
+          t("Type"),
           filesType,
           [
-            ["all", "All types"],
-            ["image", "Images"],
-            ["document", "Documents"],
-            ["other", "Other"],
+            ["all", t("All types")],
+            ["image", t("Images")],
+            ["document", t("Documents")],
+            ["other", t("Other")],
           ],
           (v) => {
             filesType = v as typeof filesType;
@@ -219,9 +220,9 @@ function drawFiles(loading = false): void {
                   </section>`,
               )}
             </div>`
-          : html`<div class="empty compact">${filtered ? "No files match these filters." : "No files yet."}</div>`
+          : html`<div class="empty compact">${filtered ? t("No files match these filters.") : t("No files yet.")}</div>`
       }
-      ${filesNextCursor ? html`<div class="list-footer"><button class="btn" type="button" ?disabled=${filesLoadingMore} @click=${() => void loadMoreFiles()}>${filesLoadingMore ? "Loading…" : "Load more"}</button></div>` : nothing}
+      ${filesNextCursor ? html`<div class="list-footer"><button class="btn" type="button" ?disabled=${filesLoadingMore} @click=${() => void loadMoreFiles()}>${filesLoadingMore ? t("Loading…") : t("Load more")}</button></div>` : nothing}
     `,
     filesHost,
   );
@@ -235,7 +236,7 @@ function fileRow(f: FileRow) {
     <span class="list-row-title" dir="auto">${f.name}</span>
     <span class="list-row-meta"
       ><span>${formatBytes(f.sizeBytes)}</span><span>${relTime(f.createdAt)}</span>${
-        f.openable ? nothing : html`<span>Unavailable</span>`
+        f.openable ? nothing : html`<span>${t("Unavailable")}</span>`
       }</span
     >
   `;
@@ -285,10 +286,12 @@ async function uploadFiles(files: globalThis.File[]): Promise<void> {
       await uploadOne(file);
       uploaded++;
     }
-    filesNotice = `Uploaded ${picked.length} ${picked.length === 1 ? "file" : "files"}.`;
+    filesNotice = t("Uploaded {count} files.", { count: picked.length });
     await loadFiles(appState.viewRenderSeq);
   } catch (e) {
-    filesNotice = `${uploaded ? `Uploaded ${uploaded} of ${picked.length}. ` : ""}${errMessage(e, "Upload failed.")}`;
+    filesNotice = uploaded
+      ? t("Uploaded {done} of {total}. {error}", { done: uploaded, total: picked.length, error: errMessage(e, t("Upload failed.")) })
+      : errMessage(e, t("Upload failed."));
     if (uploaded) await loadFiles(appState.viewRenderSeq);
     else drawFiles();
   } finally {
@@ -368,7 +371,7 @@ async function loadMoreFiles(): Promise<void> {
     filesNextCursor = page.nextCursor;
   } catch (e) {
     if (requestSeq !== filesRequestSeq) return;
-    filesNotice = errMessage(e, "Failed to load more files.");
+    filesNotice = errMessage(e, t("Failed to load more files."));
   }
   if (requestSeq !== filesRequestSeq) return;
   filesLoadingMore = false;
@@ -400,7 +403,7 @@ async function loadAllFiles(): Promise<void> {
     }
   } catch (e) {
     if (requestSeq !== filesRequestSeq) return;
-    filesNotice = errMessage(e, "Failed to load all matching files.");
+    filesNotice = errMessage(e, t("Failed to load all matching files."));
   }
   if (requestSeq !== filesRequestSeq) return;
   filesLoadAllQueued = false;
@@ -422,7 +425,7 @@ async function loadFiles(seq: number): Promise<void> {
     void loadAllFiles();
   } catch (e) {
     if (requestSeq !== filesRequestSeq || seq !== appState.viewRenderSeq || appState.currentView !== "files") return;
-    filesNotice = errMessage(e, "Failed to load files.");
+    filesNotice = errMessage(e, t("Failed to load files."));
   }
   drawFiles();
 }

@@ -1,4 +1,17 @@
 import * as governance from "./governance.ts";
+export {
+  LOCALE_LABELS,
+  currentLocale,
+  formatDate,
+  formatNumber,
+  formatRelativeTime,
+  onLocaleChange,
+  pluralize,
+  setLocale,
+  translate,
+} from "../../chassis/src/i18n.ts";
+export { translate as t } from "../../chassis/src/i18n.ts";
+export { createLocaleSwitcher } from "../../chassis/src/locale-switcher.ts";
 import * as settings from "./settings.ts";
 import * as integrations from "./integrations.ts";
 import * as onboarding from "./onboarding.ts";

@@ -1,3 +1,5 @@
+import { t } from "../../chassis/src/i18n-lit.ts";
+
 export function preserveTranscriptScroll(root: HTMLElement): () => void {
   const snapshots = [...root.querySelectorAll<HTMLElement>(".chat-scroll")]
     .filter((element) => element.clientHeight > 0)
@@ -89,7 +91,7 @@ export function createTranscriptViewport() {
     const toggle = prompt.querySelector<HTMLButtonElement>(".pin-toggle");
     if (toggle) {
       toggle.hidden = !clipped && !expanded;
-      const label = expanded ? "Show less" : "Show more";
+      const label = expanded ? t("Show less") : t("Show more");
       const text = toggle.querySelector<HTMLElement>(".pin-toggle-label") ?? toggle;
       if (text.textContent !== label) text.textContent = label;
       toggle.setAttribute("aria-expanded", String(expanded));

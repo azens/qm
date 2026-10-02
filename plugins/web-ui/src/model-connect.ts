@@ -4,6 +4,7 @@ import { errMessage } from "../../chassis/src/errors";
 import { brandMark, brandName } from "./ui";
 import { appState } from "./shell-state";
 import { trapDialogFocus, restoreDialogFocus } from "./dialog-focus";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 type ProviderKey = "claude" | "chatgpt";
 type ConnKind = "apikey" | "oauth";
@@ -194,11 +195,12 @@ async function load(): Promise<void> {
 
 function friendly(e: unknown): string {
   const raw = errMessage(e);
-  if (/invalid_api_key|rejected this API key/i.test(raw)) return "That API key was rejected — check it and try again.";
+  if (/invalid_api_key|rejected this API key/i.test(raw))
+    return t("That API key was rejected — check it and try again.");
   if (/oauth_start_failed|oauth_poll_failed|oauth_complete_failed/i.test(raw))
-    return "Sign-in didn't complete. Try again — the code may have expired.";
+    return t("Sign-in didn't complete. Try again — the code may have expired.");
   if (/network|fetch failed|timeout/i.test(raw))
-    return "Couldn't reach the sign-in service. Check your connection and try again.";
+    return t("Couldn't reach the sign-in service. Check your connection and try again.");
   return raw;
 }
 
@@ -218,7 +220,7 @@ async function afterConnect(provider: "anthropic" | "openai"): Promise<void> {
     if (current(state) && !s.error && s.mode === "manager") closeManager();
     return;
   }
-  s.notice = "Account connected. Choose Use account to use it for your chats.";
+  s.notice = t("Account connected. Choose Use account to use it for your chats.");
   paint();
 }
 
@@ -282,7 +284,7 @@ async function copyCode(code: string): Promise<void> {
     }, 1600);
   } catch {
     if (!current(state, revision)) return;
-    s.error = "Could not copy the code. Select it and copy it manually.";
+    s.error = t("Could not copy the code. Select it and copy it manually.");
     paint();
   }
 }
@@ -319,7 +321,7 @@ async function pollChatGPT(): Promise<void> {
   const device = s.flow.device;
   if (Date.now() > device.expiresAt) {
     resetFlow();
-    s.error = "That code expired. Select Sign in to get a new code.";
+    s.error = t("That code expired. Select Sign in to get a new code.");
     paint();
     return;
   }
@@ -394,8 +396,8 @@ async function disconnect(p: ProviderMeta): Promise<void> {
     s.saving = false;
     s.notice =
       s.account === p.apiName
-        ? "Account disconnected. Reconnect it or choose company access to continue chatting."
-        : "Account disconnected.";
+        ? t("Account disconnected. Reconnect it or choose company access to continue chatting.")
+        : t("Account disconnected.");
     paint();
   } catch (e) {
     if (!current(state, revision)) return;
@@ -406,18 +408,25 @@ async function disconnect(p: ProviderMeta): Promise<void> {
   }
 }
 
-function methodRow(title: string, detail: string, selected: boolean, onPick: () => void): TemplateResult {
+function methodRow(
+  title: string,
+  detail: string,
+  selected: boolean,
+  onPick: () => void,
+  titleVars?: Record<string, string>,
+  locked = false,
+): TemplateResult {
   return html`
     <button
       type="button"
       class="mc-method ${selected ? "selected" : ""}"
-      ?disabled=${s.busy || s.saving || (title === "Company access" && s.required)}
+      ?disabled=${s.busy || s.saving || (locked && s.required)}
       aria-pressed=${selected}
       @click=${onPick}
     >
       <span class="mc-method-radio" aria-hidden="true"></span>
       <span class="mc-method-text">
-        <span class="mc-method-title">${title}</span>
+        <span class="mc-method-title">${t(title, titleVars)}</span>
         <span class="mc-method-detail">${detail}</span>
       </span>
     </button>
@@ -430,15 +439,15 @@ function claudeSteps(): TemplateResult {
   return html`
     <ol class="mc-steps">
       <li>
-        <a class="btn" href=${flow.authorizeUrl} target="_blank" rel="noopener">Continue to Claude ↗</a>
+        <a class="btn" href=${flow.authorizeUrl} target="_blank" rel="noopener">${t("Continue to Claude ↗")}</a>
       </li>
       <li>
         <label class="mc-field">
-          <span>Authorization code</span>
+          <span>${t("Authorization code")}</span>
           <input
             ?disabled=${s.busy || s.saving}
             .value=${flow.code}
-            placeholder="Paste the code from Claude"
+            placeholder=${t("Paste the code from Claude")}
             autocomplete="off"
             spellcheck="false"
             @input=${(e: Event) => {
@@ -451,7 +460,7 @@ function claudeSteps(): TemplateResult {
       </li>
       <li>
         <button class="btn primary" ?disabled=${!flow.code.trim() || s.busy} @click=${finishClaude}>
-          ${s.busy ? "Connecting…" : "Connect account"}
+          ${s.busy ? t("Connecting…") : t("Connect account")}
         </button>
       </li>
     </ol>
@@ -467,18 +476,18 @@ function chatgptSteps(): TemplateResult {
         <button
           type="button"
           class="mc-code-btn ${s.copied ? "copied" : ""}"
-          title="Copy code to clipboard"
+          title=${t("Copy code to clipboard")}
           @click=${() => copyCode(device.userCode)}
         >
           <span class="mc-code">${device.userCode}</span>
-          <span class="mc-copy-hint">${s.copied ? "Copied ✓" : "Click to copy"}</span>
+          <span class="mc-copy-hint">${s.copied ? t("Copied ✓") : t("Click to copy")}</span>
         </button>
       </li>
       <li>
-        <a class="btn" href=${device.verificationUrl} target="_blank" rel="noopener">Open chatgpt.com and paste it ↗</a>
+        <a class="btn" href=${device.verificationUrl} target="_blank" rel="noopener">${t("Open chatgpt.com and paste it ↗")}</a>
       </li>
       <li>
-        <span class="mc-waiting"><span class="mc-spinner" aria-hidden="true"></span>Waiting for your approval…</span>
+        <span class="mc-waiting"><span class="mc-spinner" aria-hidden="true"></span>${t("Waiting for your approval…")}</span>
       </li>
     </ol>
   `;
@@ -490,7 +499,9 @@ function apikeySteps(p: ProviderMeta): TemplateResult {
   return html`
     <div class="mc-keyform">
       <label class="mc-field">
-        <span>API key · from <a href=${p.keyConsoleUrl} target="_blank" rel="noopener">${p.keyConsole}</a></span>
+        <span
+          >${t("API key · from")} <a href=${p.keyConsoleUrl} target="_blank" rel="noopener">${p.keyConsole}</a></span
+        >
         <input
           type="password"
           ?disabled=${s.busy || s.saving}
@@ -505,7 +516,7 @@ function apikeySteps(p: ProviderMeta): TemplateResult {
         />
       </label>
       <button class="btn primary" ?disabled=${!flow.value.trim() || s.busy} @click=${() => saveKey(p)}>
-        ${s.busy ? "Checking…" : "Connect"}
+        ${s.busy ? t("Checking…") : t("Connect")}
       </button>
     </div>
   `;
@@ -517,31 +528,37 @@ function connectBody(p: ProviderMeta): TemplateResult {
   if (s.intent) {
     return html`<div class="mc-simple-flow">
       ${s.method === "apikey" ? apikeySteps(p) : subscriptionSteps}
-      ${s.busy ? html`<p class="mc-waiting">Connecting…</p>` : nothing}
-      ${!s.method ? html`<button class="btn primary" ?disabled=${s.saving} @click=${() => void pickSubscription(p)}>Sign in with ${p.name}</button>` : nothing}
+      ${s.busy ? html`<p class="mc-waiting">${t("Connecting…")}</p>` : nothing}
+      ${!s.method
+        ? html`<button class="btn primary" ?disabled=${s.saving} @click=${() => void pickSubscription(p)}>
+            ${t("Sign in with {name}", { name: p.name })}
+          </button>`
+        : nothing}
       <button
         class="settings-theme-link"
         ?disabled=${s.busy || s.saving}
         @click=${() => (s.method === "apikey" ? void pickSubscription(p) : pickApiKey())}
       >
-        ${s.method === "apikey" ? "Use my subscription instead" : "Use an API key instead"}
+        ${s.method === "apikey" ? t("Use my subscription instead") : t("Use an API key instead")}
       </button>
     </div>`;
   }
   return html`
     <div class="mc-connect">
       ${methodRow(
-        `Sign in with ${p.name}`,
-        `Uses your ${p.subscription} subscription and its usage limits.`,
+        "Sign in with {name}",
+        t("Uses your {subscription} subscription and its usage limits.", { subscription: p.subscription }),
         s.method === "subscription",
         () => void pickSubscription(p),
+        { name: p.name },
       )}
       ${subscriptionSteps}
       ${methodRow(
-        "Use an API key",
-        `Paste a key from ${p.keyConsole} — usage is billed to the key.`,
+        t("Use an API key"),
+        t("Paste a key from {console} — usage is billed to the key.", { console: p.keyConsole }),
         s.method === "apikey",
         pickApiKey,
+        undefined,
       )}
       ${s.method === "apikey" ? apikeySteps(p) : nothing}
     </div>
@@ -551,9 +568,9 @@ function connectBody(p: ProviderMeta): TemplateResult {
 function providerRow(p: ProviderMeta): TemplateResult {
   const kind = s.connections[p.key];
   const open = s.open === p.key;
-  let statusLine = `Chat with ${p.name} on your own account`;
-  if (kind === "oauth") statusLine = `Connected with your ${p.name} subscription`;
-  else if (kind === "apikey") statusLine = "Connected with your API key";
+  let statusLine = t("Chat with {name} on your own account", { name: p.name });
+  if (kind === "oauth") statusLine = t("Connected with your {name} subscription", { name: p.name });
+  else if (kind === "apikey") statusLine = t("Connected with your API key");
   let action: TemplateResult | typeof nothing = nothing;
   if (kind) {
     action = html`<button
@@ -561,9 +578,9 @@ function providerRow(p: ProviderMeta): TemplateResult {
         ?disabled=${s.busy || s.saving || s.account === p.apiName}
         @click=${() => switchAccount("personal", p.apiName)}
       >
-        ${s.account === p.apiName ? "In use" : "Use account"}</button
+        ${s.account === p.apiName ? t("In use") : t("Use account")}</button
       ><button class="btn mc-quiet-danger" ?disabled=${s.busy || s.saving} @click=${() => disconnect(p)}>
-        ${s.busy ? "…" : "Disconnect"}
+        ${s.busy ? "…" : t("Disconnect")}
       </button>`;
   } else if (open) {
     action = html`<button
@@ -576,7 +593,7 @@ function providerRow(p: ProviderMeta): TemplateResult {
         paint();
       }}
     >
-      Cancel
+      ${t("Cancel")}
     </button>`;
   } else if (!open) {
     action = html`<button
@@ -588,7 +605,7 @@ function providerRow(p: ProviderMeta): TemplateResult {
         paint();
       }}
     >
-      Connect
+      ${t("Connect")}
     </button>`;
   }
   return html`
@@ -625,8 +642,10 @@ async function switchAccount(account: "personal" | "company", provider?: "anthro
     applyStatus(status);
     s.notice =
       account === "company"
-        ? "New chats will use company access."
-        : `New chats will use your ${provider === "anthropic" ? "Claude" : "ChatGPT / Codex"} account.`;
+        ? t("New chats will use company access.")
+        : t("New chats will use your {name} account.", {
+            name: provider === "anthropic" ? "Claude" : "ChatGPT / Codex",
+          });
   } catch (e) {
     if (!current(state, revision)) return;
     s.error = friendly(e);
@@ -645,12 +664,12 @@ function view(): TemplateResult {
     cta =
       s.mode === "gate"
         ? html`<button class="btn primary mc-cta" ?disabled=${s.saving} @click=${() => location.reload()}>
-            Start chatting
+            ${t("Start chatting")}
           </button>`
-        : html`<button class="btn primary mc-cta" ?disabled=${s.saving} @click=${closeManager}>Done</button>`;
+        : html`<button class="btn primary mc-cta" ?disabled=${s.saving} @click=${closeManager}>${t("Done")}</button>`;
   }
   let choices: TemplateResult;
-  if (!s.loaded) choices = html`<button type="button" class="btn" @click=${() => void load()}>Retry</button>`;
+  if (!s.loaded) choices = html`<button type="button" class="btn" @click=${() => void load()}>${t("Retry")}</button>`;
   else if (s.intent)
     choices = html`<div class="mc-simple-connect">
       ${s.connections[s.intent.key] ? providerRow(s.intent) : connectBody(s.intent)}
@@ -659,33 +678,41 @@ function view(): TemplateResult {
     choices = html`<div class="mc-providers">
       ${methodRow(
         "Company access",
-        s.required ? "Your organization requires a personal account." : "Use the access provided by your organization.",
+        s.required
+          ? t("Your organization requires a personal account.")
+          : t("Use the access provided by your organization."),
         !s.personal,
         () => {
           if (!s.required) void switchAccount("company");
         },
+        undefined,
+        true,
       )}
       <p class="mc-account-hint">
-        ${s.personal ? "Using a personal account. Choose a connected provider below." : "Or use your own account. Connect a provider, then choose Use account."}
+        ${s.personal
+          ? t("Using a personal account. Choose a connected provider below.")
+          : t("Or use your own account. Connect a provider, then choose Use account.")}
       </p>
       ${PROVIDERS.map((p) => providerRow(p))}
     </div>`;
-  let title = s.mode === "gate" ? "Connect your AI account" : "AI accounts";
-  if (s.intent) title = `Connect ${s.intent.name}`;
+  let title = s.mode === "gate" ? t("Connect your AI account") : t("AI accounts");
+  if (s.intent) title = t("Connect {name}", { name: s.intent.name });
   const body = s.loading
-    ? html`<div class="mc-waiting"><span class="mc-spinner" aria-hidden="true"></span>Loading…</div>`
+    ? html`<div class="mc-waiting"><span class="mc-spinner" aria-hidden="true"></span>${t("Loading…")}</div>`
     : html`
         ${s.error ? html`<div class="mc-error" role="alert">${s.error}</div>` : nothing}
-        ${s.saving || s.notice ? html`<p class="mc-notice" role="status">${s.saving ? "Saving changes…" : s.notice}</p>` : nothing}
+        ${s.saving || s.notice
+          ? html`<p class="mc-notice" role="status">${s.saving ? t("Saving changes…") : s.notice}</p>`
+          : nothing}
         ${choices} ${s.intent ? nothing : cta}
       `;
   const personalCopy =
     s.method === "apikey"
-      ? "New chats will be billed to this API key."
-      : `Use your ${s.intent?.subscription} subscription for new chats.`;
+      ? t("New chats will be billed to this API key.")
+      : t("Use your {subscription} subscription for new chats.", { subscription: s.intent?.subscription ?? "" });
   const subCopy = s.intent
     ? personalCopy
-    : "Choose who provides access for your chats on the web and in Slack. Background tasks continue using company access.";
+    : t("Choose who provides access for your chats on the web and in Slack. Background tasks continue using company access.");
   return html`
     <div class="signin">
       <div
@@ -699,8 +726,8 @@ function view(): TemplateResult {
             ? html`<button
                 type="button"
                 class="mc-close"
-                aria-label="Close"
-                title="Close"
+                aria-label=${t("Close")}
+                title=${t("Close")}
                 ?disabled=${s.saving}
                 @click=${closeManager}
               >

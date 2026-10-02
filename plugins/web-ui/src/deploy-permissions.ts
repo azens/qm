@@ -3,6 +3,7 @@ import { live } from "lit/directives/live.js";
 import { Building2, Globe, Lock, Search, X } from "lucide";
 import { api } from "./core-bridge";
 import { closeFormMenus, icon, initials, menuSelect } from "./ui";
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { scopeChip } from "./contexts";
 import { friendlyPrincipal } from "./deploy-view";
 import { errMessage } from "../../chassis/src/errors";
@@ -77,7 +78,7 @@ export async function openDeploymentPermissions(id: string, title: string, owner
       searchSequence++;
       matches = [];
     } catch (e) {
-      error = errMessage(e, "Could not update permissions.");
+      error = errMessage(e, t("Could not update permissions."));
     } finally {
       busy = false;
       if (dialog.isConnected) draw();
@@ -111,7 +112,7 @@ export async function openDeploymentPermissions(id: string, title: string, owner
         if (next === "restricted" && grant) await post({ scope: grant.scope, access: "none" });
       }
     } catch (e) {
-      error = errMessage(e, "Could not update general access.");
+      error = errMessage(e, t("Could not update general access."));
     } finally {
       busy = false;
       if (dialog.isConnected) draw();
@@ -144,7 +145,7 @@ export async function openDeploymentPermissions(id: string, title: string, owner
         .slice(0, 8);
       searched = true;
     } catch (e) {
-      if (sequence === searchSequence) error = errMessage(e, "Could not find people.");
+      if (sequence === searchSequence) error = errMessage(e, t("Could not find people."));
     } finally {
       if (sequence === searchSequence && dialog.isConnected) {
         searching = false;
@@ -152,12 +153,12 @@ export async function openDeploymentPermissions(id: string, title: string, owner
       }
     }
   };
-  const orgName = (): string => appState.me?.companyName?.trim() || "Your organization";
+  const orgName = (): string => appState.me?.companyName?.trim() || t("Your organization");
   const generalAccessNote = (): string => {
     const level = generalAccess();
-    if (level === "public") return "Anyone on the internet with the link can open. No sign-in required";
-    if (level === "org") return `Anyone signed in to ${orgName()} can open`;
-    return "Only people with access can open";
+    if (level === "public") return t("Anyone on the internet with the link can open. No sign-in required");
+    if (level === "org") return t("Anyone signed in to {org} can open", { org: orgName() });
+    return t("Only people with access can open");
   };
   const emailCandidate = (): string | null => {
     const email = query.trim().toLowerCase();
@@ -177,9 +178,9 @@ export async function openDeploymentPermissions(id: string, title: string, owner
         value,
         ariaLabel: label,
         options: [
-          { value: "view", label: "Can view" },
-          { value: "manage", label: "Can manage" },
-          ...(removable ? [{ value: "none", label: "Remove access" }] : []),
+          { value: "view", label: t("Can view") },
+          { value: "manage", label: t("Can manage") },
+          ...(removable ? [{ value: "none", label: t("Remove access") }] : []),
         ],
         onSelect: (next) => {
           if (next) update(next);
@@ -191,10 +192,10 @@ export async function openDeploymentPermissions(id: string, title: string, owner
       html`
         <div class="project-dialog-head">
           <div>
-            <h2 id="deployment-permissions-heading">App permissions</h2>
+            <h2 id="deployment-permissions-heading">${t("App permissions")}</h2>
             <p>${title}</p>
           </div>
-          <button class="chip-x" type="button" aria-label="Close" @click=${close}>${icon(X, 16)}</button>
+          <button class="chip-x" type="button" aria-label=${t("Close")} @click=${close}>${icon(X, 16)}</button>
         </div>
         ${
           loaded
@@ -210,7 +211,7 @@ export async function openDeploymentPermissions(id: string, title: string, owner
                         </div>
                         <button
                           class="chip-x"
-                          aria-label="Cancel selection"
+                          aria-label=${t("Cancel selection")}
                           ?disabled=${busy}
                           @click=${() => {
                             selected = null;
@@ -222,7 +223,7 @@ export async function openDeploymentPermissions(id: string, title: string, owner
                         <div class="permission-invite-actions">
                           ${
                             selected.email
-                              ? html`<span class="permission-note">Can view</span>`
+                              ? html`<span class="permission-note">${t("Can view")}</span>`
                               : permissionMenu(access, "New person's access", (value) => {
                                   access = value;
                                   draw();
@@ -241,7 +242,7 @@ export async function openDeploymentPermissions(id: string, title: string, owner
                               }
                             }}
                           >
-                            Add
+                            ${t("Add")}
                           </button>
                         </div>
                       </div>`
@@ -255,8 +256,8 @@ export async function openDeploymentPermissions(id: string, title: string, owner
                         <div class="project-member-search-row">
                           ${icon(Search, 16)}<input
                             id="app-people-query"
-                            aria-label="Add people"
-                            placeholder="Add people by name or email"
+                            aria-label=${t("Add people")}
+                            placeholder=${t("Add people by name or email")}
                             type="search"
                             autocomplete="off"
                             maxlength="254"
@@ -293,33 +294,36 @@ export async function openDeploymentPermissions(id: string, title: string, owner
                                     draw();
                                   }}
                                 >
-                                  Add ${emailCandidate()} with view access
+                                  ${t("Add {email} with view access", { email: emailCandidate() ?? "" })}
                                 </button>
                                 <p class="permission-note">
-                                  They receive an app link by email and sign in with this address. This does not add
-                                  them to your organization.
+                                  ${t("They receive an app link by email and sign in with this address. This does not add them to your organization.")}
                                 </p>
                               `
                             : nothing
                         }
-                        ${searching ? html`<p class="permission-note" role="status">Searching…</p>` : nothing}
-                        ${!searching && searched && !matches.length && !emailCandidate() ? html`<p class="permission-note">No additional people found.</p>` : nothing}
+                        ${searching
+                          ? html`<p class="permission-note" role="status">${t("Searching…")}</p>`
+                          : nothing}
+                        ${!searching && searched && !matches.length && !emailCandidate()
+                          ? html`<p class="permission-note">${t("No additional people found.")}</p>`
+                          : nothing}
                       </form>`
                 }
               </div>`
             : nothing
         }
-        <div class="permission-section-label">People with access</div>
+        <div class="permission-section-label">${t("People with access")}</div>
         <div class="project-member-list">
           <div class="permission-row">
             <span class="project-member-avatar" aria-hidden="true">${initials(owner.replace("personal:", ""))}</span
             ><span class="permission-person-label"
               >${owner.startsWith("personal:") ? friendlyPrincipal(owner.slice(9)) : scopeChip(owner)}</span
-            ><span class="permission-owner">Owner</span>
+            ><span class="permission-owner">${t("Owner")}</span>
           </div>
-          ${grantees.filter((grant) => generalAccess() !== "org" || !isOrgGrant(grant)).map((grant) => html`<div class="permission-row"><span class="project-member-avatar" aria-hidden="true">${initials(isOrgGrant(grant) ? orgName() : grant.scope.replace("personal:", ""))}</span><span class="permission-person-label">${isOrgGrant(grant) ? orgName() : (names.get(grant.scope) ?? (grant.scope.startsWith("personal:") ? grant.scope.slice(9) : scopeChip(grant.scope)))}${names.has(grant.scope) ? html`<small>${grant.scope.replace("personal:", "")}</small>` : nothing}</span>${permissionMenu(grant.permission === "write" ? "manage" : "view", `Access for ${grant.scope}`, (value) => void change(grant.scope, value), true)}</div>`)}
+          ${grantees.filter((grant) => generalAccess() !== "org" || !isOrgGrant(grant)).map((grant) => html`<div class="permission-row"><span class="project-member-avatar" aria-hidden="true">${initials(isOrgGrant(grant) ? orgName() : grant.scope.replace("personal:", ""))}</span><span class="permission-person-label">${isOrgGrant(grant) ? orgName() : (names.get(grant.scope) ?? (grant.scope.startsWith("personal:") ? grant.scope.slice(9) : scopeChip(grant.scope)))}${names.has(grant.scope) ? html`<small>${grant.scope.replace("personal:", "")}</small>` : nothing}</span>${permissionMenu(grant.permission === "write" ? "manage" : "view", t("Access for {scope}", { scope: grant.scope }), (value) => void change(grant.scope, value), true)}</div>`)}
         </div>
-        <div class="permission-section-label permission-general-label">General access</div>
+        <div class="permission-section-label permission-general-label">${t("General access")}</div>
         <div class="project-member-list">
           <div class="permission-row">
             <span class="project-member-avatar" aria-hidden="true"
@@ -329,17 +333,17 @@ export async function openDeploymentPermissions(id: string, title: string, owner
               <fieldset class="permission-control general-access-control" ?disabled=${busy}>
                 ${menuSelect({
                   value: generalAccess(),
-                  ariaLabel: "General access",
+                  ariaLabel: t("General access"),
                   className: "general-access-menu",
                   options: [
-                    { value: "restricted", label: "Restricted" },
+                    { value: "restricted", label: t("Restricted") },
                     { value: "org", label: orgName() },
                     {
                       value: "public",
-                      label: "Anyone with the link",
+                      label: t("Anyone with the link"),
                       ...(externalSharing
                         ? {}
-                        : { disabledHint: "An org admin must turn on external app sharing first." }),
+                        : { disabledHint: t("An org admin must turn on external app sharing first.") }),
                     },
                   ],
                   onSelect: (next) => {
@@ -363,12 +367,14 @@ export async function openDeploymentPermissions(id: string, title: string, owner
         </div>
         ${
           publicAccess
-            ? html`<p class="share-external-warning" role="status">⚠️ Public. Anyone can open this app.</p>`
+            ? html`<p class="share-external-warning" role="status">${t("⚠️ Public. Anyone can open this app.")}</p>`
             : nothing
         }
-        ${busy ? html`<p role="status">Loading…</p>` : nothing}
+        ${busy ? html`<p role="status">${t("Loading…")}</p>` : nothing}
         ${error ? html`<p class="composer-error" role="alert">${error}</p>` : nothing}
-        <div class="project-dialog-actions actions"><button class="btn" @click=${close}>Done</button></div>
+        <div class="project-dialog-actions actions">
+          <button class="btn" @click=${close}>${t("Done")}</button>
+        </div>
       `,
       dialog,
     );
@@ -381,7 +387,7 @@ export async function openDeploymentPermissions(id: string, title: string, owner
     grantees = response.grantees;
     loaded = true;
   } catch (e) {
-    error = errMessage(e, "Could not load permissions.");
+    error = errMessage(e, t("Could not load permissions."));
   } finally {
     busy = false;
     if (dialog.isConnected) draw();

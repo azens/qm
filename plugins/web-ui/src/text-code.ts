@@ -1,4 +1,5 @@
 import { markdownFence, type MarkdownFence } from "./streaming-markdown.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 export function normalizePlainTextFences(text: string): string {
   const newline = text.includes("\r\n") ? "\r\n" : "\n";
@@ -44,7 +45,7 @@ export function decorateTextCodeBlocks(root: ParentNode | null): void {
     button.className = "text-code-toggle";
     const update = (expanded: boolean) => {
       block.dataset.expanded = String(expanded);
-      button.textContent = expanded ? "Show less" : "Show more";
+      button.textContent = expanded ? t("Show less") : t("Show more");
       button.setAttribute("aria-expanded", String(expanded));
     };
     button.addEventListener("click", () => update(block.dataset.expanded !== "true"));

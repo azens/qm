@@ -16,6 +16,9 @@ import { mountFlags } from "./settings-flags.ts";
 export { configureFlags, loadFlags } from "./settings-flags.ts";
 import { brandingCard } from "./settings-branding.ts";
 import { html } from "lit";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { createLocaleSwitcher, type LocaleSwitcher } from "../../chassis/src/locale-switcher.ts";
+import { onLocaleChange } from "../../chassis/src/i18n.ts";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 
@@ -30,7 +33,7 @@ export class SettingsState extends SettingState {
   history: Data[] = [];
   collect(_validate = true): Data {
     if (_validate && this.key === "soul" && (this.draft.content || "").length > 100000)
-      throw new Error("Maximum length reached");
+      throw new Error(t("Maximum length reached"));
     if (this.key !== "runtime" && runtimeKeys.includes(this.key)) {
       if (this.draft.inherit) return { inherit: true };
       const { inherit: _inherit, ...selection } = this.draft;
@@ -80,7 +83,7 @@ export class SettingsState extends SettingState {
     this.changed();
   }
   changed() {
-    this.message = this.dirty ? "Unsaved changes" : "";
+    this.message = this.dirty ? t("Unsaved changes") : "";
     this.tone = "";
     this.render();
   }
@@ -172,6 +175,15 @@ const effortLabels: Record<string, string> = {
   max: "Max",
   ultracode: "Ultracode",
 };
+
+const harnessLabel = (id: string): string => {
+  const known = harnessLabels[id];
+  return known ? t(known) : id;
+};
+const effortLabel = (id: string): string => {
+  const known = effortLabels[id];
+  return known ? t(known) : id;
+};
 const value = (event: Event) => (event.target as HTMLInputElement).value;
 const label = (s: SettingsState, id: string) => {
   const m = s.catalog.find((x) => x.id === id);
@@ -184,12 +196,12 @@ function card(s: SettingsState) {
     const prefix = s.key === "runtime" ? "base" : s.key;
     const purpose = s.key !== "runtime";
     const [title, description] = {
-      runtime: ["Conversation runtime", "The default runtime for conversations unless overridden."],
-      "cron-runtime": ["Cron runtime", "Used for scheduled jobs without a per-job runtime override."],
-      "subagent-runtime": ["Sub-agent runtime", "Used for new sub-agents unless explicitly overridden."],
+      runtime: [t("Conversation runtime"), t("The default runtime for conversations unless overridden.")],
+      "cron-runtime": [t("Cron runtime"), t("Used for scheduled jobs without a per-job runtime override.")],
+      "subagent-runtime": [t("Sub-agent runtime"), t("Used for new sub-agents unless explicitly overridden.")],
       "fallback-runtime": [
-        "Fallback runtime",
-        "Retries a turn or compaction when the model refuses it or is unavailable.",
+        t("Fallback runtime"),
+        t("Retries a turn or compaction when the model refuses it or is unavailable."),
       ],
     }[s.key]!;
     return html`<section
@@ -212,13 +224,13 @@ function card(s: SettingsState) {
                 />
                 <span class="setting-switch" aria-hidden="true"></span>
                 <span class="setting-copy"
-                  ><strong>Use existing fallback</strong
+                  ><strong>${t("Use existing fallback")}</strong
                   ><small
                     >${
                       {
-                        "cron-runtime": "Use the job's scope default.",
-                        "subagent-runtime": "Use the child’s scope default.",
-                        "fallback-runtime": "Use the built-in Claude fallback.",
+                        "cron-runtime": t("Use the job's scope default."),
+                        "subagent-runtime": t("Use the child’s scope default."),
+                        "fallback-runtime": t("Use the built-in Claude fallback."),
                       }[s.key]
                     }</small
                   ></span
@@ -228,18 +240,18 @@ function card(s: SettingsState) {
         }
         <div class="model-runtime-fields">
           <div>
-            <label for=${`${prefix}-harness`}>Harness</label
+            <label for=${`${prefix}-harness`}>${t("Harness")}</label
             ><select
               id=${`${prefix}-harness`}
               ?disabled=${purpose && s.draft.inherit}
               .value=${s.draft.harnessId || ""}
               @change=${(e: Event) => s.change("harnessId", value(e))}
             >
-              ${s.harnesses.map((id) => html`<option value=${id} ?selected=${id === s.draft.harnessId}>${harnessLabels[id] || id}</option>`)}
+              ${s.harnesses.map((id) => html`<option value=${id} ?selected=${id === s.draft.harnessId}>${harnessLabel(id)}</option>`)}
             </select>
           </div>
           <div>
-            <label for=${`${prefix}-model`}>Model</label
+            <label for=${`${prefix}-model`}>${t("Model")}</label
             ><select
               id=${`${prefix}-model`}
               ?disabled=${purpose && s.draft.inherit}
@@ -254,7 +266,7 @@ function card(s: SettingsState) {
             </select>
           </div>
           <div>
-            <label for=${`${prefix}-effort`}>Reasoning level</label
+            <label for=${`${prefix}-effort`}>${t("Reasoning level")}</label
             ><select
               id=${`${prefix}-effort`}
               ?disabled=${purpose && s.draft.inherit}
@@ -265,7 +277,7 @@ function card(s: SettingsState) {
                 s.efforts,
                 (id) => id,
                 (id) =>
-                  html`<option value=${id} ?selected=${id === s.draft.effortLevel}>${effortLabels[id] || id}</option>`,
+                  html`<option value=${id} ?selected=${id === s.draft.effortLevel}>${effortLabel(id)}</option>`,
               )}
             </select>
           </div>
@@ -279,7 +291,7 @@ function card(s: SettingsState) {
             @change=${(e: Event) => s.change("fastMode", (e.target as HTMLInputElement).checked)}
           /><span class="setting-switch" aria-hidden="true"></span
           ><span class="setting-copy"
-            ><strong>Fast mode</strong><small>Only available for supported models.</small></span
+            ><strong>${t("Fast mode")}</strong><small>${t("Only available for supported models.")}</small></span
           ></label
         >
       </div>
@@ -292,11 +304,11 @@ function card(s: SettingsState) {
     class=${classMap({ card: true, "sv-models": true, hidden: !s.available, dirty: s.dirty })}
     id="card-webui-models"
   >
-    <div class="head"><h2>Enabled models</h2></div>
+    <div class="head"><h2>${t("Enabled models")}</h2></div>
     <div class="body">
       <div class="model-add-row">
         <div class="model-add-field">
-          <label for="webui-models-add">Add a model</label
+          <label for="webui-models-add">${t("Add a model")}</label
           ><select
             id="webui-models-add"
             .value=${s.selected}
@@ -306,17 +318,17 @@ function card(s: SettingsState) {
               s.render();
             }}
           >
-            <option value="">Choose a model…</option>
+            <option value="">${t("Choose a model…")}</option>
             ${available.map((m) => html`<option value=${m.id}>${label(s, m.id)}</option>`)}
           </select>
         </div>
         <button type="button" id="webui-models-add-button" ?disabled=${!s.selected} @click=${() => s.add()}>
-          + Add model
+          ${t("+ Add model")}
         </button>
       </div>
       <div id="webui-models-list" class="model-list">
         <p id="webui-models-empty" class=${classMap({ hint: true, hidden: !!ids.length })}>
-          No additional models enabled.
+          ${t("No additional models enabled.")}
         </p>
         ${repeat(
           ids,
@@ -324,7 +336,7 @@ function card(s: SettingsState) {
           (id) =>
             html`<span data-chip=${id} class="model-chip"
               ><span>${label(s, id)}</span
-              ><button type="button" aria-label=${"Remove " + id} @click=${() => s.remove(id)}>
+              ><button type="button" aria-label=${t("Remove {model}", { model: id })} @click=${() => s.remove(id)}>
                 <svg
                   width="12"
                   height="12"
@@ -344,8 +356,33 @@ function card(s: SettingsState) {
     ${saveFooter(s)}
   </section>`;
 }
+let localeSwitcher: LocaleSwitcher | null = null;
+let unsubscribeLocaleCaption: (() => void) | null = null;
+function mountLocaleSwitcher(): void {
+  const host = document.querySelector<HTMLElement>("#view-governance .governance-content");
+  if (!host) return;
+  if (host.querySelector("#qm-locale-slot")) return;
+  localeSwitcher?.dispose();
+  unsubscribeLocaleCaption?.();
+  localeSwitcher = null;
+  unsubscribeLocaleCaption = null;
+  const slot = document.createElement("div");
+  slot.className = "qm-locale-slot";
+  slot.id = "qm-locale-slot";
+  const caption = document.createElement("span");
+  caption.className = "qm-locale-caption";
+  caption.textContent = t("Language");
+  const switcher = createLocaleSwitcher();
+  slot.append(caption, switcher.element);
+  host.prepend(slot);
+  unsubscribeLocaleCaption = onLocaleChange(() => {
+    caption.textContent = t("Language");
+  });
+  localeSwitcher = switcher;
+}
 export function mountCards() {
   mountFlags();
+  mountLocaleSwitcher();
   mountProviders();
   mountCredentials();
   const renderRuntimes = mountTemplate('template[data-settings-card="card-base-model"]', () =>
@@ -389,47 +426,55 @@ function soulCard(s: SettingsState) {
     id="card-soul"
   >
     <div class="head">
-      <h2>Organization SOUL</h2>
+      <h2>${t("Organization SOUL")}</h2>
       <p>
-        Write the standing instructions composed into every system prompt for this scope. Saving creates a durable
-        revision; restoring an older revision creates a new one.
+        ${t(
+          "Write the standing instructions composed into every system prompt for this scope. Saving creates a durable revision; restoring an older revision creates a new one.",
+        )}
       </p>
     </div>
     <div class="body soul-preview-body">
-      <div class="soul-preview-label" id="soul-preview-label">Standing instructions</div>
+      <div class="soul-preview-label" id="soul-preview-label">${t("Standing instructions")}</div>
       <p class="soul-preview" id="soul-preview" aria-labelledby="soul-preview-label">
-        ${saved || "No saved instructions"}
+        ${saved || t("No saved instructions")}
       </p>
     </div>
     <div class="body soul-workbench">
-      <label for="soul">Standing instructions</label
+      <label for="soul">${t("Standing instructions")}</label
       ><textarea
         id="soul"
         maxlength="100000"
-        placeholder="No scope-specific instructions"
+        placeholder=${t("No scope-specific instructions")}
         .value=${content}
         @input=${(e: Event) => s.change("content", value(e))}
       ></textarea>
       <div class="soul-meta">
         <span id="soul-ver"
-          >${s.draft.expectedVersion ? "Saved version " + s.draft.expectedVersion : "No saved revision"}</span
+          >${
+            s.draft.expectedVersion
+              ? t("Saved version {version}", { version: s.draft.expectedVersion })
+              : t("No saved revision")
+          }</span
         ><span id="soul-size"
-          >${content.length.toLocaleString() + " characters · about " + Math.ceil(content.length / 4).toLocaleString() + " tokens"}</span
-        ><span id="soul-validation">${content.length >= 100000 ? "Maximum length reached" : "Draft valid"}</span>
+          >${t("{count} characters · about {tokens} tokens", {
+            count: content.length.toLocaleString(),
+            tokens: Math.ceil(content.length / 4).toLocaleString(),
+          })}</span
+        ><span id="soul-validation">${content.length >= 100000 ? t("Maximum length reached") : t("Draft valid")}</span>
       </div>
       <div class="soul-diff" id="soul-diff">
         <section>
-          <h3>Saved revision</h3>
-          <pre id="soul-saved">${saved || "No saved instructions"}</pre>
+          <h3>${t("Saved revision")}</h3>
+          <pre id="soul-saved">${saved || t("No saved instructions")}</pre>
         </section>
         <section>
-          <h3>Current draft</h3>
+          <h3>${t("Current draft")}</h3>
           <pre id="soul-draft">
-${content === saved ? "No draft changes" : content || "Instructions will be cleared"}</pre>
+${content === saved ? t("No draft changes") : content || t("Instructions will be cleared")}</pre>
         </section>
       </div>
-      <div class="soul-history" id="soul-history" aria-label="SOUL version history">
-        <h3>Version history</h3>
+      <div class="soul-history" id="soul-history" aria-label=${t("SOUL version history")}>
+        <h3>${t("Version history")}</h3>
         ${
           s.history.length
             ? repeat(
@@ -438,9 +483,9 @@ ${content === saved ? "No draft changes" : content || "Instructions will be clea
                 (r) =>
                   html`<div class="soul-revision">
                     <p>
-                      Version ${r.version}<small
-                        >${r.updatedBy || "Author unavailable"} ·
-                        ${r.updatedAt ? soulActions.formatTime(r.updatedAt) : "Time unavailable"}</small
+                      ${t("Version {version}", { version: r.version })}<small
+                        >${r.updatedBy || t("Author unavailable")} ·
+                        ${r.updatedAt ? soulActions.formatTime(r.updatedAt) : t("Time unavailable")}</small
                       >
                     </p>
                     <button
@@ -448,11 +493,11 @@ ${content === saved ? "No draft changes" : content || "Instructions will be clea
                       ?disabled=${r.version === s.draft.expectedVersion || s.saving}
                       @click=${() => soulActions.restore({ ...r })}
                     >
-                      ${r.version === s.draft.expectedVersion ? "Current" : "Restore"}
+                      ${r.version === s.draft.expectedVersion ? t("Current") : t("Restore")}
                     </button>
                   </div>`,
               )
-            : html`<p class="hint">History begins with the next saved revision.</p>`
+            : html`<p class="hint">${t("History begins with the next saved revision.")}</p>`
         }
       </div>
     </div>
@@ -467,7 +512,7 @@ ${content === saved ? "No draft changes" : content || "Instructions will be clea
           document.getElementById("soul-history")?.scrollIntoView({ behavior: "smooth", block: "center" });
         }}
       >
-        View history ›</button
+        ${t("View history ›")}</button
       ><button
         type="button"
         id="soul-edit"
@@ -478,8 +523,8 @@ ${content === saved ? "No draft changes" : content || "Instructions will be clea
           if (s.editing) document.getElementById("soul")?.focus();
         }}
       >
-        ${s.editing ? "Cancel" : "Edit"}</button
-      >${saveButton(s, "Save")}${settingStatus(s)}
+        ${s.editing ? t("Cancel") : t("Edit")}</button
+      >${saveButton(s, t("Save"))}${settingStatus(s)}
     </div>
   </section>`;
 }

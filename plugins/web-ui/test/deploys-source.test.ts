@@ -46,7 +46,7 @@ test("app index rows launch live apps by default and use Manage for app details"
 test("app index header keeps search and tabs without secondary controls", () => {
   const draw = bodyOf("drawDeploysPage");
   assert.doesNotMatch(draw, /onScope:|action:|controls:|deploySort|Deploy with Agent/);
-  assert.match(draw, /placeholder: "Search apps"/);
+  assert.match(draw, /placeholder: t\("Search apps"\)/);
   assert.match(draw, /deployTabs\(\)/);
 });
 
@@ -232,6 +232,8 @@ for (const count of [0, 7, 23, 150]) {
     const handlers: Array<() => void> = [];
     const redraws: unknown[] = [];
     const context = createContext({
+      t: (key: string) => key,
+      formatDate: (ms: number) => new Date(ms).toISOString(),
       d: deployment,
       nothing: "",
       drawDeployDetail: (value: unknown) => redraws.push(value),
@@ -252,7 +254,7 @@ for (const count of [0, 7, 23, 150]) {
     const initialCount = source.match(/let visibleVersionCount = \d+;/)?.[0];
     const orderedVersions = bodyOf("drawDeployDetail").match(/const versions = [^;]+;/)?.[0];
     const section = source.match(
-      /<section class="deploy-detail-section">\s*<h3>Version history<\/h3>[\s\S]*?<\/section>/,
+      /<section class="deploy-detail-section">\s*<h3>\$\{t\("Version history"\)\}<\/h3>[\s\S]*?<\/section>/,
     )?.[0];
     assert.ok(initialCount && orderedVersions && section);
     runInContext(stripTypeScriptTypes(initialCount + orderedVersions), context);
@@ -288,6 +290,7 @@ test("detail redraws reuse the scroll container and retain focus", () => {
     const mainEl = dom.window.document.querySelector("main")!;
     const deployment = { id: "app" };
     const context = createContext({
+      t: (key: string) => key,
       appState: { currentView: "deploys", mainEl },
       document: dom.window.document,
       d: deployment,

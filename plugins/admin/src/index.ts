@@ -9,6 +9,7 @@ import { createHash } from "node:crypto";
 import { signedRequestHeaders, withSourceAuthNonce } from "../../chassis/src/core-client.ts";
 import { json, readBody, cookie, gzipAccepted } from "../../chassis/src/http.ts";
 import { createBrandingCache, injectBranding, type OrgBranding } from "../../chassis/src/branding.ts";
+import { LOCALE_COOKIE, injectLocale, localeFromRequest } from "../../chassis/src/i18n.ts";
 import { verifyPortalIdentity, PORTAL_IDENTITY_HEADER } from "../../chassis/src/portal-identity.ts";
 import { errMessage } from "../../chassis/src/errors.ts";
 import { principalInAllowlist } from "../../chassis/src/principal-allowlist.ts";
@@ -78,13 +79,17 @@ async function refreshBrandNow(): Promise<void> {
 }
 type Shell = { key: string; html: string; gzip: Buffer; etag: string; gzipEtag: string };
 let shellCache: Shell | null = null;
-function brandedShell(branding: OrgBranding): Shell {
-  const key = JSON.stringify([branding.accent, branding.mark, branding.markUrl, branding.selfLabel]);
+function brandedShell(branding: OrgBranding, locale: string): Shell {
+  const key = JSON.stringify([branding.accent, branding.mark, branding.markUrl, branding.selfLabel, locale]);
   if (shellCache?.key === key) return shellCache;
-  const html = injectBranding(BASE_HTML, branding, { titleSuffix: "Admin" });
+  const html = injectLocale(injectBranding(BASE_HTML, branding, { titleSuffix: "Admin" }), locale);
   const digest = createHash("sha256").update(html).digest("hex").slice(0, 16);
   shellCache = { key, html, gzip: gzipSync(html), etag: `"${digest}"`, gzipEtag: `"${digest}-gzip"` };
   return shellCache;
+}
+function requestLocale(req: IncomingMessage): string {
+  const accept = req.headers["accept-language"];
+  return localeFromRequest(cookie(req, LOCALE_COOKIE), typeof accept === "string" ? accept : null);
 }
 const ALLOW_UNSIGNED_TEST_IDENTITY =
   process.env.NODE_ENV === "test" && process.env.ALLOW_UNSIGNED_TEST_IDENTITY === "1";
@@ -368,7 +373,7 @@ async function handle(req: IncomingMessage, res: ServerResponse): Promise<void> 
 
   const serveShell = async (): Promise<void> => {
     if (process.env.QM_SLACK_SERVICE_URL) res.setHeader("referrer-policy", "strict-origin");
-    const shell = brandedShell(await brandCache.forRender());
+    const shell = brandedShell(await brandCache.forRender(), requestLocale(req));
     const gz = gzipAccepted(req);
     const etag = gz ? shell.gzipEtag : shell.etag;
     if (req.headers["if-none-match"] === etag) {

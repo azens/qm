@@ -8,6 +8,10 @@ import {
   formatCronDateTime,
 } from "../src/cron-format.ts";
 
+import { setLocale } from "../../chassis/src/i18n.ts";
+
+setLocale("en");
+
 const baseCron = {
   enabled: true,
   createdAt: Date.UTC(2026, 0, 1, 8),
@@ -74,7 +78,7 @@ test("calendar schedule honors a core-provided next fire timestamp", () => {
 });
 
 function zonedTime(ms: number, timeZone?: string): string {
-  return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit", ...(timeZone ? { timeZone } : {}) });
+  return new Date(ms).toLocaleTimeString("en", { hour: "numeric", minute: "2-digit", ...(timeZone ? { timeZone } : {}) });
 }
 
 test("same instant renders as today's time in one timezone and tomorrow's in another", () => {
@@ -138,7 +142,7 @@ function legacyFormatCronDateTime(ms: number, now: number, timeZone?: string): s
         parts.year === todayParts.year
           ? { month: "short", day: "numeric", timeZone }
           : { month: "short", day: "numeric", year: "numeric", timeZone };
-      return `${date.toLocaleDateString([], dateOpts)} ${time}`;
+      return `${date.toLocaleDateString("en", dateOpts)} ${time}`;
     }
   }
   const tomorrow = new Date(today);
@@ -160,7 +164,7 @@ function legacyFormatCronDateTime(ms: number, now: number, timeZone?: string): s
     date.getFullYear() === today.getFullYear()
       ? { month: "short", day: "numeric" }
       : { month: "short", day: "numeric", year: "numeric" };
-  return `${date.toLocaleDateString([], dateOpts)} ${time}`;
+  return `${date.toLocaleDateString("en", dateOpts)} ${time}`;
 }
 
 interface LegacyParts {

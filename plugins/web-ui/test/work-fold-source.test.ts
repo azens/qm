@@ -8,7 +8,7 @@ const css = readFileSync(new URL("../src/shell.css", import.meta.url), "utf8");
 test("live and completed work keep chronological folds split around steering", () => {
   assert.match(chat, /class=\$\{stopped && last \? "stopped-work" : `work work-fold work-\$\{work.status\}`\}/);
   assert.match(chat, /messageWorkTimeline\(work, active \? "" : text\)/);
-  assert.match(chat, /let label = last \? workLabel\(work\) : "Worked"/);
+  assert.match(chat, /let label = last \? workLabel\(work\) : t\("Worked"\)/);
   assert.match(chat, /const animating = active && last && !stopping;/);
   assert.match(chat, /sheenLabel\(label, animating\)/);
   assert.match(chat, /\?open=\$\{last && \(active \|\| !!work.pendingApprovals\?\.length\)\}/);
@@ -54,8 +54,8 @@ test("expanded tool activity uses a compact log rhythm", () => {
 test("execution shows only its command while other tools disclose input and result", () => {
   assert.match(chat, /function toolDisclosure\(/);
   assert.match(chat, /const output = execution \? "" : toolPayloadText\(result\);/);
-  assert.match(chat, /toolPayloadCard\(execution \? null : "Input", input,/);
-  assert.match(chat, /toolPayloadCard\("Result", output,/);
+  assert.match(chat, /toolPayloadCard\(execution \? null : t\("Input"\), input,/);
+  assert.match(chat, /toolPayloadCard\(t\("Result"\), output,/);
   assert.match(chat, /<details\s+class="\$\{classes\} tool-expandable"/);
   assert.match(css, /\.tool-payload-body \{[\s\S]{0,300}?white-space: pre-wrap;/);
 });
@@ -64,7 +64,7 @@ test("unknown tools retain their name and a useful identifying argument", () => 
   assert.match(chat, /function toolName\(/);
   assert.match(chat, /function genericToolDetail\(/);
   assert.match(chat, /"command",[\s\S]{0,240}?"database",[\s\S]{0,80}?"filter"/);
-  assert.match(chat, /knownMeta \? meta\.done : name/);
+  assert.match(chat, /knownMeta \? t\(meta\.done\) : name/);
 });
 
 test("thinking stays in sequence but is independently collapsible", () => {

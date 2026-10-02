@@ -1,5 +1,6 @@
 import { nothing } from "lit";
 import { AsyncDirective, directive, type ElementPart, type PartInfo, PartType } from "lit/async-directive.js";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 let tipEl: HTMLDivElement | null = null;
 let anchor: Element | null = null;
@@ -25,7 +26,7 @@ function showTooltip(target: Element, text: string): void {
   anchor = target;
   target.setAttribute("data-qm-tooltip-anchor", "");
   const el = ensureEl();
-  el.textContent = text;
+  el.textContent = t(text);
   el.classList.toggle("sidebar-status", target.matches(".sidebar .session-status"));
   el.classList.toggle("beside", !!target.closest('[data-tip-placement="right"]'));
   el.classList.add("visible");

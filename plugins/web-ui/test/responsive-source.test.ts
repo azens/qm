@@ -20,7 +20,7 @@ test("mobile shell follows the visual viewport and device safe areas", () => {
 test("mobile sidebar is modal, dismissible, and sized for touch", () => {
   assert.match(shell, /actionRow\(ICON\.newChat[\s\S]{0,200}startNewChatInLastScope\(\);/);
   assert.match(sessions, /export function startNewChat\([^)]*\)[^{]*\{\s*closeSidebarOnNarrowView\(\);/);
-  assert.match(shell, /class="sidebar-scrim"[^>]+aria-label="Close sidebar"[^>]+@click=\$\{toggleSidebar\}/);
+  assert.match(shell, /class="sidebar-scrim"[^>]+aria-label=\$\{t\("Close sidebar"\)\}[^>]+@click=\$\{toggleSidebar\}/);
   assert.match(shell, /main\.inert = modal/);
   assert.match(
     css,
@@ -68,7 +68,7 @@ test("the sidebar's quick actions share the navrow treatment", () => {
 test("the sidebar resize handle stays accessible without a hover tooltip", () => {
   assert.match(
     shell,
-    /class="sidebar-resize-handle"[\s\S]{0,200}aria-label="Resize sidebar"[\s\S]{0,200}@pointerdown=\$\{startSidebarResize\}[\s\S]{0,100}@dblclick=\$\{resetSidebarWidth\}/,
+    /class="sidebar-resize-handle"[\s\S]{0,200}aria-label=\$\{t\("Resize sidebar"\)\}[\s\S]{0,200}@pointerdown=\$\{startSidebarResize\}[\s\S]{0,100}@dblclick=\$\{resetSidebarWidth\}/,
   );
   assert.doesNotMatch(shell, /Drag to resize/);
 });
@@ -76,7 +76,7 @@ test("the sidebar resize handle stays accessible without a hover tooltip", () =>
 test("the quick nav is home, search, browse; create sits under the divider", () => {
   assert.match(
     shell,
-    /<nav class="nav quick-nav"[\s\S]*?navRow\("chats", ICON\.home, "Home"\)[\s\S]*?actionRow\(Search, "Search"[\s\S]*?actionRow\(ICON\.browse, "Browse"[\s\S]*?<\/nav>/,
+    /<nav class="nav quick-nav"[\s\S]*?navRow\("chats", ICON\.home, t\("Home"\)\)[\s\S]*?actionRow\(Search, t\("Search"[\s\S]*?actionRow\(ICON\.browse, t\("Browse"\)[\s\S]*?<\/nav>/,
   );
   assert.doesNotMatch(
     shell,
@@ -119,7 +119,7 @@ test("touch layouts expose row actions and preserve readable composer choices", 
   );
   assert.match(compactCss, /\.composer-right \.model-control \{\s*flex: 1 1 96px;/);
   assert.match(compactCss, /\.project-create-button \{\s*width: 44px;\s*height: 44px;/);
-  assert.match(contexts, /project-create-button"\s+type="button"\s+aria-label="New project"/);
+  assert.match(contexts, /project-create-button"\s+type="button"\s+aria-label=\$\{t\("New project"\)\}/);
   assert.match(
     compactCss,
     /\.chat-scroll \{\s*padding-right: max\(var\(--chat-pad\), env\(safe-area-inset-right\)\);\s*padding-left: max\(var\(--chat-pad\), env\(safe-area-inset-left\)\)/,

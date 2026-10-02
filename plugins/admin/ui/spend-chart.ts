@@ -1,19 +1,20 @@
 import { html } from "lit";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { formatDate, formatNumber } from "../../chassis/src/i18n.ts";
 
 const DAY = 86400000;
-const PARTS = [
+const PARTS: ReadonlyArray<readonly [string, string]> = [
   ["live", "Live"],
   ["cron", "Crons"],
   ["background", "Background"],
-] as const;
-const usd = (n: number) => "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-const date = (ms: number) =>
-  new Date(ms).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+];
+const usd = (n: number) => "$" + formatNumber(n, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const date = (ms: number) => formatDate(ms, { month: "short", day: "numeric", timeZone: "UTC" });
 
 export function spendChart(data: any, breakdown: "category" | "model" | "person" = "category") {
   const field = breakdown === "person" ? "people" : "models";
   const id = breakdown === "person" ? "principalId" : "model";
-  const unknown = breakdown === "person" ? "Shared scopes" : "Unknown model";
+  const unknown = breakdown === "person" ? t("Shared scopes") : t("Unknown model");
   const names = new Map(
     (breakdown === "person" ? data.people || [] : []).map((p: any) => [p.principalId, p.displayName || p.principalId]),
   );
@@ -37,7 +38,7 @@ export function spendChart(data: any, breakdown: "category" | "model" | "person"
             cls: `spend-${breakdown}`,
           };
         })
-      : PARTS.map(([key, label]) => ({ key, label, color: `var(--spend-${key})`, cls: `spend-${key}` }));
+      : PARTS.map(([key, label]) => ({ key, label: t(label), color: `var(--spend-${key})`, cls: `spend-${key}` }));
   const from = Date.parse(data.window.from),
     to = Date.parse(data.window.to);
   const weekly = data.window.bucket === "week";
@@ -66,7 +67,7 @@ export function spendChart(data: any, breakdown: "category" | "model" | "person"
       last = Math.min(p.t + step, to) - DAY;
     return [
       `${date(first)}${weekly && first !== last ? " – " + date(last) : ""}`,
-      `${usd(p.values.reduce((a: number, b: number) => a + b, 0))} total`,
+      t("{amount} total", { amount: usd(p.values.reduce((a: number, b: number) => a + b, 0)) }),
       ...parts.map(({ label }, k) => `${label} ${usd(p.values[k])}`),
     ];
   };
@@ -84,8 +85,8 @@ export function spendChart(data: any, breakdown: "category" | "model" | "person"
   };
   return html`<div class="spend-chart">
     <div class="spend-chart-summary">
-      <div><strong>${usd(total)}</strong><span>Total spend</span></div>
-      <div><strong>${usd(total / Math.max(1, (to - from) / DAY))}</strong><span>Average / day</span></div>
+      <div><strong>${usd(total)}</strong><span>${t("Total spend")}</span></div>
+      <div><strong>${usd(total / Math.max(1, (to - from) / DAY))}</strong><span>${t("Average / day")}</span></div>
       <div class="spend-chart-legend">
         ${parts.map(({ label, color }) => html`<span><i style=${"background:" + color}></i>${label}</span>`)}
       </div>
@@ -93,7 +94,9 @@ export function spendChart(data: any, breakdown: "category" | "model" | "person"
     <div
       class="spend-chart-plot"
       role="group"
-      aria-label=${`Spend over time by ${breakdown} in US dollars. Focus a bar for its breakdown.`}
+      aria-label=${t("Spend over time by {breakdown} in US dollars. Focus a bar for its breakdown.", {
+        breakdown: t(({ category: "category", model: "model", person: "person" } as const)[breakdown]),
+      })}
     >
       <div class="spend-chart-axis" aria-hidden="true">
         ${[4, 3, 2, 1, 0].map((n) => html`<span>${usd((ceiling * n) / 4)}</span>`)}
@@ -120,7 +123,9 @@ export function spendChart(data: any, breakdown: "category" | "model" | "person"
       </div>
     </div>
     <div class="spend-chart-detail" aria-live="polite">
-      Hover or focus a bar for the ${weekly ? "weekly" : "daily"} breakdown. USD · UTC.
+      ${t("Hover or focus a bar for the {bucket} breakdown. USD · UTC.", {
+        bucket: weekly ? t("weekly") : t("daily"),
+      })}
     </div>
   </div>`;
 }

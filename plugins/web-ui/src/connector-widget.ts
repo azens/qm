@@ -3,6 +3,7 @@ import { ArrowUpRight, Check } from "lucide";
 import { icon } from "./ui";
 import { connectorLogo } from "./connector-logo";
 import { CONNECTOR_NAMES, connectorService, type ConnectorLink } from "./connector-link";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 export function connectorCard(
   link: ConnectorLink,
@@ -10,12 +11,14 @@ export function connectorCard(
   withReturnTo: (url: string) => string = (url) => url,
 ): TemplateResult {
   const composio = link.provider === "composio";
-  const name = CONNECTOR_NAMES[link.provider] ?? "your account";
+  const name = CONNECTOR_NAMES[link.provider] ?? t("your account");
   const service = connectorService(link);
   if (!composio && connected) {
     return html`<div class="connector-widget connected" role="status">
       ${connectorLogo(service)}
-      <span class="connector-widget-text"><strong>Connected ${name}</strong><small>Ready to use in chat</small></span>
+      <span class="connector-widget-text"
+        ><strong>${t("Connected {name}", { name })}</strong><small>${t("Ready to use in chat")}</small></span
+      >
       <span class="connector-widget-status" aria-hidden="true">${icon(Check, 16)}</span>
     </div>`;
   }
@@ -24,11 +27,12 @@ export function connectorCard(
     href=${composio ? link.url : withReturnTo(link.url)}
     target="_blank"
     rel="noreferrer"
-    title="Opens in a new tab"
+    title=${t("Opens in a new tab")}
   >
     ${connectorLogo(service)}
     <span class="connector-widget-text"
-      ><strong>${(composio && link.label) || `Connect ${name}`}</strong> <small>Authorize access · New tab</small></span
+      ><strong>${(composio && link.label) || t("Connect {name}", { name })}</strong>
+      <small>${t("Authorize access · New tab")}</small></span
     >
     <span class="connector-widget-action" aria-hidden="true">${icon(ArrowUpRight, 16)}</span>
   </a>`;

@@ -30,6 +30,7 @@ import {
 import { tip } from "./tooltip";
 import { isPhone } from "./viewport";
 import { burstEffortConfetti } from "./effort-confetti";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 const EFFORT_PEAK_FLOOR = EFFORT_LEVELS.findIndex((option) => option.value === "xhigh");
 
@@ -84,7 +85,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
 
   function toggleFastMode(target: T): void {
     applyFastMode(target);
-    focusSpeedControl("Fast");
+    focusSpeedControl(t("Fast"));
   }
 
   function removeLoadoutEntry(value: string, selected: ModelOption): void {
@@ -105,7 +106,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
     return option.model.id === ULTRAFAST_MODEL_ID
       ? (getModelOptions(scopeKey()).find(
           (candidate) => candidate.harnessId === option.harnessId && candidate.model.id === ULTRAFAST_BASE_MODEL_ID,
-        )?.label ?? "Astra")
+        )?.label ?? t("Astra"))
       : option.label;
   }
 
@@ -151,13 +152,13 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
         <span class="loadout-model-copy">
           <span class="loadout-title">
             <span class="loadout-name">${modelLabel(option)}</span>
-            ${isDefault ? html`<span class="loadout-default">my default</span>` : nothing}
+            ${isDefault ? html`<span class="loadout-default">${t("my default")}</span>` : nothing}
           </span>
           <span class="loadout-details">
             <span class="loadout-harness">${option.harnessLabel}</span>
             <span>${effortText(settings.effort)}</span>
-            ${option.model.id === ULTRAFAST_MODEL_ID ? html`<span class="loadout-ultrafast-badge">${icon(Zap, 10)} Ultrafast</span>` : nothing}
-            ${settings.fast ? html`<span class="loadout-bolt" aria-label="Fast">${icon(Zap, 10)}</span>` : nothing}
+            ${option.model.id === ULTRAFAST_MODEL_ID ? html`<span class="loadout-ultrafast-badge">${icon(Zap, 10)} ${t("Ultrafast")}</span>` : nothing}
+            ${settings.fast ? html`<span class="loadout-bolt" aria-label=${t("Fast")}>${icon(Zap, 10)}</span>` : nothing}
           </span>
         </span>
       </button>
@@ -168,8 +169,8 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
               data-default=${isDefault ? "true" : "false"}
               type="button"
               role="menuitem"
-              aria-label=${`Make ${modelLabel(option)} default`}
-              ${tip("Make default")}
+              aria-label=${t("Make {name} default", { name: modelLabel(option) })}
+              ${tip(t("Make default"))}
               @click=${async (event: MouseEvent) => {
                 const row = (event.currentTarget as HTMLElement).closest(".loadout-row");
                 await changeScopeRuntime(
@@ -190,14 +191,14 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
             </button>`
           : nothing
       }
-      ${isDefault && !canMakeDefault ? html`<span class="loadout-default-star" role="img" aria-label="My default" ${tip("My default")}>${icon(Star, 14)}</span>` : nothing}
+      ${isDefault && !canMakeDefault ? html`<span class="loadout-default-star" role="img" aria-label=${t("My default")} ${tip(t("My default"))}>${icon(Star, 14)}</span>` : nothing}
       ${
         !active
           ? html`<button
               class="loadout-remove"
               type="button"
-              aria-label=${`Remove ${modelLabel(option)} from presets`}
-              ${tip("Remove from presets")}
+              aria-label=${t("Remove {name} from presets", { name: modelLabel(option) })}
+              ${tip(t("Remove from presets"))}
               @click=${() => removeLoadoutEntry(entry.value, selected)}
             >
               ${icon(X, 14)}
@@ -279,7 +280,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
     return html`<div
       class="loadout-submenu"
       role="menu"
-      aria-label=${{ effort: "Effort levels", harness: "Run with", add: "Add models" }[loadoutSection]}
+      aria-label=${{ effort: t("Effort levels"), harness: t("Run with"), add: t("Add models") }[loadoutSection]}
       @mouseenter=${() => cancelLoadoutClose()}
       @mouseleave=${() => queueLoadoutClose()}
       @keydown=${(e: KeyboardEvent) => {
@@ -291,7 +292,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
       }}
     >
       <button class="loadout-back" type="button" @click=${() => closeLoadoutSection()}>
-        ${icon(ChevronDown, 13)} Back
+        ${icon(ChevronDown, 13)} ${t("Back")}
       </button>
       ${
         effort
@@ -347,11 +348,11 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
       ${
         loadoutSection === "add"
           ? html` <label class="loadout-search"
-                ><span class="sr-only">Search models</span>
+                ><span class="sr-only">${t("Search models")}</span>
                 <input
                   type="search"
                   data-focus-key=${`${loadoutMenuId}-search`}
-                  placeholder="Search models…"
+                  placeholder=${t("Search models…")}
                   .value=${live(composerState.menuQuery)}
                   @input=${(e: InputEvent) => {
                     const input = e.currentTarget as HTMLInputElement;
@@ -372,7 +373,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
                     class="menu-option"
                     type="button"
                     role="menuitem"
-                    aria-label=${`Add ${modelLabel(option)} to presets`}
+                    aria-label=${t("Add {name} to presets", { name: modelLabel(option) })}
                     @click=${() => {
                       dismissSelection();
                       addLoadoutEntry(option, agent);
@@ -381,12 +382,12 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
                     ${modelGlyph(option)}<span class="menu-option-copy"
                       ><span>${modelLabel(option)}</span
                       ><span class="loadout-meta"
-                        >${option.harnessLabel}${option.model.id === ULTRAFAST_MODEL_ID ? " · Ultrafast · 6× cost" : ""}</span
+                        >${option.harnessLabel}${option.model.id === ULTRAFAST_MODEL_ID ? ` · ${t("Ultrafast")} · ${t("6× cost")}` : ""}</span
                       ></span
-                    ><span class="loadout-add-label" aria-hidden="true">Add</span>
+                    ><span class="loadout-add-label" aria-hidden="true">${t("Add")}</span>
                   </button>`,
               )}
-              ${catalog.length ? nothing : html`<div class="loadout-empty">No models found</div>`}`
+              ${catalog.length ? nothing : html`<div class="loadout-empty">${t("No models found")}</div>`}`
           : nothing
       }
     </div>`;
@@ -399,7 +400,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
     >`;
     if (options.length < 2)
       return html`<div class="loadout-setting loadout-setting-static">
-        <span class="loadout-setting-label">Run with</span><span class="loadout-setting-value">${value}</span>
+        <span class="loadout-setting-label">${t("Run with")}</span><span class="loadout-setting-value">${value}</span>
       </div>`;
     return html`<div class="loadout-submenu-anchor">
       <button
@@ -426,7 +427,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
           openLoadoutSection("harness", e.detail === 0);
         }}
       >
-        <span class="loadout-setting-label">Run with</span>
+        <span class="loadout-setting-label">${t("Run with")}</span>
         <span class="loadout-setting-value">${value}<span class="loadout-end">${icon(ChevronRight, 14)}</span></span>
       </button>
     </div>`;
@@ -434,7 +435,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
 
   function render(agent: T, choice: ModelOption | undefined, disabled: boolean): TemplateResult {
     const selected = choice ?? getModelOptions(scopeKey())[0];
-    if (!selected) return html`<span class="context-model-status">No models available</span>`;
+    if (!selected) return html`<span class="context-model-status">${t("No models available")}</span>`;
     const open = composerState.openMenu === "loadout";
     const entries = seededLoadout(selected);
     const ultrafastOn = selected.model.id === ULTRAFAST_MODEL_ID;
@@ -448,9 +449,11 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
       (!ultrafastOn || !!ultrafastTarget) &&
       harnessSupportsFastMode(selected.harnessId) &&
       modelSupportsFast;
-    const fastUnsupportedReason = modelSupportsFast ? "Not supported by this harness" : "Not supported by this model";
+    const fastUnsupportedReason = modelSupportsFast
+      ? t("Not supported by this harness")
+      : t("Not supported by this model");
     const fastOn = fastAvailable && effectiveFastMode();
-    const speedLabel = (ultrafastOn && ", Ultrafast") || (fastOn && ", Fast") || "";
+    const speedLabel = (ultrafastOn && t(", Ultrafast")) || (fastOn && t(", Fast")) || "";
     return html`<div
       class="menu-control loadout-control"
       data-align="left"
@@ -472,7 +475,13 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
         class="menu-button loadout-button ${ultrafastOn ? "ultrafast-active" : ""}"
         data-focus-key=${`${loadoutMenuId}-trigger`}
         type="button"
-        aria-label=${choice ? `Model: ${modelLabel(choice)}, ${effortLabel(composerState.effortLevel)} effort${speedLabel}` : "Choose model"}
+        aria-label=${choice
+          ? t("Model: {name}, {effort} effort{speed}", {
+              name: modelLabel(choice),
+              effort: effortLabel(composerState.effortLevel),
+              speed: speedLabel,
+            })
+          : t("Choose model")}
         aria-haspopup="menu"
         aria-expanded=${open ? "true" : "false"}
         aria-controls=${loadoutMenuId}
@@ -500,9 +509,9 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
           placeLoadout();
         }}
       >
-        <span class="menu-label">${choice ? modelLabel(choice) : "Choose model"}</span>
+        <span class="menu-label">${choice ? modelLabel(choice) : t("Choose model")}</span>
         ${choice ? html`<span class="menu-suffix">${effortText(composerState.effortLevel)}</span>` : nothing}
-        ${ultrafastOn ? html`<span class="loadout-ultrafast-badge">${icon(Zap, 12)} Ultrafast</span>` : nothing}
+        ${ultrafastOn ? html`<span class="loadout-ultrafast-badge">${icon(Zap, 12)} ${t("Ultrafast")}</span>` : nothing}
         ${fastOn ? html`<span class="loadout-bolt">${icon(Zap, 13)}</span>` : nothing}${icon(ChevronDown, 13)}
       </button>
       ${
@@ -512,7 +521,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
               popover="manual"
               id=${loadoutMenuId}
               role="menu"
-              aria-label="Model settings"
+              aria-label=${t("Model settings")}
               @click=${(e: Event) => e.stopPropagation()}
               @mouseover=${(e: MouseEvent) => trackLoadoutHover(e)}
               @mouseleave=${() => queueLoadoutClose()}
@@ -527,11 +536,11 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
               }}
             >
               <div class="loadout-panel">
-                <div class="loadout-head">Presets</div>
+                <div class="loadout-head">${t("Presets")}</div>
                 <div class="loadout-list">${entries.map((entry) => loadoutRow(entry, selected, agent))}</div>
                 <div
                   class="loadout-submenu-anchor"
-                  ${tip(entries.length >= LOADOUT_CAP ? "Remove a preset to add another." : "")}
+                  ${tip(entries.length >= LOADOUT_CAP ? t("Remove a preset to add another.") : "")}
                 >
                   <button
                     class="loadout-add ${loadoutSection === "add" ? "open" : ""}"
@@ -558,7 +567,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
                       openLoadoutSection("add", e.detail === 0);
                     }}
                   >
-                    <span class="loadout-icon" aria-hidden="true">${icon(Plus, 16)}</span><span>Add models</span
+                    <span class="loadout-icon" aria-hidden="true">${icon(Plus, 16)}</span><span>${t("Add models")}</span
                     ><span class="loadout-end">${icon(ChevronRight, 14)}</span>
                   </button>
                 </div>
@@ -593,7 +602,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
                                     openLoadoutSection("effort", e.detail === 0);
                                   }}
                                 >
-                                  <span class="loadout-setting-label">Effort</span
+                                  <span class="loadout-setting-label">${t("Effort")}</span
                                   ><span class="loadout-setting-value"
                                     >${effortText(composerState.effortLevel)}<span class="loadout-end"
                                       >${icon(ChevronRight, 14)}</span
@@ -607,12 +616,12 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
                           class="loadout-setting"
                           type="button"
                           role="menuitemcheckbox"
-                          aria-label="Fast"
+                          aria-label=${t("Fast")}
                           aria-checked=${fastOn ? "true" : "false"}
                           ?disabled=${!fastAvailable}
                           @click=${() => toggleFastMode(agent)}
                         >
-                          <span class="loadout-setting-label">Fast</span>
+                          <span class="loadout-setting-label">${t("Fast")}</span>
                           <span class="loadout-setting-value">
                             <span class="loadout-shortcut">${fastAvailable ? "⌘⇧E" : fastUnsupportedReason}</span>
                             <span class="loadout-toggle ${fastOn ? "on" : ""}" aria-hidden="true">
@@ -626,9 +635,9 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
                                 class="loadout-setting loadout-ultrafast"
                                 type="button"
                                 role="menuitemcheckbox"
-                                aria-label="Ultrafast"
+                                aria-label=${t("Ultrafast")}
                                 ?disabled=${!ultrafastTarget}
-                                aria-description="Six times standard token cost. Turning on Ultrafast turns off Fast."
+                                aria-description=${t("Six times standard token cost. Turning on Ultrafast turns off Fast.")}
                                 aria-checked=${ultrafastOn ? "true" : "false"}
                                 @click=${() => {
                                   if (!ultrafastTarget) return;
@@ -636,12 +645,12 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
                                     { ...activeLoadoutEntry(selected), value: ultrafastTarget.value, fast: false },
                                     agent,
                                   );
-                                  focusSpeedControl("Ultrafast");
+                                  focusSpeedControl(t("Ultrafast"));
                                 }}
                               >
-                                <span class="loadout-setting-label">${icon(Zap, 14)} Ultrafast</span>
+                                <span class="loadout-setting-label">${icon(Zap, 14)} ${t("Ultrafast")}</span>
                                 <span class="loadout-setting-value">
-                                  <span class="loadout-shortcut">6× cost</span>
+                                  <span class="loadout-shortcut">${t("6× cost")}</span>
                                   <span class="loadout-toggle ${ultrafastOn ? "on" : ""}" aria-hidden="true"
                                     ><span class="loadout-knob"></span
                                   ></span>
@@ -652,7 +661,7 @@ export function createModelPicker<T>(bindings: ModelPickerBindings<T>) {
                     : nothing
                 }
               </div>
-              ${bindings.showInheritAction !== false && getRuntimeConfig(scopeKey())?.scopeOverride ? html`<div class="loadout-foot"><button class="loadout-foot-btn" type="button" @click=${() => changeScopeRuntime({ inherit: true }, agent)}>Use org default</button></div>` : nothing}
+              ${bindings.showInheritAction !== false && getRuntimeConfig(scopeKey())?.scopeOverride ? html`<div class="loadout-foot"><button class="loadout-foot-btn" type="button" @click=${() => changeScopeRuntime({ inherit: true }, agent)}>${t("Use org default")}</button></div>` : nothing}
               ${loadoutSubmenu(agent, selected)}
             </div>`
           : nothing

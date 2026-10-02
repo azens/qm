@@ -4,6 +4,7 @@ import test from "node:test";
 import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import { deepLinkPath, parseDeepLink } from "../src/deep-link.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 import { messageLinkSeq } from "../src/message-link.ts";
 
@@ -179,13 +180,15 @@ test("single and multiview headers render mutually exclusive tools and pane cont
     },
     paneScopeId: () => null,
     paneKindEntry: () => null,
-    PANE_TOOLS: ["Crons", "Apps", "Files", "Skills", "Memory", "Your keychain"].map((label) => ({
-      label,
-      tool: label,
-      glyph: label,
-    })),
+    paneTools: () =>
+      ["Crons", "Apps", "Files", "Skills", "Memory", "Your keychain"].map((label) => ({
+        label,
+        tool: label,
+        glyph: label,
+      })),
     icon: () => "",
     tip: () => "",
+    t,
     ref: () => "",
     Plus: "",
     Maximize2: "",
@@ -223,7 +226,7 @@ test("single and multiview headers render mutually exclusive tools and pane cont
 });
 
 test("single-pane toolbar and split menu put Crons and Apps first", () => {
-  const tools = split.slice(split.indexOf("const PANE_TOOLS:"), split.indexOf("function openPaneTool"));
+  const tools = split.slice(split.indexOf("function paneTools("), split.indexOf("function openPaneTool"));
   assert.deepEqual(
     [...tools.matchAll(/tool: "([^"]+)"/g)].map((match) => match[1]),
     ["crons", "apps", "files", "skills", "memory", "keychain"],

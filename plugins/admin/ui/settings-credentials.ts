@@ -1,5 +1,6 @@
 import { mountTemplate } from "./shared.ts";
 import { html, render } from "lit";
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 let config: any = { label: (id: string) => id, formatTime: String, edit: () => {}, remove: () => {} };
@@ -7,7 +8,7 @@ type Data = Record<string, any>;
 export class CredentialState {
   draft: Data = {};
   rows: Data[] = [];
-  listMessage = "Loading credentials…";
+  listMessage = t("Loading credentials…");
   listRetry = false;
   directory: Data[] = [];
   channels: Data[] = [];
@@ -108,7 +109,7 @@ export class CredentialState {
   }
   changed() {
     if (!this.saving) {
-      this.message = this.dirty ? "Unsaved changes" : "";
+      this.message = this.dirty ? t("Unsaved changes") : "";
       this.tone = "";
     }
     this.render();
@@ -133,7 +134,7 @@ export class CredentialState {
       const names = this.directory.filter((m) => m.displayName.toLowerCase() === q);
       if (names.length === 1) return "personal:" + names[0].principalId;
       if (names.length > 1 || exact.length > 1)
-        this.resolutionError = "“" + id + "” matches multiple people. Use an exact principal ID.";
+        this.resolutionError = t("“{id}” matches multiple people. Use an exact principal ID.", { id });
       return "personal:" + id;
     });
   }
@@ -168,49 +169,56 @@ export class CredentialState {
     };
   }
   validate(body: Data) {
-    if (!body.slug) return "Slug is required.";
-    if (!body.name) return "Name is required.";
+    if (!body.slug) return t("Slug is required.");
+    if (!body.name) return t("Name is required.");
     if (body.delivery === "env") {
-      if (!body.envKey) return "Env delivery needs an env var name.";
-      if (!/^[A-Z][A-Z0-9_]*$/.test(body.envKey)) return "Env var must be UPPER_SNAKE_CASE.";
-      if (body.envKey.startsWith("AGENT_")) return "AGENT_* env vars are reserved for the platform.";
-    } else if (!body.host) return "Host is required.";
+      if (!body.envKey) return t("Env delivery needs an env var name.");
+      if (!/^[A-Z][A-Z0-9_]*$/.test(body.envKey)) return t("Env var must be UPPER_SNAKE_CASE.");
+      if (body.envKey.startsWith("AGENT_")) return t("AGENT_* env vars are reserved for the platform.");
+    } else if (!body.host) return t("Host is required.");
     if (body.delivery !== "env" && !this.draft.org && !body.grantees.length)
-      return "Add at least one person or choose org-wide access.";
+      return t("Add at least one person or choose org-wide access.");
     if (body.delivery !== "env" && this.resolutionError) return this.resolutionError;
     const unsupported = body.grantees.find((g: string) => g.startsWith("group:") || /^personal:[^,]*:/.test(g));
     if (unsupported)
-      return (
-        "Remove unsupported legacy grant “" +
-        unsupported +
-        "” before saving. Shared credentials support people, teams, channels, or the organization."
-      );
+      return t("Remove unsupported legacy grant “{grant}” before saving. Shared credentials support people, teams, channels, or the organization.", {
+        grant: unsupported,
+      });
     return "";
   }
   capability() {
     const d = this.draft;
     const env = d.delivery === "env";
     const b = this.collect();
-    const disabled = env ? "Disabled: never injected" : "Disabled: broker requests refused";
-    const envHost = d.envkey.trim() ? "Sandbox env $" + d.envkey.trim() : "Env var not set";
-    const brokerHost = d.host.trim() ? d.host.trim() + " and its subdomains" : "Not set";
-    const brokerPaths = b.allowedPathPrefixes.length ? b.allowedPathPrefixes.join(", ") : "Any path on this host";
-    const storedSecret = this.original?.hasSecret ? "Stored secret retained" : "Required before first save";
+    const disabled = env ? t("Disabled: never injected") : t("Disabled: broker requests refused");
+    const envHost = d.envkey.trim() ? t("Sandbox env ${key}", { key: d.envkey.trim() }) : t("Env var not set");
+    const brokerHost = d.host.trim() ? t("{host} and its subdomains", { host: d.host.trim() }) : t("Not set");
+    const brokerPaths = b.allowedPathPrefixes.length
+      ? b.allowedPathPrefixes.join(", ")
+      : t("Any path on this host");
+    const storedSecret = this.original?.hasSecret ? t("Stored secret retained") : t("Required before first save");
     return {
-      state: d.enabled ? "Enabled" : disabled,
+      state: d.enabled ? t("Enabled") : disabled,
       host: env ? envHost : brokerHost,
       auth: env
-        ? "Injected into all-internal conversations; rooms with externals get nothing"
-        : (d.header.trim() || "Authorization") + " header · prefix “" + (d.scheme || "Bearer") + "”",
+        ? t("Injected into all-internal conversations; rooms with externals get nothing")
+        : t("{header} header · prefix “{scheme}”", {
+            header: d.header.trim() || "Authorization",
+            scheme: d.scheme || "Bearer",
+          }),
       methods: env
-        ? "None"
+        ? t("None")
         : (b.allowedMethods.length ? b.allowedMethods.map((m: string) => m.toUpperCase()) : ["GET"]).join(", "),
-      paths: env ? "Never served by the credential broker" : brokerPaths,
+      paths: env ? t("Never served by the credential broker") : brokerPaths,
       principals: env
-        ? "Every all-internal conversation; grants don't gate env delivery"
-        : (b.grantees.map(config.label).join(", ") || "No principal selected") +
-          (d.deployments ? " · published apps, acting as their publisher" : " · switched off for published apps"),
-      secret: d.secret ? "Will replace the stored secret" : storedSecret,
+        ? t("Every all-internal conversation; grants don't gate env delivery")
+        : t(
+            d.deployments
+              ? "{principals} · published apps, acting as their publisher"
+              : "{principals} · switched off for published apps",
+            { principals: b.grantees.map(config.label).join(", ") || t("No principal selected") },
+          ),
+      secret: d.secret ? t("Will replace the stored secret") : storedSecret,
     };
   }
 }
@@ -224,7 +232,7 @@ export function credentialStatus(message: string, tone: string) {
   credentialState.saving = tone === "saving";
   credentialState.render();
 }
-export function credentialLoading(message = "Loading credentials…", retry = false) {
+export function credentialLoading(message = t("Loading credentials…"), retry = false) {
   credentialState.rows = [];
   credentialState.listMessage = message;
   credentialState.listRetry = retry;
@@ -235,20 +243,25 @@ export function loadCredentials(rows: Data[], directory: Data[], channels: Data[
   if (!credentialState.open) credentialState.baseline = JSON.stringify(credentialState.collect());
   credentialState.render();
 }
-const plural = (n: number, label: string) => n + " " + label + (n === 1 ? "" : "s");
+const plural = (n: number, one: string, many: string) => t(n === 1 ? one : many, { count: n });
 const badge = (text: string, tone: string) => html`<span class=${"badge " + tone}>${text}</span>`;
 function credentialUsage(c: Data) {
-  if (c.usageUnavailable) return "Usage unavailable";
-  if (c.usageCount == null) return "Loading usage…";
-  return (
-    (c.usageTruncated ? "at least " : "") +
-    plural(c.usageCount, "successful use") +
-    (c.usageCount ? " since " + config.formatTime(c.usageSince) : " in retained broker history")
+  if (c.usageUnavailable) return t("Usage unavailable");
+  if (c.usageCount == null) return t("Loading usage…");
+  return t(
+    c.usageTruncated
+      ? c.usageCount
+        ? "at least {count} successful uses since {time}"
+        : "at least {count} successful uses in retained broker history"
+      : c.usageCount
+        ? "{count} successful uses since {time}"
+        : "{count} successful uses in retained broker history",
+    { count: c.usageCount, time: config.formatTime(c.usageSince) },
   );
 }
 function credentialRows() {
   if (credentialState.listMessage)
-    return html`${credentialState.listMessage}${credentialState.listRetry ? html`<button type="button" style="margin-inline-start: 8px" @click=${() => config.reload()}>Retry</button>` : null}`;
+    return html`${credentialState.listMessage}${credentialState.listRetry ? html`<button type="button" style="margin-inline-start: 8px" @click=${() => config.reload()}>${t("Retry")}</button>` : null}`;
   return credentialState.rows.length
     ? repeat(
         credentialState.rows,
@@ -257,7 +270,7 @@ function credentialRows() {
           const org = (c.grantees || []).some((g: string) => g.startsWith("org:"));
           const target =
             c.delivery === "env"
-              ? "sandbox env $" + (c.envKey || "?")
+              ? t("sandbox env {key}", { key: c.envKey || "?" })
               : c.host + " · " + (c.allowedMethods?.length ? c.allowedMethods.join("/") : "GET");
           return html`<div
             class=${classMap({ "credential-row": true, "is-editing": c.slug === credentialState.editing })}
@@ -268,25 +281,25 @@ function credentialRows() {
               </div>
               <div class="hint">${target + " · " + credentialUsage(c)}</div>
               <div class="credential-badges">
-                ${badge(c.delivery === "env" ? "Env" : "Broker", "info")}${badge(c.enabled === false ? "Disabled" : "Enabled", c.enabled === false ? "warn" : "ok")}${badge(c.hasSecret ? "Secret set" : "Secret missing", c.hasSecret ? "ok" : "err")}${badge(org ? "Organization-wide" : plural((c.grantees || []).length, "principal"), org ? "info" : "muted")}${c.delivery !== "env" && c.deployments === false ? badge("No apps", "muted") : null}
+                ${badge(c.delivery === "env" ? t("Env") : t("Broker"), "info")}${badge(c.enabled === false ? t("Disabled") : t("Enabled"), c.enabled === false ? "warn" : "ok")}${badge(c.hasSecret ? t("Secret set") : t("Secret missing"), c.hasSecret ? "ok" : "err")}${badge(org ? t("Organization-wide") : plural((c.grantees || []).length, "{count} principal", "{count} principals"), org ? "info" : "muted")}${c.delivery !== "env" && c.deployments === false ? badge(t("No apps"), "muted") : null}
               </div>
             </div>
             <div class="credential-actions">
-              <button type="button" @click=${() => config.edit(c)}>Edit</button
+              <button type="button" @click=${() => config.edit(c)}>${t("Edit")}</button
               ><button
                 type="button"
                 class="rowbtn danger"
-                title="Delete credential"
-                aria-label=${"Delete " + (c.name || c.slug)}
+                title=${t("Delete credential")}
+                aria-label=${t("Delete {name}", { name: c.name || c.slug })}
                 @click=${() => config.remove(c)}
               >
-                Delete
+                ${t("Delete")}
               </button>
             </div>
           </div>`;
         },
       )
-    : "No credentials configured.";
+    : t("No credentials configured.");
 }
 function pickerRows() {
   const s = credentialState;
@@ -319,20 +332,20 @@ function pickerRows() {
     </div>`;
   return html`${
     selected.length
-      ? html`<div class="sc-picker-group">Has access</div>
+      ? html`<div class="sc-picker-group">${t("Has access")}</div>
           ${selected.map((id) => item(id, config.label(id), true))}`
       : null
   }${
     people.length
-      ? html`<div class="sc-picker-group">People</div>
+      ? html`<div class="sc-picker-group">${t("People")}</div>
           ${people.slice(0, 30).map((m) => item(m.principalId, m.displayName + " (" + m.principalId + ")", false))}`
       : null
-  }${people.length > 30 ? html`<div class="sc-picker-more">${"…" + (people.length - 30) + " more — keep typing"}</div>` : null}${
+  }${people.length > 30 ? html`<div class="sc-picker-more">${t("…{count} more — keep typing", { count: people.length - 30 })}</div>` : null}${
     channels.length
-      ? html`<div class="sc-picker-group">Channels</div>
+      ? html`<div class="sc-picker-group">${t("Channels")}</div>
           ${channels.slice(0, 15).map((c) => item(c.scopeId, c.label ? "#" + c.label.replace(/^#/, "") + " (" + c.scopeId + ")" : c.scopeId, false))}`
       : null
-  }${channels.length > 15 ? html`<div class="sc-picker-more">${"…" + (channels.length - 15) + " more channels — keep typing"}</div>` : null}`;
+  }${channels.length > 15 ? html`<div class="sc-picker-more">${t("…{count} more channels — keep typing", { count: channels.length - 15 })}</div>` : null}`;
 }
 
 function template() {
@@ -343,10 +356,9 @@ function template() {
     id="card-service-credentials"
   >
     <div class="head">
-      <h2>Shared service credentials</h2>
+      <h2>${t("Shared service credentials")}</h2>
       <p>
-        The agent calls these services by proxy such that secrets never reach a sandbox. Review the complete effective
-        capability (destination, authentication, methods, paths, and principals) before saving.
+        ${t("The agent calls these services by proxy such that secrets never reach a sandbox. Review the complete effective capability (destination, authentication, methods, paths, and principals) before saving.")}
       </p>
     </div>
     <div class="body">
@@ -361,21 +373,21 @@ function template() {
     >
       <div class="sc-form-head">
         <p class="hint" id="sc-form-title">
-          ${credentialState.editing ? "Editing " + credentialState.editing : "Add a credential"}
+          ${credentialState.editing ? t("Editing {slug}", { slug: credentialState.editing }) : t("Add a credential")}
         </p>
         <span class=${"badge " + (credentialState.editing ? "info" : "muted")} id="sc-form-mode"
-          >${credentialState.editing ? "Editing" : "New"}</span
+          >${credentialState.editing ? t("Editing") : t("New")}</span
         >
       </div>
-      <div class="sc-semantics" aria-label="Blank value semantics">
-        <div><strong>Blank secret</strong><span id="sc-secret-semantics">${secretSemantics()}</span></div>
-        <div><strong>Blank method</strong><span>Uses the broker default: GET only.</span></div>
-        <div><strong>Blank paths</strong><span>Allows every path on the selected host.</span></div>
+      <div class="sc-semantics" aria-label=${t("Blank value semantics")}>
+        <div><strong>${t("Blank secret")}</strong><span id="sc-secret-semantics">${secretSemantics()}</span></div>
+        <div><strong>${t("Blank method")}</strong><span>${t("Uses the broker default: GET only.")}</span></div>
+        <div><strong>${t("Blank paths")}</strong><span>${t("Allows every path on the selected host.")}</span></div>
       </div>
       <div class="editor-grid">
         <div>
           <label style="display: block; margin-bottom: 8px"
-            >Slug <span class="hint">lowercase identifier</span
+            >${t("Slug")} <span class="hint">${t("lowercase identifier")}</span
             ><input
               type="text"
               id="sc-slug"
@@ -387,17 +399,18 @@ function template() {
               style="width: 100%"
           /></label>
           <label style="display: block; margin-bottom: 8px"
-            >Display name
+            >${t("Display name")}
             <input
               type="text"
               id="sc-name"
               .value=${credentialState.draft.name || ""}
               @input=${(e: Event) => credentialState.change("name", (e.target as HTMLInputElement).value)}
-              placeholder="Credential display name"
+              placeholder=${t("Credential display name")}
               style="width: 100%"
           /></label>
           <label style="display: block; margin-bottom: 8px"
-            >Delivery <span class="hint">how the secret is used</span>
+            >${t("Delivery")} <span class="hint">${t("how the secret is used")}</span
+            >
             <select
               id="sc-delivery"
               .value=${credentialState.draft.delivery || ""}
@@ -405,16 +418,17 @@ function template() {
               style="width: 100%"
             >
               <option value="broker">
-                Broker: core stamps it onto proxied HTTP calls; the secret never leaves core
+                ${t("Broker: core stamps it onto proxied HTTP calls; the secret never leaves core")}
               </option>
               <option value="env">
-                Sandbox env: injected into all-internal conversations under an env var (e.g. a browser-provider key for
-                the browse skill)
+                ${t(
+                  "Sandbox env: injected into all-internal conversations under an env var (e.g. a browser-provider key for the browse skill)",
+                )}
               </option>
             </select>
           </label>
           <label style="display: block; margin-bottom: 8px" class=${classMap({ "sc-env-only": true, hidden: !env })}
-            >Env var <span class="hint">UPPER_SNAKE_CASE; the skill reads this</span
+            >${t("Env var")} <span class="hint">${t("UPPER_SNAKE_CASE; the skill reads this")}</span
             ><input
               type="text"
               id="sc-envkey"
@@ -425,7 +439,7 @@ function template() {
               style="width: 100%"
           /></label>
           <label style="display: block; margin-bottom: 8px" class=${classMap({ "sc-broker-only": true, hidden: env })}
-            >Destination host <span class="hint">bare hostname only</span
+            >${t("Destination host")} <span class="hint">${t("bare hostname only")}</span
             ><input
               type="text"
               id="sc-host"
@@ -436,41 +450,41 @@ function template() {
               style="width: 100%"
           /></label>
           <label style="display: block; margin-bottom: 8px"
-            >Secret
+            >${t("Secret")}
             <input
               type="password"
               id="sc-secret"
               .value=${credentialState.draft.secret || ""}
               @input=${(e: Event) => credentialState.change("secret", (e.target as HTMLInputElement).value)}
               autocomplete="new-password"
-              placeholder=${credentialState.original?.hasSecret ? "Stored secret retained when blank" : "Write-only secret"}
+              placeholder=${credentialState.original?.hasSecret ? t("Stored secret retained when blank") : t("Write-only secret")}
               style="width: 100%"
           /></label>
           <p class="field-hint" id="sc-secret-hint">${secretHint()}</p>
           <div class=${classMap({ "sc-broker-only": true, hidden: env })} style="display: flex; gap: 10px">
             <label style="display: block; margin-bottom: 8px; flex: 1"
-              >Authentication header <span class="hint">blank = Authorization</span
+              >${t("Authentication header")} <span class="hint">${t("blank = Authorization")}</span
               ><input
                 type="text"
                 id="sc-header"
                 .value=${credentialState.draft.header || ""}
                 @input=${(e: Event) => credentialState.change("header", (e.target as HTMLInputElement).value)}
-                placeholder="Default: Authorization"
+                placeholder=${t("Default: Authorization")}
                 style="width: 100%"
             /></label>
             <label style="display: block; margin-bottom: 8px; flex: 1"
-              >Value prefix <span class="hint">blank = Bearer</span
+              >${t("Value prefix")} <span class="hint">${t("blank = Bearer")}</span
               ><input
                 type="text"
                 id="sc-scheme"
                 .value=${credentialState.draft.scheme || ""}
                 @input=${(e: Event) => credentialState.change("scheme", (e.target as HTMLInputElement).value)}
-                placeholder="Default: Bearer"
+                placeholder=${t("Default: Bearer")}
                 style="width: 100%"
             /></label>
           </div>
           <label style="display: block; margin-bottom: 8px" class=${classMap({ "sc-broker-only": true, hidden: env })}
-            >Allowed HTTP methods <span class="hint">comma-separated; blank = GET</span
+            >${t("Allowed HTTP methods")} <span class="hint">${t("comma-separated; blank = GET")}</span
             ><input
               type="text"
               id="sc-methods"
@@ -480,7 +494,7 @@ function template() {
               style="width: 100%"
           /></label>
           <label style="display: block; margin-bottom: 8px" class=${classMap({ "sc-broker-only": true, hidden: env })}
-            >Allowed path prefixes <span class="hint">one per line; blank = any path</span
+            >${t("Allowed path prefixes")} <span class="hint">${t("one per line; blank = any path")}</span
             ><textarea
               id="sc-paths"
               .value=${credentialState.draft.paths || ""}
@@ -496,7 +510,7 @@ function template() {
               @change=${(e: Event) => credentialState.change("enabled", (e.target as HTMLInputElement).checked)}
               style="width: auto"
             />
-            Credential is enabled</label
+            ${t("Credential is enabled")}</label
           >
           <label
             class=${classMap({ "sc-broker-only": true, hidden: env })}
@@ -508,14 +522,13 @@ function template() {
               @change=${(e: Event) => credentialState.change("deployments", (e.target as HTMLInputElement).checked)}
               style="width: auto"
             />
-            Published apps may use it, acting as their publisher</label
+            ${t("Published apps may use it, acting as their publisher")}</label
           >
           <p class=${classMap({ hint: true, "sc-broker-only": true, hidden: env })} style="margin-bottom: 6px">
-            Principals with access
+            ${t("Principals with access")}
           </p>
           <p class=${classMap({ hint: true, "sc-env-only": true, hidden: !env })} style="margin-bottom: 6px">
-            Access: every all-internal conversation. Env delivery is not gated by grants. Rooms with externals get
-            nothing, everyone else gets the env var.
+            ${t("Access: every all-internal conversation. Env delivery is not gated by grants. Rooms with externals get nothing, everyone else gets the env var.")}
           </p>
           <label
             class=${classMap({ "sc-broker-only": true, hidden: env })}
@@ -529,7 +542,7 @@ function template() {
               value="org"
               style="width: auto"
             />
-            Everyone in this organization</label
+            ${t("Everyone in this organization")}</label
           >
           <label
             class=${classMap({ "sc-broker-only": true, hidden: env })}
@@ -542,7 +555,7 @@ function template() {
               @change=${() => credentialState.change("org", false)}
               style="width: auto"
             />
-            Only selected people or teams</label
+            ${t("Only selected people or teams")}</label
           >
           <input
             type="text"
@@ -551,7 +564,7 @@ function template() {
             @input=${(e: Event) => credentialState.change("people", (e.target as HTMLInputElement).value)}
             class=${classMap({ "sc-broker-only": true, hidden: env })}
             list="sc-people-options"
-            placeholder="Principal IDs, comma-separated"
+            placeholder=${t("Principal IDs, comma-separated")}
             style="width: 100%; display: none"
           />
           <datalist id="sc-people-options"></datalist>
@@ -578,7 +591,7 @@ function template() {
                   credentialState.picker = false;
                   credentialState.render();
                 }, 150)}
-              placeholder="Search people to grant access…"
+              placeholder=${t("Search people to grant access…")}
               autocomplete="off"
               spellcheck="false"
             />
@@ -589,34 +602,34 @@ function template() {
           </div>
         </div>
         <aside class="editor-panel" aria-live="polite">
-          <h3>Effective capability</h3>
+          <h3>${t("Effective capability")}</h3>
           <dl class="capability-summary">
             <div>
-              <dt>State</dt>
+              <dt>${t("State")}</dt>
               <dd id="sc-cap-state">${cap.state}</dd>
             </div>
             <div>
-              <dt>Host</dt>
+              <dt>${t("Host")}</dt>
               <dd id="sc-cap-host">${cap.host}</dd>
             </div>
             <div>
-              <dt>Auth</dt>
+              <dt>${t("Auth")}</dt>
               <dd id="sc-cap-auth">${cap.auth}</dd>
             </div>
             <div>
-              <dt>Methods</dt>
+              <dt>${t("Methods")}</dt>
               <dd id="sc-cap-methods">${cap.methods}</dd>
             </div>
             <div>
-              <dt>Paths</dt>
+              <dt>${t("Paths")}</dt>
               <dd id="sc-cap-paths">${cap.paths}</dd>
             </div>
             <div>
-              <dt>Access</dt>
+              <dt>${t("Access")}</dt>
               <dd id="sc-cap-principals">${cap.principals}</dd>
             </div>
             <div>
-              <dt>Secret</dt>
+              <dt>${t("Secret")}</dt>
               <dd id="sc-cap-secret">${cap.secret}</dd>
             </div>
           </dl>
@@ -624,21 +637,21 @@ function template() {
       </div>
     </div>
     <div class="foot">
-      <button type="button" class="viewlink" data-viewlink="audit">View usage ›</button
+      <button type="button" class="viewlink" data-viewlink="audit">${t("View usage ›")}</button
       ><button
         type="button"
         id="sc-add"
         ?disabled=${!!credentialState.listMessage}
         class=${credentialState.open ? "hidden" : ""}
       >
-        + Add credential</button
+        ${t("+ Add credential")}</button
       ><button
         class=${classMap({ primary: true, hidden: !credentialState.open, dirty: credentialState.dirty })}
         id="sc-save"
         ?disabled=${!credentialState.dirty || credentialState.saving}
       >
-        ${credentialState.editing ? "Save changes" : "Save credential"}</button
-      ><button class=${credentialState.open ? "" : "hidden"} id="sc-reset">Cancel</button
+        ${credentialState.editing ? t("Save changes") : t("Save credential")}</button
+      ><button class=${credentialState.open ? "" : "hidden"} id="sc-reset">${t("Cancel")}</button
       ><span
         class=${classMap({ status: true, [credentialState.tone]: !!credentialState.tone })}
         id="st-service-credentials"
@@ -652,19 +665,19 @@ export function mountCredentials() {
 }
 
 function secretSemantics() {
-  if (credentialState.original?.hasSecret) return "Keeps the stored secret unchanged.";
-  return credentialState.editing ? "A secret is required before saving." : "New credentials require a secret.";
+  if (credentialState.original?.hasSecret) return t("Keeps the stored secret unchanged.");
+  return credentialState.editing ? t("A secret is required before saving.") : t("New credentials require a secret.");
 }
 function secretHint() {
-  if (!credentialState.editing) return "The secret is write-only. It cannot be viewed after saving.";
+  if (!credentialState.editing) return t("The secret is write-only. It cannot be viewed after saving.");
   return credentialState.original?.hasSecret
-    ? "Stored secret is set. Leave blank to keep it; enter a new value to replace it."
-    : "No stored secret yet. Enter one to make this credential usable.";
+    ? t("Stored secret is set. Leave blank to keep it; enter a new value to replace it.")
+    : t("No stored secret yet. Enter one to make this credential usable.");
 }
 function grantTag(id: string) {
-  if (id.startsWith("group:")) return html`<small>unsupported · remove before saving</small>`;
-  if (id.startsWith("channel:")) return html`<small>channel</small>`;
-  return config.label(id) === id ? html`<small>unresolved</small>` : null;
+  if (id.startsWith("group:")) return html`<small>${t("unsupported · remove before saving")}</small>`;
+  if (id.startsWith("channel:")) return html`<small>${t("channel")}</small>`;
+  return config.label(id) === id ? html`<small>${t("unresolved")}</small>` : null;
 }
 
 const summaryRoots = new WeakSet<HTMLElement>();
@@ -677,8 +690,8 @@ export function keychainSummary(data: Data | null) {
   }
   const ready = data && data.enabled !== false;
   render(
-    html`<strong id="keychain-user-count">${ready ? String(data.users) : "—"}</strong> users with keychain entries ·
-      <strong id="keychain-standing-count">${ready ? String(data.standing) : "—"}</strong> standing grants`,
+    html`<strong id="keychain-user-count">${ready ? String(data.users) : "—"}</strong> ${t("users with keychain entries")} ·
+      <strong id="keychain-standing-count">${ready ? String(data.standing) : "—"}</strong> ${t("standing grants")}`,
     root,
   );
 }

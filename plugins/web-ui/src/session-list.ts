@@ -8,6 +8,7 @@ import {
 import { subagentCounts } from "./subagent-activity.ts";
 import { goalFloorLabel, goalWorkedLabel } from "./goal-strip.ts";
 import { relTime } from "./ui.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 type ProjectAwareContext = CoreContext & { project?: CoreProject };
 
@@ -99,11 +100,11 @@ export function groupProjectSessions(
 export function recencyGroup(ms: number, now = Date.now()): string {
   const d = new Date(now);
   const dayStart = (back: number): number => new Date(d.getFullYear(), d.getMonth(), d.getDate() - back).getTime();
-  if (ms >= dayStart(0)) return "Today";
-  if (ms >= dayStart(1)) return "Yesterday";
-  if (ms >= dayStart(6)) return "Previous 7 days";
-  if (ms >= dayStart(29)) return "Previous 30 days";
-  return "Older";
+  if (ms >= dayStart(0)) return t("Today");
+  if (ms >= dayStart(1)) return t("Yesterday");
+  if (ms >= dayStart(6)) return t("Previous 7 days");
+  if (ms >= dayStart(29)) return t("Previous 30 days");
+  return t("Older");
 }
 
 export function withPendingSession(list: CoreSession[], pending: CoreSession): CoreSession[] {

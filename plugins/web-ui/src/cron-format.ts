@@ -1,6 +1,7 @@
 import { addDays, isSameDay } from "date-fns";
 import { TZDate } from "@date-fns/tz";
 import { relTime } from "./ui.ts";
+import { currentLocale, formatDate, translate as t } from "../../chassis/src/i18n.ts";
 
 export interface CronTimingView {
   schedule: { everyMs?: number; firstFireAt?: number; cron?: string; timezone?: string };
@@ -26,8 +27,8 @@ function humanizeCronInterval(ms: number): string {
 }
 
 export function cronScheduleSummary(c: CronTimingView): string {
-  if (c.schedule.cron) return `cron ${c.schedule.cron.trim().replace(/\s+/g, " ")}`;
-  return c.schedule.everyMs != null ? `every ${humanizeCronInterval(c.schedule.everyMs)}` : "one-time";
+  if (c.schedule.cron) return `${t("cron")} ${c.schedule.cron.trim().replace(/\s+/g, " ")}`;
+  return c.schedule.everyMs != null ? t("every {interval}", { interval: humanizeCronInterval(c.schedule.everyMs) }) : t("one-time");
 }
 
 export function cronScheduleDetail(c: CronTimingView): string {
@@ -35,13 +36,34 @@ export function cronScheduleDetail(c: CronTimingView): string {
   const label = summary.charAt(0).toUpperCase() + summary.slice(1);
   if (c.schedule.cron) {
     const tz = c.schedule.timezone?.trim();
-    return `${label}${tz ? ` (${tz})` : " (default timezone)"}`;
+    return `${label}${tz ? ` (${tz})` : ` (${t("default timezone")})`}`;
   }
   if (c.schedule.firstFireAt == null) return label;
   if (c.schedule.everyMs != null && c.lastFiredAt != null) return label;
-  const runLabel = c.schedule.everyMs != null ? "first run" : "run";
+  const runLabel = c.schedule.everyMs != null ? t("first run") : t("run");
   return `${label} - ${runLabel} ${formatCronDateTime(c.schedule.firstFireAt, Date.now(), c.schedule.timezone)}`;
 }
+
+export function cronRunSummary(c: CronTimingView, now = Date.now()): string {
+  const next = cronNextFire(c);
+  const tz = c.schedule.cron ? calendarTimezone(c.schedule) : c.schedule.timezone;
+  if (next != null) return t(next <= now ? "due {when}" : "next {when}", { when: formatCronDateTime(next, now, tz) });
+  if (c.lastFiredAt != null) return t("last {when}", { when: relTime(c.lastFiredAt) });
+  if (c.schedule.firstFireAt != null)
+    return t("first {when}", { when: formatCronDateTime(c.schedule.firstFireAt, now, tz) });
+  return t("never fired");
+}
+
+export function cronRunSummaryTitle(c: CronTimingView): string {
+  const tz = c.schedule.cron ? calendarTimezone(c.schedule) : c.schedule.timezone;
+  const next = cronNextFire(c);
+  if (next != null) return t("Next run: {when}", { when: formatTitleDateTime(next, tz) });
+  if (c.lastFiredAt != null) return t("Last fired: {when}", { when: formatTitleDateTime(c.lastFiredAt, tz) });
+  if (c.schedule.firstFireAt != null)
+    return t("First run: {when}", { when: formatTitleDateTime(c.schedule.firstFireAt, tz) });
+  return t("Never fired");
+}
+
 
 export function cronNextFire(c: CronTimingView): number | null {
   if (c.archived || !c.enabled) return null;
@@ -52,23 +74,6 @@ export function cronNextFire(c: CronTimingView): number | null {
   return c.lastFiredAt + c.schedule.everyMs;
 }
 
-export function cronRunSummary(c: CronTimingView, now = Date.now()): string {
-  const next = cronNextFire(c);
-  const tz = c.schedule.cron ? calendarTimezone(c.schedule) : c.schedule.timezone;
-  if (next != null) return `${next <= now ? "due" : "next"} ${formatCronDateTime(next, now, tz)}`;
-  if (c.lastFiredAt != null) return `last ${relTime(c.lastFiredAt)}`;
-  if (c.schedule.firstFireAt != null) return `first ${formatCronDateTime(c.schedule.firstFireAt, now, tz)}`;
-  return "never fired";
-}
-
-export function cronRunSummaryTitle(c: CronTimingView): string {
-  const tz = c.schedule.cron ? calendarTimezone(c.schedule) : c.schedule.timezone;
-  const next = cronNextFire(c);
-  if (next != null) return `Next run: ${formatTitleDateTime(next, tz)}`;
-  if (c.lastFiredAt != null) return `Last fired: ${formatTitleDateTime(c.lastFiredAt, tz)}`;
-  if (c.schedule.firstFireAt != null) return `First run: ${formatTitleDateTime(c.schedule.firstFireAt, tz)}`;
-  return "Never fired";
-}
 
 export function formatCronDateTime(ms: number, now = Date.now(), timeZone?: string): string {
   const date = new Date(ms);
@@ -79,22 +84,22 @@ export function formatCronDateTime(ms: number, now = Date.now(), timeZone?: stri
     if (zonedDate && zonedToday) {
       const time = formatTime(ms, timeZone);
       if (isSameDay(zonedDate, zonedToday)) return time;
-      if (isSameDay(zonedDate, addDays(zonedToday, 1))) return `tomorrow ${time}`;
+      if (isSameDay(zonedDate, addDays(zonedToday, 1))) return `${t("tomorrow")} ${time}`;
       const dateOpts: Intl.DateTimeFormatOptions =
         zonedDate.getFullYear() === zonedToday.getFullYear()
           ? { month: "short", day: "numeric", timeZone }
           : { month: "short", day: "numeric", year: "numeric", timeZone };
-      return `${date.toLocaleDateString([], dateOpts)} ${time}`;
+      return `${formatDate(date, dateOpts, currentLocale())} ${time}`;
     }
   }
   const time = formatTime(ms);
   if (isSameDay(date, today)) return time;
-  if (isSameDay(date, addDays(today, 1))) return `tomorrow ${time}`;
+  if (isSameDay(date, addDays(today, 1))) return `${t("tomorrow")} ${time}`;
   const dateOpts: Intl.DateTimeFormatOptions =
     date.getFullYear() === today.getFullYear()
       ? { month: "short", day: "numeric" }
       : { month: "short", day: "numeric", year: "numeric" };
-  return `${date.toLocaleDateString([], dateOpts)} ${time}`;
+  return `${formatDate(date, dateOpts, currentLocale())} ${time}`;
 }
 
 function calendarTimezone(schedule: { timezone?: string }): string | undefined {
@@ -113,7 +118,7 @@ function isIntlTimezone(timeZone: string): boolean {
   let valid = TIMEZONE_VALIDITY.get(timeZone);
   if (valid === undefined) {
     try {
-      new Intl.DateTimeFormat("en-US", { timeZone });
+      new Intl.DateTimeFormat(currentLocale(), { timeZone });
       valid = true;
     } catch {
       valid = false;
@@ -134,25 +139,25 @@ function zoned(ms: number, timeZone: string): TZDate | null {
 }
 
 function formatTime(ms: number, timeZone?: string): string {
-  try {
-    return new Date(ms).toLocaleTimeString([], {
+  return formatDate(
+    ms,
+    {
       hour: "numeric",
       minute: "2-digit",
       ...(timeZone ? { timeZone } : {}),
-    });
-  } catch {
-    return new Date(ms).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
-  }
+    },
+    currentLocale(),
+  );
 }
 
 function formatTitleDateTime(ms: number, timeZone?: string): string {
-  try {
-    return new Intl.DateTimeFormat([], {
+  return formatDate(
+    ms,
+    {
       dateStyle: "medium",
       timeStyle: "short",
       ...(timeZone ? { timeZone } : {}),
-    }).format(ms);
-  } catch {
-    return new Date(ms).toLocaleString();
-  }
+    },
+    currentLocale(),
+  );
 }

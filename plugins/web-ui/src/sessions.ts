@@ -103,6 +103,8 @@ import {
 } from "./split";
 import { liveTurnThreadRef } from "./working-dot";
 import { emptySelection, pruneSelection, selectionClick, type SessionSelection } from "./session-select";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { formatDate, onLocaleChange } from "../../chassis/src/i18n.ts";
 
 export const sessionsState = {
   list: [] as CoreSession[],
@@ -239,7 +241,7 @@ function loadRecentContexts(force = false): void {
 
 function listWhen(ms: number): string {
   if (Date.now() - ms < 6 * 86_400_000) return relTime(ms);
-  return new Date(ms).toLocaleDateString([], { month: "short", day: "numeric" });
+  return formatDate(ms, { month: "short", day: "numeric" });
 }
 
 export function surfaceOf(s: CoreSession): string {
@@ -269,10 +271,10 @@ export function defaultSessionTitle(s: CoreSession): string {
   const project = projectName(s.scopeId);
   if (project) return project;
   const surface = surfaceOf(s);
-  if (surface === "web") return "Web chat";
-  if (s.type === "channel") return channelLabel(s) ?? "Channel";
-  if (s.type === "group") return groupDmText(s.channelName) ?? s.channelName?.trim() ?? "Group DM";
-  return "Direct message";
+  if (surface === "web") return t("Web chat");
+  if (s.type === "channel") return channelLabel(s) ?? t("Channel");
+  if (s.type === "group") return groupDmText(s.channelName) ?? s.channelName?.trim() ?? t("Group DM");
+  return t("Direct message");
 }
 
 function channelLabel(s: CoreSession): string | null {
@@ -360,7 +362,7 @@ export function renderList(): void {
         pinned.length
           ? html`
               <div class="recents-group pinned-head">
-                <span class="pinned-head-glyph">${icon(Pin, 11)}</span><span>Pinned</span>
+                <span class="pinned-head-glyph">${icon(Pin, 11)}</span><span>${t("Pinned")}</span>
               </div>
               <div class="pinned-children">
                 ${repeat(
@@ -383,7 +385,7 @@ export function renderList(): void {
                 renderList();
               }}
             >
-              Show more conversations
+              ${t("Show more conversations")}
             </button>`
           : nothing
       }
@@ -392,7 +394,7 @@ export function renderList(): void {
           ? html`
               <button class="archived-toggle ${showArchived ? "open" : ""}" @click=${toggleShowArchived}>
                 ${icon(showArchived ? ChevronDown : ChevronRight, 14)}
-                <span>Archived</span>
+                <span>${t("Archived")}</span>
                 <span class="archived-count">${archived.length}</span>
               </button>
               ${
@@ -409,7 +411,7 @@ export function renderList(): void {
                                 renderList();
                               }}
                             >
-                              Show more archived conversations
+                              ${t("Show more archived conversations")}
                             </button>`
                           : nothing
                       }
@@ -420,11 +422,11 @@ export function renderList(): void {
           : nothing
       }
       ${sessionsNotice ? html`<div class="empty" style="padding:16px">${sessionsNotice}</div>` : ""}
-      ${sessionsLoading ? html`<div class="empty" style="padding:16px">Loading conversations...</div>` : ""}
+      ${sessionsLoading ? html`<div class="empty" style="padding:16px">${t("Loading conversations...")}</div>` : ""}
       ${
         !sessionsLoading && !sessionsNotice && visible.length === 0
           ? html`<div class="empty" style="padding:16px">
-              ${sessionsState.list.length ? "Slack conversations hidden." : "No conversations yet."}
+              ${sessionsState.list.length ? t("Slack conversations hidden.") : t("No conversations yet.")}
             </div>`
           : ""
       }
@@ -440,12 +442,9 @@ export function renderList(): void {
   notifyPanesChanged();
 }
 
-const NEW_CHAT_TOOLTIP = "Start a new chat";
-const PROJECT_OPTIONS_TOOLTIP = "Project options";
-const CHAT_OPTIONS_TOOLTIP = "Chat options";
 
 function newChatHint(name: string): string {
-  return `Start a new chat in ${name}`;
+  return t("Start a new chat in {name}", { name });
 }
 
 function recentItem(item: RecentItem, shownThreads: ReadonlySet<string>): TemplateResult {
@@ -455,15 +454,15 @@ function recentItem(item: RecentItem, shownThreads: ReadonlySet<string>): Templa
   if (item.groupKind === "personal") glyph = null;
   else if (item.groupKind === "channel") glyph = Hash;
   else if (item.groupKind === "group") glyph = Users;
-  let fallbackName = "Project";
-  if (item.groupKind === "channel") fallbackName = "Channel";
-  else if (item.groupKind === "group") fallbackName = "Group DM";
+  let fallbackName = t("Project");
+  if (item.groupKind === "channel") fallbackName = t("Channel");
+  else if (item.groupKind === "group") fallbackName = t("Group DM");
   const name = item.name ?? fallbackName;
   const childrenId = `recent-${item.scopeId.replace(/[^a-zA-Z0-9_-]/g, "-")}`;
   const menuKey = projectMenuKey(item.scopeId);
   const menuOpen = sessionsState.openMenuId === menuKey;
   return html`
-    <section class="recent-project ${item.sessions.some(isActiveRow) ? "active" : ""}" aria-label=${`${name} project`}>
+    <section class="recent-project ${item.sessions.some(isActiveRow) ? "active" : ""}" aria-label=${t("{name} project", { name })}>
       ${
         sessionsState.renamingId === menuKey
           ? projectRenameRow(item)
@@ -487,10 +486,10 @@ function recentItem(item: RecentItem, shownThreads: ReadonlySet<string>): Templa
                   class="session-menu-btn"
                   data-menu-id=${menuKey}
                   type="button"
-                  aria-label=${`Options for ${name}`}
+                  aria-label=${t("Options for {name}", { name })}
                   aria-haspopup="menu"
                   aria-expanded=${menuOpen ? "true" : "false"}
-                  ${tip(PROJECT_OPTIONS_TOOLTIP)}
+                  ${tip(t("Project options"))}
                   @click=${(e: Event) => toggleSessionMenu(e, menuKey)}
                 >
                   ${icon(EllipsisVertical, 15)}
@@ -501,7 +500,7 @@ function recentItem(item: RecentItem, shownThreads: ReadonlySet<string>): Templa
                 class="recent-project-new-chat"
                 type="button"
                 aria-label=${newChatHint(name)}
-                ${tip(NEW_CHAT_TOOLTIP)}
+                ${tip(t("Start a new chat"))}
                 @click=${(event: Event) => startProjectChat(event, item.scopeId, item.name)}
               >
                 ${icon(Plus, 15)}
@@ -565,7 +564,7 @@ function projectMenuPopover(item: Extract<RecentItem, { kind: "project" }>): Tem
         role="menuitem"
         @click=${() => openProjectFromMenu(item.scopeId)}
       >
-        ${icon(Folder, 15)}<span>View project</span>
+        ${icon(Folder, 15)}<span>${t("View project")}</span>
       </button>
       ${
         owned
@@ -575,7 +574,7 @@ function projectMenuPopover(item: Extract<RecentItem, { kind: "project" }>): Tem
               role="menuitem"
               @click=${() => beginRename(projectMenuKey(item.scopeId), item.name ?? "")}
             >
-              ${icon(Pencil, 15)}<span>Rename</span>
+              ${icon(Pencil, 15)}<span>${t("Rename")}</span>
             </button>`
           : nothing
       }
@@ -591,7 +590,7 @@ function openProjectFromMenu(scopeId: string): void {
 function projectRenameRow(item: Extract<RecentItem, { kind: "project" }>): TemplateResult {
   const menuKey = projectMenuKey(item.scopeId);
   return html`<div class="recent-project-head renaming">
-    ${renameInput(menuKey, "Rename project", () => commitProjectRename(item))}
+    ${renameInput(menuKey, t("Rename project"), () => commitProjectRename(item))}
   </div>`;
 }
 
@@ -646,28 +645,28 @@ export function drawChatsPage(): void {
             drawChatsPage();
           }}
         >
-          Show more conversations
+          ${t("Show more conversations")}
         </button>
       </div>`,
     );
-  let empty = "No conversations yet. Start a new chat.";
-  if (sessionsLoading && sessionsState.list.length === 0) empty = "Loading conversations…";
+  let empty = t("No conversations yet. Start a new chat.");
+  if (sessionsLoading && sessionsState.list.length === 0) empty = t("Loading conversations…");
   else if (chatsPageScope || q || chatsPageStatus !== "active" || chatsPageSurface !== "all") {
-    empty = "No conversations match.";
+    empty = t("No conversations match.");
   }
   render(
     listPageTpl({
-      title: "Chats",
+      title: t("Chats"),
       scope: chatsPageScope,
       onScope: (s) => {
         chatsPageScope = s;
         chatsPageLimit = SESSION_BATCH_SIZE;
         drawChatsPage();
       },
-      action: { label: "New chat", onClick: () => startNewChat() },
+      action: { label: t("New chat"), onClick: () => startNewChat() },
       search: {
         value: chatsPageQuery,
-        placeholder: "Search chats…",
+        placeholder: t("Search chats…"),
         onInput: (v) => {
           chatsPageQuery = v;
           chatsPageLimit = SESSION_BATCH_SIZE;
@@ -675,12 +674,12 @@ export function drawChatsPage(): void {
         },
       },
       filters: html`<div class="chat-filters">
-        <div class="resource-tabs" role="tablist" aria-label="Conversation status">
+        <div class="resource-tabs" role="tablist" aria-label=${t("Conversation status")}>
           ${(
             [
-              ["active", "Active"],
-              ["waiting", "Waiting"],
-              ["archived", "Archived"],
+              ["active", t("Active")],
+              ["waiting", t("Waiting")],
+              ["archived", t("Archived")],
             ] as const
           ).map(
             ([value, label]) =>
@@ -704,15 +703,15 @@ export function drawChatsPage(): void {
         <div class="list-select">
           ${menuSelect({
             value: chatsPageSurface,
-            ariaLabel: "Filter by surface",
+            ariaLabel: t("Filter by surface"),
             onSelect: (value) => {
               chatsPageSurface = (value ?? "all") as typeof chatsPageSurface;
               chatsPageLimit = SESSION_BATCH_SIZE;
               drawChatsPage();
             },
             options: [
-              { value: "all", label: "All surfaces" },
-              { value: "web", label: "Web" },
+              { value: "all", label: t("All surfaces") },
+              { value: "web", label: t("Web") },
               { value: "slack", label: "Slack" },
             ],
           })}
@@ -726,7 +725,7 @@ export function drawChatsPage(): void {
 }
 
 function chatMatches(s: CoreSession, q: string): boolean {
-  const context = sharedContextLabel(s.scopeId, s.channelName ?? null) ?? "Personal";
+  const context = sharedContextLabel(s.scopeId, s.channelName ?? null) ?? t("Personal");
   return [sessionTitle(s), s.channelName ?? "", context].join(" ").toLowerCase().includes(q);
 }
 
@@ -760,15 +759,15 @@ function sessionWorking(s: CoreSession): boolean {
 function statusMarks(s: CoreSession): TemplateResult {
   const ind = rowIndicators(s, liveThreads(), sessionsState.list);
   return html`${ind.working ? html`<span class="working-mark" ${ref(syncWorkingPulse)}>${workingWave()}</span>` : nothing}${
-    ind.awaiting ? html`<span class="awaiting-dot" aria-label="Waiting for your reply"></span>` : nothing
+    ind.awaiting ? html`<span class="awaiting-dot" aria-label=${t("Waiting for your reply")}></span>` : nothing
   }${
     ind.background
       ? html`<span
           class="bg-chip"
           role="button"
           tabindex="0"
-          aria-label="${ind.background.label}. Click to inspect"
-          ${tip(`${ind.background.label}. Click to inspect`)}
+          aria-label=${t("{label}. Click to inspect", { label: ind.background.label })}
+          ${tip(t("{label}. Click to inspect", { label: ind.background.label }))}
           @click=${(e: Event) => openBackgroundInspector(e, s)}
           @keydown=${(e: KeyboardEvent) => (e.key === "Enter" || e.key === " ") && openBackgroundInspector(e, s)}
           >${ind.background.jobs > 0 ? icon(Cog, 11) : nothing}${
@@ -812,7 +811,7 @@ function chatPageRow(s: CoreSession): TemplateResult {
         <span class="list-row-meta">
           ${sessionStatusMark(s.status)} ${scopeChip(s.scopeId, s.channelName ?? null)}
           ${surfaceOf(s) === "slack" ? html`<span class="surface surface-slack">${slackLogo(13)}</span>` : nothing}
-          ${readOnly ? html`<span class="ro-lock" ${tip("Read-only")}>${icon(Lock, 12)}</span>` : nothing}
+          ${readOnly ? html`<span class="ro-lock" ${tip(t("Read-only"))}>${icon(Lock, 12)}</span>` : nothing}
           <span class="list-row-date">${listWhen(activityOf(s))}</span>
           <span class="chat-row-arrow" aria-hidden="true">${icon(ChevronRight, 16)}</span>
         </span>
@@ -823,8 +822,8 @@ function chatPageRow(s: CoreSession): TemplateResult {
               <button
                 class="icon-btn"
                 type="button"
-                ${tip(s.pinned ? "Unpin" : "Pin")}
-                aria-label=${`${s.pinned ? "Unpin" : "Pin"} ${sessionTitle(s)}`}
+                ${tip(s.pinned ? t("Unpin") : t("Pin"))}
+                aria-label=${t("{action} {title}", { action: s.pinned ? t("Unpin") : t("Pin"), title: sessionTitle(s) })}
                 @click=${() => {
                   setPinned(s, !s.pinned);
                   drawChatsPage();
@@ -835,8 +834,8 @@ function chatPageRow(s: CoreSession): TemplateResult {
               <button
                 class="icon-btn"
                 type="button"
-                ${tip("Share conversation")}
-                aria-label=${`Share ${sessionTitle(s)}`}
+                ${tip(t("Share conversation"))}
+                aria-label=${t("Share {title}", { title: sessionTitle(s) })}
                 @click=${() => void openSessionShare(s.id)}
               >
                 ${icon(Link, 13.5)}
@@ -844,8 +843,8 @@ function chatPageRow(s: CoreSession): TemplateResult {
               <button
                 class="icon-btn"
                 type="button"
-                ${tip(s.archived ? "Unarchive" : "Archive")}
-                aria-label=${`${s.archived ? "Unarchive" : "Archive"} ${sessionTitle(s)}`}
+                ${tip(s.archived ? t("Unarchive") : t("Archive"))}
+                aria-label=${t("{action} {title}", { action: s.archived ? t("Unarchive") : t("Archive"), title: sessionTitle(s) })}
                 @click=${() => {
                   setArchived(s, !s.archived);
                   drawChatsPage();
@@ -954,7 +953,7 @@ function sessionRow(s: CoreSession, projectChild = false): TemplateResult {
   const refreshingTitle = saved && refreshingTitleIds.has(s.id);
   const untitledProjectChild = projectChild && !s.title?.trim();
   let title = sessionTitle(s);
-  if (untitledProjectChild) title = surfaceOf(s) === "web" ? "Web chat" : "New chat";
+  if (untitledProjectChild) title = surfaceOf(s) === "web" ? t("Web chat") : t("New chat");
   const readOnly = !isContinuable(s, appState.me?.user ?? "");
   const surface = surfaceOf(s);
   const context = projectChild ? null : rowContext(s);
@@ -970,11 +969,11 @@ function sessionRow(s: CoreSession, projectChild = false): TemplateResult {
     title,
     surface !== "web" ? surface : null,
     context,
-    working ? "agent is working" : null,
-    s.awaitingInput ? "waiting for your reply" : null,
-    readOnly ? "read-only" : null,
-    s.pinned ? "pinned" : null,
-    selection.ids.has(s.id) ? "selected" : null,
+    working ? t("agent is working") : null,
+    s.awaitingInput ? t("waiting for your reply") : null,
+    readOnly ? t("read-only") : null,
+    s.pinned ? t("pinned") : null,
+    selection.ids.has(s.id) ? t("selected") : null,
     relTime(activityOf(s)),
   ]
     .filter(Boolean)
@@ -1031,7 +1030,7 @@ function sessionRow(s: CoreSession, projectChild = false): TemplateResult {
         }}
       >
         <div class="title" aria-live="polite">
-          ${statusMarks(s)}${surfaceGlyph(s)}${readOnly ? html`<span class="ro-lock" ${tip("Read-only")}>${icon(Lock, 12)}</span>` : nothing}<span
+          ${statusMarks(s)}${surfaceGlyph(s)}${readOnly ? html`<span class="ro-lock" ${tip(t("Read-only"))}>${icon(Lock, 12)}</span>` : nothing}<span
             class="tl"
             dir="auto"
             >${titleContent}</span
@@ -1044,8 +1043,8 @@ function sessionRow(s: CoreSession, projectChild = false): TemplateResult {
               <button
                 class="session-menu-btn session-share-btn"
                 type="button"
-                ${tip("Share conversation")}
-                aria-label=${`Share ${sessionTitle(s)}`}
+                ${tip(t("Share conversation"))}
+                aria-label=${t("Share {title}", { title: sessionTitle(s) })}
                 @click=${(e: Event) => {
                   e.stopPropagation();
                   void openSessionShare(s.id);
@@ -1056,8 +1055,8 @@ function sessionRow(s: CoreSession, projectChild = false): TemplateResult {
               <button
                 class="session-menu-btn session-archive-btn"
                 type="button"
-                ${tip(s.archived ? "Unarchive" : "Archive")}
-                aria-label=${`${s.archived ? "Unarchive" : "Archive"} ${sessionTitle(s)}`}
+                ${tip(s.archived ? t("Unarchive") : t("Archive"))}
+                aria-label=${t("{action} {title}", { action: s.archived ? t("Unarchive") : t("Archive"), title: sessionTitle(s) })}
                 @click=${(e: Event) => {
                   e.stopPropagation();
                   setArchived(s, !s.archived);
@@ -1069,8 +1068,8 @@ function sessionRow(s: CoreSession, projectChild = false): TemplateResult {
                 class="session-menu-btn"
                 data-menu-id=${s.id}
                 type="button"
-                ${tip(CHAT_OPTIONS_TOOLTIP)}
-                aria-label=${`Options for ${sessionTitle(s)}`}
+                ${tip(t("Chat options"))}
+                aria-label=${t("Options for {title}", { title: sessionTitle(s) })}
                 aria-haspopup="menu"
                 aria-expanded=${menuOpen ? "true" : "false"}
                 @click=${(e: Event) => toggleSessionMenu(e, s.id)}
@@ -1141,7 +1140,7 @@ function detachDropZone(): TemplateResult {
       void promoteSession(id);
     }}
   >
-    ${icon(CornerLeftUp, 13)}<span>Drop to make a top-level session</span>
+    ${icon(CornerLeftUp, 13)}<span>${t("Drop to make a top-level session")}</span>
   </div>`;
 }
 
@@ -1166,13 +1165,13 @@ function sessionMenuPopover(s: CoreSession): TemplateResult {
   return html`
     <div class="session-menu-popover" role="menu" ${ref(placeSessionMenu)} @click=${(e: Event) => e.stopPropagation()}>
       <button class="session-menu-option" type="button" role="menuitem" @click=${() => void copySessionLink(s)}>
-        ${icon(Link, 15)}<span>Copy link</span>
+        ${icon(Link, 15)}<span>${t("Copy link")}</span>
       </button>
       <button class="session-menu-option" type="button" role="menuitem" @click=${() => setPinned(s, !pinned)}>
-        ${pinned ? icon(PinOff, 15) : icon(Pin, 15)}<span>${pinned ? "Unpin" : "Pin"}</span>
+        ${pinned ? icon(PinOff, 15) : icon(Pin, 15)}<span>${pinned ? t("Unpin") : t("Pin")}</span>
       </button>
       <button class="session-menu-option" type="button" role="menuitem" @click=${() => startRename(s)}>
-        ${icon(Pencil, 15)}<span>Rename</span>
+        ${icon(Pencil, 15)}<span>${t("Rename")}</span>
       </button>
       <button
         class="session-menu-option"
@@ -1181,10 +1180,10 @@ function sessionMenuPopover(s: CoreSession): TemplateResult {
         ?disabled=${refreshingTitle}
         @click=${() => void refreshSessionTitle(s)}
       >
-        ${icon(RefreshCw, 15)}<span>${refreshingTitle ? "Refreshing title" : "Refresh title"}</span>
+        ${icon(RefreshCw, 15)}<span>${refreshingTitle ? t("Refreshing title") : t("Refresh title")}</span>
       </button>
       <button class="session-menu-option" type="button" role="menuitem" @click=${() => setArchived(s, !archived)}>
-        ${archived ? icon(ArchiveRestore, 15) : icon(Archive, 15)}<span>${archived ? "Unarchive" : "Archive"}</span>
+        ${archived ? icon(ArchiveRestore, 15) : icon(Archive, 15)}<span>${archived ? t("Unarchive") : t("Archive")}</span>
       </button>
       ${sessionColorRow(s)}
     </div>
@@ -1211,23 +1210,23 @@ function sessionColorRow(s: CoreSession): TemplateResult {
   const current = displaySessionColor(s.color);
   const isPreset = SESSION_COLORS.includes(current as (typeof SESSION_COLORS)[number]);
   return html`
-    <div class="session-menu-colors" role="group" aria-label="Row color">
+    <div class="session-menu-colors" role="group" aria-label=${t("Row color")}>
       ${SESSION_COLORS.map(
         (c) => html`
           <button
             class="color-swatch ${current === c ? "selected" : ""}"
             type="button"
             style=${`--swatch:${c}`}
-            aria-label=${`Color row ${c}`}
+            aria-label=${t("Color row {color}", { color: c })}
             aria-pressed=${current === c ? "true" : "false"}
             @click=${() => setColor(s, current === c ? null : c)}
           ></button>
         `,
       )}
-      <label class="color-swatch custom ${current && !isPreset ? "selected" : ""}" ${tip("Custom color (RGB picker)")}>
+      <label class="color-swatch custom ${current && !isPreset ? "selected" : ""}" ${tip(t("Custom color (RGB picker)"))}>
         <input
           type="color"
-          aria-label="Custom row color"
+          aria-label=${t("Custom row color")}
           value=${current ?? SESSION_COLORS[3]}
           @click=${(e: Event) => e.stopPropagation()}
           @input=${(e: InputEvent) => previewColor(s, (e.currentTarget as HTMLInputElement).value)}
@@ -1239,8 +1238,8 @@ function sessionColorRow(s: CoreSession): TemplateResult {
           ? html`<button
               class="color-swatch clear"
               type="button"
-              ${tip("Clear color")}
-              aria-label="Clear row color"
+              ${tip(t("Clear color"))}
+              aria-label=${t("Clear row color")}
               @click=${() => setColor(s, null)}
             >
               ${icon(X, 12)}
@@ -1253,7 +1252,7 @@ function sessionColorRow(s: CoreSession): TemplateResult {
 
 function renameRow(s: CoreSession): TemplateResult {
   return html`<div class="session-row renaming">
-    ${renameInput(s.id, "Rename conversation", () => commitRename(s))}
+    ${renameInput(s.id, t("Rename conversation"), () => commitRename(s))}
   </div>`;
 }
 
@@ -1388,26 +1387,26 @@ export function sessionSelectionBar(): TemplateResult | null {
     <div
       class="section-label recents-label multi-select-bar"
       role="toolbar"
-      aria-label=${`${n} conversations selected`}
+      aria-label=${t("{count} conversations selected", { count: n })}
     >
       <span class="multi-select-summary">
         <button
           class="icon-btn"
           type="button"
-          ${tip("Clear selection (Esc)")}
-          aria-label="Clear selection"
+          ${tip(t("Clear selection (Esc)"))}
+          aria-label=${t("Clear selection")}
           @click=${() => clearSessionSelection()}
         >
           ${icon(X, 14)}
         </button>
-        <span class="multi-select-count">${n} selected</span>
+        <span class="multi-select-count">${t("{count} selected", { count: n })}</span>
       </span>
       <span class="multi-select-actions">
         <button
           class="icon-btn"
           type="button"
-          ${tip(allPinned ? "Unpin selected" : "Pin selected")}
-          aria-label=${allPinned ? "Unpin selected conversations" : "Pin selected conversations"}
+          ${tip(allPinned ? t("Unpin selected") : t("Pin selected"))}
+          aria-label=${allPinned ? t("Unpin selected conversations") : t("Pin selected conversations")}
           @click=${() => void bulkPatch({ pinned: !allPinned })}
         >
           ${allPinned ? icon(PinOff, 14) : icon(Pin, 14)}
@@ -1416,8 +1415,8 @@ export function sessionSelectionBar(): TemplateResult | null {
           <button
             class="icon-btn"
             type="button"
-            ${tip("Color selected")}
-            aria-label="Color selected conversations"
+            ${tip(t("Color selected"))}
+            aria-label=${t("Color selected conversations")}
             aria-haspopup="true"
             aria-expanded=${selectColorOpen ? "true" : "false"}
             @click=${(e: Event) => {
@@ -1432,8 +1431,8 @@ export function sessionSelectionBar(): TemplateResult | null {
         <button
           class="icon-btn"
           type="button"
-          ${tip(allArchived ? "Unarchive selected" : "Archive selected")}
-          aria-label=${allArchived ? "Unarchive selected conversations" : "Archive selected conversations"}
+          ${tip(allArchived ? t("Unarchive selected") : t("Archive selected"))}
+          aria-label=${allArchived ? t("Unarchive selected conversations") : t("Archive selected conversations")}
           @click=${() => void bulkPatch({ archived: !allArchived })}
         >
           ${allArchived ? icon(ArchiveRestore, 14) : icon(Archive, 14)}
@@ -1458,15 +1457,15 @@ function colorPopover(): TemplateResult {
       role="menu"
       @click=${(e: Event) => e.stopPropagation()}
     >
-      <div class="session-menu-colors" role="group" aria-label="Color selected conversations">
+      <div class="session-menu-colors" role="group" aria-label=${t("Color selected conversations")}>
         ${SESSION_COLORS.map(
           (c) => html`
             <button
               class="color-swatch"
               type="button"
               style=${`--swatch:${c}`}
-              ${tip(`Color selected ${c}`)}
-              aria-label=${`Color selected conversations ${c}`}
+              ${tip(t("Color selected {color}", { color: c }))}
+              aria-label=${t("Color selected conversations {color}", { color: c })}
               @click=${() => void bulkPatch({ color: c })}
             ></button>
           `,
@@ -1474,8 +1473,8 @@ function colorPopover(): TemplateResult {
         <button
           class="color-swatch clear"
           type="button"
-          ${tip("Clear color")}
-          aria-label="Clear color on selected conversations"
+          ${tip(t("Clear color"))}
+          aria-label=${t("Clear color on selected conversations")}
           @click=${() => void bulkPatch({ color: null })}
         >
           ${icon(Ban, 10)}
@@ -1704,7 +1703,7 @@ async function runSessionsRefresh(
     return true;
   } catch (e) {
     if (seq !== sessionRefreshSeq) return sessionsState.loaded || ((await newerRun()) ?? false);
-    if (!opts.silent) sessionsNotice = errMessage(e, "Failed to load conversations.");
+    if (!opts.silent) sessionsNotice = errMessage(e, t("Failed to load conversations."));
     return false;
   } finally {
     if (seq === sessionRefreshSeq) {
@@ -1802,3 +1801,8 @@ export async function openSessionInto(
   conv.setPins(entriesRes.pins ?? []);
   renderList();
 }
+
+onLocaleChange(() => {
+  renderList();
+  renderSidebarTop();
+});

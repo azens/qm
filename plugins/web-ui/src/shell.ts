@@ -46,6 +46,8 @@ import {
 } from "./core-bridge";
 import { seedRuntimeConfig } from "./runtime-config-store";
 import { errMessage, swallow } from "../../chassis/src/errors";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { onLocaleChange } from "../../chassis/src/i18n.ts";
 import { brandMark, brandName, icon } from "./ui";
 import { PHONE_MAX_WIDTH, trackVisualViewport } from "./viewport";
 import { markConnectorConnected } from "./chat";
@@ -288,9 +290,14 @@ function impersonationBanner(by: string) {
   return html`
     <div class="impersonation-banner" role="status">
       <span class="impersonation-banner-text"
-        >Viewing the assistant as <b>${appState.me?.user ?? ""}</b>. You are <b>${by}</b></span
+        >${t("Viewing the assistant as {user}. You are {by}.", {
+          user: appState.me?.user ?? "",
+          by,
+        })}</span
       >
-      <button class="impersonation-banner-exit" type="button" @click=${exitImpersonation}>Exit impersonation</button>
+      <button class="impersonation-banner-exit" type="button" @click=${exitImpersonation}>
+        ${t("Exit impersonation")}
+      </button>
     </div>
   `;
 }
@@ -298,8 +305,10 @@ function impersonationBanner(by: string) {
 function devBanner(user: string) {
   return html`
     <div class="top-banner dev" role="status">
-      <span><b>Dev mode</b> — no identity provider, signed in as ${user}</span>
-      <button class="top-banner-action" type="button" @click=${signOut}>Sign out</button>
+      <span
+        ><b>${t("Dev mode")}</b> — ${t("no identity provider, signed in as {user}", { user })}</span
+      >
+      <button class="top-banner-action" type="button" @click=${signOut}>${t("Sign out")}</button>
     </div>
   `;
 }
@@ -351,32 +360,33 @@ function clearPortalAttempt(): void {
 function portalGate() {
   if (portalAttemptedRecently())
     return gateShell(html`
-      <h1>Sign in through the portal</h1>
+      <h1>${t("Sign in through the portal")}</h1>
       <p class="signin-body">
-        This surface is reached through the portal, and signing in there didn't produce a session for it. Open the
-        portal address directly rather than this one.
+        ${t(
+          "This surface is reached through the portal, and signing in there didn't produce a session for it. Open the portal address directly rather than this one.",
+        )}
       </p>
       <div class="hint">
-        If you opened this surface's own address, that's the cause — it can't authenticate anyone on its own.
+        ${t("If you opened this surface's own address, that's the cause — it can't authenticate anyone on its own.")}
       </div>
     `);
   return gateShell(html`
-    <h1>Your session ended</h1>
-    <p class="signin-body">You've been signed out. Sign in again and you'll come back to this page.</p>
-    <button class="btn primary" type="button" @click=${signInWithPortal}>Sign in</button>
+    <h1>${t("Your session ended")}</h1>
+    <p class="signin-body">${t("You've been signed out. Sign in again and you'll come back to this page.")}</p>
+    <button class="btn primary" type="button" @click=${signInWithPortal}>${t("Sign in")}</button>
   `);
 }
 
 function deniedGate() {
   return gateShell(html`
-    <h1>You don't have access</h1>
+    <h1>${t("You don't have access")}</h1>
     <p class="signin-body">
-      Your account is signed in and verified — it just isn't allowed on this instance. Ask an administrator to add you.
+      ${t("Your account is signed in and verified — it just isn't allowed on this instance. Ask an administrator to add you.")}
     </p>
-    <button class="btn" type="button" @click=${signOut}>Sign out</button>
+    <button class="btn" type="button" @click=${signOut}>${t("Sign out")}</button>
     ${
       authMode === "dev"
-        ? html`<div class="hint">This instance lists its principals in <b>WEB_UI_PRINCIPALS</b>.</div>`
+        ? html`<div class="hint">${t("This instance lists its principals in")} <b>WEB_UI_PRINCIPALS</b>.</div>`
         : nothing
     }
   `);
@@ -388,10 +398,10 @@ function retryBoot(): void {
 
 function unreachableGate() {
   return gateShell(html`
-    <h1>We couldn't reach the assistant</h1>
-    <p class="signin-body">The service didn't respond. This is usually temporary.</p>
-    <button class="btn primary" type="button" @click=${retryBoot}>Try again</button>
-    <div class="hint">If this keeps happening, the core service may be down.</div>
+    <h1>${t("We couldn't reach the assistant")}</h1>
+    <p class="signin-body">${t("The service didn't respond. This is usually temporary.")}</p>
+    <button class="btn primary" type="button" @click=${retryBoot}>${t("Try again")}</button>
+    <div class="hint">${t("If this keeps happening, the core service may be down.")}</div>
   `);
 }
 
@@ -400,7 +410,7 @@ async function submitDevSignin(user: string): Promise<void> {
   try {
     await api("/signin", { method: "POST", body: JSON.stringify({ user }) });
   } catch (err) {
-    renderAuthGate({ kind: "dev", value: user, error: errMessage(err, "Sign-in failed.") });
+    renderAuthGate({ kind: "dev", value: user, error: errMessage(err, t("Sign-in failed.")) });
     return;
   }
   await bootSafely();
@@ -417,12 +427,13 @@ function devGate(gate: { value?: string; error?: string; pending?: boolean }) {
         if (user) void submitDevSignin(user);
       }}
     >
-      <h1>Dev sign-in</h1>
+      <h1>${t("Dev sign-in")}</h1>
       <p class="signin-body">
-        No identity provider is configured, so this instance trusts a local cookie. Set
-        <b>CORE_SIGNING_SECRET</b> and run the portal to use real sign-in.
+        ${t("No identity provider is configured, so this instance trusts a local cookie. Set")}
+        <b>CORE_SIGNING_SECRET</b>
+        ${t("and run the portal to use real sign-in.")}
       </p>
-      <label for="dev-principal">Principal</label>
+      <label for="dev-principal">${t("Principal")}</label>
       <input
         id="dev-principal"
         name="principal"
@@ -437,7 +448,7 @@ function devGate(gate: { value?: string; error?: string; pending?: boolean }) {
         ?disabled=${gate.pending === true}
       />
       <button class="btn primary" type="submit" ?disabled=${gate.pending === true}>
-        ${gate.pending ? "Signing in…" : "Continue"}
+        ${gate.pending ? t("Signing in…") : t("Continue")}
       </button>
       ${gate.error ? html`<div class="hint error" role="alert">${gate.error}</div>` : nothing}
     </form>
@@ -486,7 +497,7 @@ export function mountShell(): void {
       <div class="layout ${sidebarOpen ? "" : "sidebar-closed"} ${banner !== nothing ? "bannered" : ""}">
         <aside
           class="sidebar"
-          aria-label="Navigation"
+          aria-label=${t("Navigation")}
           data-tip-placement=${sidebarOpen ? "top" : "right"}
           @keydown=${onSidebarKeydown}
         >
@@ -506,12 +517,12 @@ export function mountShell(): void {
           <div class="list" id="sidebar-body"></div>
           <div class="sidebar-footer" id="sidebar-footer"></div>
         </aside>
-        <button class="sidebar-scrim" type="button" aria-label="Close sidebar" @click=${toggleSidebar}></button>
+        <button class="sidebar-scrim" type="button" aria-label=${t("Close sidebar")} @click=${toggleSidebar}></button>
         <div
           class="sidebar-resize-handle"
           role="separator"
           aria-orientation="vertical"
-          aria-label="Resize sidebar"
+          aria-label=${t("Resize sidebar")}
           @pointerdown=${startSidebarResize}
           @dblclick=${resetSidebarWidth}
         ></div>
@@ -524,7 +535,7 @@ export function mountShell(): void {
           ${icon(Menu, 20)}
         </button>
         <section class="main" id="main" tabindex="-1">
-          <div class="empty">Pick a conversation, or start a new chat.</div>
+          <div class="empty">${t("Pick a conversation, or start a new chat.")}</div>
         </section>
       </div>
     `,
@@ -554,7 +565,7 @@ function inboxNavRow(): TemplateResult {
     }}
     @dragend=${() => endPaneDrag()}
   >
-    ${icon(ICON.inbox, 17)}<span>Inbox</span>${count > 0 ? html`<span class="nav-badge" aria-label=${`${count} waiting on you`}>${count > 99 ? "99+" : count}</span>` : nothing}
+    ${icon(ICON.inbox, 17)}<span>${t("Inbox")}</span>${count > 0 ? html`<span class="nav-badge" aria-label=${t("{count} waiting on you", { count })}>${count > 99 ? "99+" : count}</span>` : nothing}
   </a>`;
 }
 
@@ -576,7 +587,7 @@ export function renderSidebarFooter(): void {
           userMenuOpen
             ? html`<div class="session-menu-popover user-menu-popover" role="menu">
                 <button class="session-menu-option" type="button" role="menuitem" @click=${signOutFromMenu}>
-                  ${icon(LogOut, 15)}<span>Sign out</span>
+                  ${icon(LogOut, 15)}<span>${t("Sign out")}</span>
                 </button>
               </div>`
             : nothing
@@ -584,12 +595,12 @@ export function renderSidebarFooter(): void {
       </div>
       ${
         can("admin")
-          ? html`<a class="icon-btn subtle" href=${ADMIN_HOME_URL} aria-label="Admin" ${tip("Admin")}>
+          ? html`<a class="icon-btn subtle" href=${ADMIN_HOME_URL} aria-label=${t("Admin console")} ${tip(t("Admin console"))}>
               ${icon(ShieldUser, 17)}
             </a>`
           : nothing
       }
-      <button class="icon-btn subtle" aria-label="Settings" ${tip("Settings")} @click=${() => switchView("settings")}>
+      <button class="icon-btn subtle" aria-label=${t("Settings")} ${tip(t("Settings"))} @click=${() => switchView("settings")}>
         ${icon(Settings, 17)}
       </button>
     `,
@@ -624,17 +635,17 @@ export function renderSidebarTop(): void {
     >
       ${icon(glyph, 17)}<span>${label}</span>
     </button>`;
-  const newChatLabel = splitState.active ? "New session" : "Create New Chat";
+  const newChatLabel = t(splitState.active ? "New session" : "Create New Chat");
   render(
     html`
       <nav class="nav quick-nav" @click=${onNavClick}>
-        ${navRow("chats", ICON.home, "Home")}
-        ${can("inbox") ? html`${inboxNavRow()} ${navRow("calendar", ICON.calendar, "Calendar")}` : nothing}
-        ${actionRow(Search, "Search", () => {
+        ${navRow("chats", ICON.home, t("Home"))}
+        ${can("inbox") ? html`${inboxNavRow()} ${navRow("calendar", ICON.calendar, t("Calendar"))}` : nothing}
+        ${actionRow(Search, t("Search"), () => {
           hideTooltip();
           openChatSearch();
         })}
-        ${actionRow(ICON.browse, "Browse", () => {
+        ${actionRow(ICON.browse, t("Browse"), () => {
           hideTooltip();
           openBrowse();
         })}
@@ -713,7 +724,7 @@ export function switchView(v: View): void {
       };
       if (pendingCanvasRestore) {
         appState.mainEl?.replaceChildren(
-          Object.assign(document.createElement("div"), { className: "empty", textContent: "Loading conversations…" }),
+          Object.assign(document.createElement("div"), { className: "empty", textContent: t("Loading conversations…") }),
         );
         void pendingCanvasRestore.then(showChats);
       } else showChats();
@@ -838,19 +849,22 @@ export function showMainEmpty(text: string): void {
 function showConversationError(unavailable: boolean): void {
   showMainEmpty("");
   if (!appState.mainEl) return;
+  const headline = t(unavailable ? "Couldn't load conversation" : "Conversation not found");
   render(
     html`
       <section class="conversation-error" aria-labelledby="conversation-error-title">
-        <span class="conversation-error-code">${unavailable ? "Connection problem" : "404"}</span>
-        <h1 id="conversation-error-title" tabindex="-1">
-          ${unavailable ? "Couldn't load conversation" : "Conversation not found"}
-        </h1>
+        <span class="conversation-error-code">${unavailable ? t("Connection problem") : "404"}</span>
+        <h1 id="conversation-error-title" tabindex="-1">${headline}</h1>
         <p>
-          ${unavailable ? "Something went wrong loading this conversation. Please try again." : "This conversation may have been deleted, or you may be signed into an account that doesn’t have access."}
+          ${t(
+            unavailable
+              ? "Something went wrong loading this conversation. Please try again."
+              : "This conversation may have been deleted, or you may be signed into an account that doesn't have access.",
+          )}
         </p>
         <div class="conversation-error-actions">
-          <a class="btn" href=${withBase("/")}>Back to chats</a>
-          ${unavailable ? html`<button class="btn" @click=${() => location.reload()}>Try again</button>` : nothing}
+          <a class="btn" href=${withBase("/")}>${t("Back to chats")}</a>
+          ${unavailable ? html`<button class="btn" @click=${() => location.reload()}>${t("Try again")}</button>` : nothing}
         </div>
       </section>
     `,
@@ -858,7 +872,7 @@ function showConversationError(unavailable: boolean): void {
   );
   appState.mainEl.querySelector<HTMLElement>("h1")?.focus();
   renderList();
-  document.title = `${unavailable ? "Couldn't load conversation" : "Conversation not found"} · ${brandName()}`;
+  document.title = `${headline} · ${brandName()}`;
 }
 
 function toggleSidebar(): void {
@@ -952,8 +966,15 @@ function onSidebarKeydown(event: KeyboardEvent): void {
 }
 
 function sidebarToggleLabel(): string {
-  return sidebarOpen ? "Hide sidebar" : "Show sidebar";
+  return t(sidebarOpen ? "Hide sidebar" : "Show sidebar");
 }
+
+onLocaleChange(() => {
+  if (!shellMounted) return;
+  renderSidebarTop();
+  renderSidebarFooter();
+  updateSidebarToggleLabels();
+});
 
 function updateSidebarToggleLabels(): void {
   const collapseLabel = sidebarToggleLabel();
@@ -1203,7 +1224,7 @@ export async function boot(): Promise<void> {
       openAppEditChat(slug);
       return;
     }
-    showMainEmpty("This edit link is missing a valid app name.");
+    showMainEmpty(t("This edit link is missing a valid app name."));
     return;
   }
 

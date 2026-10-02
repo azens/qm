@@ -6,6 +6,7 @@ import { setScopedSession } from "./session-scope";
 import { ADMIN_HOME_URL, appState, can, switchView } from "./shell";
 import { icon } from "./ui";
 import type { View } from "./shell-state";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 interface Destination {
   view: View | null;
@@ -30,23 +31,23 @@ export function destinations(): Destination[] {
     blurb,
   });
   const list: Destination[] = [
-    to("contexts", Folder, "Projects", "Group chats, files, and automations"),
-    to("files", Files, "Files", "Everything you and QM have shared"),
-    to("crons", Clock, "Crons", "Work that runs on a schedule"),
-    to("webhooks", Webhook, "Webhooks", "Inbound events that wake QM"),
-    to("keychain", KeyRound, "Keychain", "Connected accounts and credentials"),
-    to("deploys", Rocket, "Apps", "What QM has shipped for you"),
-    to("memory", Brain, "Memory", "What QM remembers about your work"),
-    to("skills", Box, "Skills", "Reusable procedures QM can follow"),
+    to("contexts", Folder, t("Projects"), t("Group chats, files, and automations")),
+    to("files", Files, t("Files"), t("Everything you and QM have shared")),
+    to("crons", Clock, t("Crons"), t("Work that runs on a schedule")),
+    to("webhooks", Webhook, t("Webhooks"), t("Inbound events that wake QM")),
+    to("keychain", KeyRound, t("Keychain"), t("Connected accounts and credentials")),
+    to("deploys", Rocket, t("Apps"), t("What QM has shipped for you")),
+    to("memory", Brain, t("Memory"), t("What QM remembers about your work")),
+    to("skills", Box, t("Skills"), t("Reusable procedures QM can follow")),
   ];
-  if (can("loops")) list.push(to("loops", Repeat, "Loops", "Standing work QM keeps pushing forward"));
+  if (can("loops")) list.push(to("loops", Repeat, t("Loops"), t("Standing work QM keeps pushing forward")));
   if (can("admin")) {
     list.push({
       view: null,
       href: ADMIN_HOME_URL,
       glyph: ShieldUser,
       label: "Admin",
-      blurb: "Org settings, people, and policy",
+      blurb: t("Org settings, people, and policy"),
     });
   }
   return list;
@@ -145,12 +146,12 @@ function paletteTpl(): TemplateResult {
         if (e.target === e.currentTarget) closeBrowse();
       }}
     >
-      <div class="chat-search-palette browse-palette" role="dialog" aria-label="Browse" @keydown=${onGridKeydown}>
+      <div class="chat-search-palette browse-palette" role="dialog" aria-label=${t("Browse")} @keydown=${onGridKeydown}>
         <div class="chat-search-inputrow browse-head">
-          <span class="browse-title">Browse</span>
+          <span class="browse-title">${t("Browse")}</span>
           <span class="chat-search-kbd">esc</span>
         </div>
-        <div class="browse-grid" role="group" aria-label="Destinations">${destinations().map(tile)}</div>
+        <div class="browse-grid" role="group" aria-label=${t("Destinations")}>${destinations().map(tile)}</div>
       </div>
     </div>
   `;

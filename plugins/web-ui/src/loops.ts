@@ -6,6 +6,8 @@ import { errMessage } from "../../chassis/src/errors";
 import { fieldSelect, icon } from "./ui";
 import { listBackLink, listPageTpl } from "./list-page";
 import { appState, can } from "./shell";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { formatRelativeTime } from "../../chassis/src/i18n.ts";
 
 interface LoopView {
   id: string;
@@ -104,13 +106,8 @@ function healthBadge(loop: LoopView): TemplateResult {
 }
 
 function ago(ts?: number): string {
-  if (!ts) return "never";
-  const mins = Math.round((Date.now() - ts) / 60_000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.round(mins / 60);
-  if (hours < 48) return `${hours}h ago`;
-  return `${Math.round(hours / 24)}d ago`;
+  if (!ts) return t("never");
+  return formatRelativeTime(ts);
 }
 
 async function refreshLoops(): Promise<void> {
@@ -232,7 +229,7 @@ function savePlaybook(loop: LoopView): void {
   playbookDraft = null;
 }
 
-function reviewRow(loop: LoopView, output: LoopOutputView, shipLabel = "Ship"): TemplateResult {
+function reviewRow(loop: LoopView, output: LoopOutputView, shipLabel = t("Ship")): TemplateResult {
   const externalUrl = output.externalRef && /^https?:\/\//i.test(output.externalRef) ? output.externalRef : undefined;
   return html`
     <div class="loop-output">
@@ -250,15 +247,15 @@ function reviewRow(loop: LoopView, output: LoopOutputView, shipLabel = "Ship"): 
       <div class="loop-output-decide">
         <input
           type="text"
-          placeholder="return note…"
+          placeholder=${t("return note…")}
           .value=${returnDrafts.get(output.id) ?? ""}
           @input=${(e: Event) => returnDrafts.set(output.id, (e.target as HTMLInputElement).value)}
         />
         <button class="btn" type="button" ?disabled=${loopBusy} @click=${() => decide(loop, output, "return")}>
-          ${icon(CornerUpLeft, 14)}<span>Return</span>
+          ${icon(CornerUpLeft, 14)}<span>${t("Return")}</span>
         </button>
         <button class="btn primary" type="button" ?disabled=${loopBusy} @click=${() => decide(loop, output, "ship")}>
-          ${icon(CheckCircle2, 14)}<span>${shipLabel}</span>
+          ${icon(CheckCircle2, 14)}<span>${t(shipLabel)}</span>
         </button>
       </div>
     </div>
@@ -272,8 +269,8 @@ function itemRow(item: LoopItemView): TemplateResult {
       <span class="loop-item-key">${item.sourceKey}</span>
       <span class="loop-item-summary">${item.sourceSummary ?? ""}</span>
       <span class="loop-item-meta">
-        ${item.attempts > 0 ? `${item.attempts} attempt${item.attempts === 1 ? "" : "s"}` : ""}
-        ${item.parkedReason ? html` · <span title=${item.parkedReason}>parked</span>` : nothing}
+        ${item.attempts > 0 ? t("{count} attempts", { count: item.attempts }) : ""}
+        ${item.parkedReason ? html` · <span title=${item.parkedReason}>${t("parked")}</span>` : nothing}
       </span>
     </div>
   `;
@@ -305,15 +302,16 @@ function ingestionTpl(loop: LoopView): TemplateResult {
   const names = { webhook: "Signed webhook", slack: "Slack events", gmail: "Gmail Pub/Sub" };
   return html`<section class="loop-ingestion">
     <div class="loop-ingestion-heading">
-      <h2>Ingestion</h2>
-      <span>${loop.cronId ? "Scheduled sync enabled" : "No scheduled sync"}</span>
+      <h2>${t("Ingestion")}</h2>
+      <span>${loop.cronId ? t("Scheduled sync enabled") : t("No scheduled sync")}</span>
     </div>
-    <p>Choose how new work reaches this Loop. Event sources can run alongside a schedule.</p>
+    <p>${t("Choose how new work reaches this Loop. Event sources can run alongside a schedule.")}</p>
     ${ingestion?.sources.map(
       (source) =>
         html`<div class="loop-ingestion-source">
           <div class="loop-ingestion-source-head">
-            <strong>${names[source.kind]}</strong><span>${source.enabled ? "Listening" : "Disabled"}</span
+            <strong>${t(names[source.kind])}</strong
+            ><span>${source.enabled ? t("Listening") : t("Disabled")}</span
             ><button
               class="btn compact"
               ?disabled=${loopBusy}
@@ -326,13 +324,25 @@ function ingestionTpl(loop: LoopView): TemplateResult {
                   await refreshDetail(loop.id);
                 })}
             >
-              ${source.enabled ? "Disable" : "Enable"}
+              ${source.enabled ? t("Disable") : t("Enable")}
             </button>
           </div>
-          <label>Endpoint<input readonly .value=${source.url} aria-label=${`${names[source.kind]} endpoint`} /></label>
-          ${source.gmail ? html`<p>${source.gmail.email} · watch renews automatically</p>` : nothing}
-          ${source.channels?.length ? html`<p>Channels: ${source.channels.join(", ")}</p>` : nothing}
-          <p>Last event: ${ago(source.lastReceivedAt)}${loop.state !== "enabled" ? " · Processing paused" : ""}</p>
+          <label
+            >${t("Endpoint")}<input
+              readonly
+              .value=${source.url}
+              aria-label=${t("{source} endpoint", { source: names[source.kind] })}
+          /></label
+          >
+          ${source.gmail ? html`<p>${source.gmail.email} · ${t("watch renews automatically")}</p>` : nothing}
+          ${source.channels?.length
+            ? html`<p>${t("Channels: {list}", { list: source.channels.join(", ") })}</p>`
+            : nothing}
+          <p>
+            ${t("Last event: {when}", { when: ago(source.lastReceivedAt) })}${loop.state !== "enabled"
+              ? ` · ${t("Processing paused")}`
+              : ""}
+          </p>
           ${source.lastError ? html`<p class="error-banner">${source.lastError}</p>` : nothing}
         </div>`,
     )}
@@ -340,12 +350,12 @@ function ingestionTpl(loop: LoopView): TemplateResult {
       createdSecret
         ? html`<div class="loop-ingestion-secret">
             <label
-              >Signing secret — save it now; it is only shown once<input
+              >${t("Signing secret — save it now; it is only shown once")}<input
                 readonly
                 .value=${createdSecret}
-                aria-label="Webhook signing secret"
+                aria-label=${t("Webhook signing secret")}
             /></label>
-            <p>Sign the exact JSON body with HMAC-SHA256 and send its hex digest in X-Signature.</p>
+            <p>${t("Sign the exact JSON body with HMAC-SHA256 and send its hex digest in X-Signature.")}</p>
             <button
               class="btn compact"
               @click=${() => {
@@ -353,49 +363,49 @@ function ingestionTpl(loop: LoopView): TemplateResult {
                 paint();
               }}
             >
-              Done
+              ${t("Done")}
             </button>
           </div>`
         : nothing
     }
     <div class="loop-ingestion-add">
       ${fieldSelect({
-        ariaLabel: "Ingestion source",
+        ariaLabel: t("Ingestion source"),
         value: ingestionKind,
         onChange: (value) => {
           ingestionKind = value as typeof ingestionKind;
           ingestionSecret = "";
           paint();
         },
-        options: html`<option value="">Add event source…</option>
+        options: html`<option value="">${t("Add event source…")}</option>
           ${Object.entries(names)
             .filter(
               ([kind]) =>
                 !ingestion?.sources.some((source) => source.kind === kind) &&
                 (!loop.sources?.length ? true : kind !== "webhook" && loop.sources.includes(kind)),
             )
-            .map(([kind, name]) => html`<option value=${kind}>${name}</option>`)}`,
+            .map(([kind, name]) => html`<option value=${kind}>${t(name)}</option>`)}`,
       })}
     </div>
     ${
       ingestionKind === "slack"
         ? html`<div class="loop-ingestion-fields">
             <label
-              >Workspace ID<input
+              >${t("Workspace ID")}<input
                 placeholder="T0123456789"
                 .value=${ingestionTeam}
                 @input=${(event: Event) => {
                   ingestionTeam = (event.target as HTMLInputElement).value;
                 }} /></label
             ><label
-              >Channel IDs<input
+              >${t("Channel IDs")}<input
                 placeholder="C0123456789, C9876543210"
                 .value=${ingestionChannels}
                 @input=${(event: Event) => {
                   ingestionChannels = (event.target as HTMLInputElement).value;
                 }} /></label
             ><label
-              >Slack signing secret<input
+              >${t("Slack signing secret")}<input
                 type="password"
                 autocomplete="off"
                 .value=${ingestionSecret}
@@ -404,14 +414,34 @@ function ingestionTpl(loop: LoopView): TemplateResult {
                 }}
             /></label>
             <p>
-              Use the endpoint as your Slack app’s Events API request URL. Only human messages from these channels are
-              accepted.
+              ${t(
+                "Use the endpoint as your Slack app’s Events API request URL. Only human messages from these channels are accepted.",
+              )}
             </p>
           </div>`
         : nothing
     }
-    ${ingestionKind === "gmail" ? html`<p>${ingestion?.gmailAvailable ? "Uses your connected personal Gmail account. New Inbox messages become Loop work items." : "An administrator must configure the Google Cloud Pub/Sub topic, audience, and push service account before Gmail can be enabled."}</p>` : nothing}
-    ${ingestionKind ? html`<button class="btn compact" ?disabled=${loopBusy || (ingestionKind === "gmail" && !ingestion?.gmailAvailable)} @click=${() => void addIngestion(loop)}>${loopBusy ? "Connecting…" : `Enable ${names[ingestionKind]}`}</button>` : nothing}
+    ${
+      ingestionKind === "gmail"
+        ? html`<p
+            >${ingestion?.gmailAvailable
+              ? t("Uses your connected personal Gmail account. New Inbox messages become Loop work items.")
+              : t(
+                  "An administrator must configure the Google Cloud Pub/Sub topic, audience, and push service account before Gmail can be enabled.",
+                )}</p
+          >`
+        : nothing
+    }
+    ${
+      ingestionKind
+        ? html`<button
+            class="btn compact"
+            ?disabled=${loopBusy || (ingestionKind === "gmail" && !ingestion?.gmailAvailable)}
+            @click=${() => void addIngestion(loop)}
+            >${loopBusy ? t("Connecting…") : t("Enable {source}", { source: names[ingestionKind] })}</button
+          >`
+        : nothing
+    }
   </section>`;
 }
 
@@ -422,7 +452,7 @@ function detailTpl(detail: LoopDetail): TemplateResult {
   const unconfirmed = outputs.filter((o) => o.state === "unconfirmed");
   const decided = outputs.filter((o) => o.state !== "ready" && o.state !== "unconfirmed");
   return html`
-    ${listBackLink("Loops", () => {
+    ${listBackLink(t("Loops"), () => {
       resetActiveLoop();
       paint();
       void refreshLoops();
@@ -443,18 +473,20 @@ function detailTpl(detail: LoopDetail): TemplateResult {
             }
           }}
         >
-          <summary aria-label=${`Change icon for ${loop.name}`} title="Change icon">${loopIcon(loop, 24)}</summary>
-          <div class="loop-icon-popover" role="group" aria-label="Loop icon">
-            <span class="loop-icon-heading">Choose an icon</span>
+          <summary aria-label=${t("Change icon for {name}", { name: loop.name })} title=${t("Change icon")}
+            >${loopIcon(loop, 24)}</summary
+          >
+          <div class="loop-icon-popover" role="group" aria-label=${t("Loop icon")}>
+            <span class="loop-icon-heading">${t("Choose an icon")}</span>
             <div class="loop-icon-grid">
-              ${LOOP_ICONS.map((choice) => html`<button type="button" aria-label=${choice.label} title=${choice.label} aria-pressed=${loop.icon === choice.id ? "true" : "false"} ?disabled=${loopBusy} @click=${() => void setLoopIcon(loop, choice.id)}>${loopIcon({ icon: choice.id }, 20)}</button>`)}
+              ${LOOP_ICONS.map((choice) => html`<button type="button" aria-label=${t(choice.label)} title=${t(choice.label)} aria-pressed=${loop.icon === choice.id ? "true" : "false"} ?disabled=${loopBusy} @click=${() => void setLoopIcon(loop, choice.id)}>${loopIcon({ icon: choice.id }, 20)}</button>`)}
             </div>
             <label class="loop-icon-upload">
-              <span>${loopBusy ? "Saving…" : "Upload image"}</span>
+              <span>${loopBusy ? t("Saving…") : t("Upload image")}</span>
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
-                aria-label="Upload loop icon"
+                aria-label=${t("Upload loop icon")}
                 ?disabled=${loopBusy}
                 @change=${(event: Event) => {
                   const input = event.currentTarget as HTMLInputElement;
@@ -464,14 +496,14 @@ function detailTpl(detail: LoopDetail): TemplateResult {
                 }}
               />
             </label>
-            <span class="loop-icon-hint">Images up to 2 MB, including SVG</span>
+            <span class="loop-icon-hint">${t("Images up to 2 MB, including SVG")}</span>
             <button
               class="loop-icon-default"
               type="button"
               ?disabled=${loopBusy || !loop.icon}
               @click=${() => void setLoopIcon(loop, null)}
             >
-              ${loopIcon({ sources: loop.sources })}<span>Use default</span>
+              ${loopIcon({ sources: loop.sources })}<span>${t("Use default")}</span>
             </button>
           </div>
         </details>
@@ -480,12 +512,12 @@ function detailTpl(detail: LoopDetail): TemplateResult {
       <div class="list-page-actions">
         ${healthBadge(loop)}
         <button class="btn" type="button" ?disabled=${loopBusy} @click=${() => fireNow(loop)}>
-          ${icon(Zap, 14)}<span>Fire now</span>
+          ${icon(Zap, 14)}<span>${t("Fire now")}</span>
         </button>
         ${
           loop.state === "enabled"
             ? html`<button class="btn" type="button" ?disabled=${loopBusy} @click=${() => setState(loop, "paused")}>
-                ${icon(Pause, 14)}<span>Pause</span>
+                ${icon(Pause, 14)}<span>${t("Pause")}</span>
               </button>`
             : html`<button
                 class="btn primary"
@@ -493,7 +525,7 @@ function detailTpl(detail: LoopDetail): TemplateResult {
                 ?disabled=${loopBusy}
                 @click=${() => setState(loop, "enabled")}
               >
-                ${icon(Play, 14)}<span>${loop.state === "quarantined" ? "Clear quarantine" : "Resume"}</span>
+                ${icon(Play, 14)}<span>${loop.state === "quarantined" ? t("Clear quarantine") : t("Resume")}</span>
               </button>`
         }
       </div>
@@ -511,9 +543,9 @@ function detailTpl(detail: LoopDetail): TemplateResult {
             @click=${() => setAutopilot(loop, !autopilot)}
           >
             <span class="loop-autopilot-copy">
-              <span class="loop-autopilot-label">Autopilot</span>
+              <span class="loop-autopilot-label">${t("Autopilot")}</span>
               <span class="loop-autopilot-sublabel"
-                >${autopilot ? "Shipping without review" : "Ships outputs without review"}</span
+                >${autopilot ? t("Shipping without review") : t("Ships outputs without review")}</span
               >
             </span>
             <span class="loop-autopilot-switch"><span></span></span>
@@ -522,20 +554,20 @@ function detailTpl(detail: LoopDetail): TemplateResult {
     }
 
     <h2 class="loop-section-title">
-      Ready to ship ${ready.length ? html`<span class="loop-count">${ready.length}</span>` : nothing}
+      ${t("Ready to ship")} ${ready.length ? html`<span class="loop-count">${ready.length}</span>` : nothing}
     </h2>
-    ${ready.length ? ready.map((o) => reviewRow(loop, o)) : html`<p class="list-empty">Nothing waiting on you.</p>`}
+    ${ready.length ? ready.map((o) => reviewRow(loop, o)) : html`<p class="list-empty">${t("Nothing waiting on you.")}</p>`}
 
     <h2 class="loop-section-title">
-      Needs confirmation ${unconfirmed.length ? html`<span class="loop-count">${unconfirmed.length}</span>` : nothing}
+      ${t("Needs confirmation")} ${unconfirmed.length ? html`<span class="loop-count">${unconfirmed.length}</span>` : nothing}
     </h2>
     ${
       unconfirmed.length
-        ? unconfirmed.map((o) => reviewRow(loop, o, "Confirm shipped"))
-        : html`<p class="list-empty">Nothing needs confirmation.</p>`
+        ? unconfirmed.map((o) => reviewRow(loop, o, t("Confirm shipped")))
+        : html`<p class="list-empty">${t("Nothing needs confirmation.")}</p>`
     }
     ${ingestionTpl(loop)}
-    <h2 class="loop-section-title">Playbook <span class="loop-count">v${loop.playbookVersion}</span></h2>
+    <h2 class="loop-section-title">${t("Playbook")} <span class="loop-count">v${loop.playbookVersion}</span></h2>
     <textarea
       class="loop-playbook"
       rows="10"
@@ -545,21 +577,23 @@ function detailTpl(detail: LoopDetail): TemplateResult {
       }}
     ></textarea>
     <div class="loop-playbook-actions">
-      <span class="loop-success-condition" title="success condition">Done when: ${loop.successCondition}</span>
+      <span class="loop-success-condition" title=${t("success condition")}
+        >${t("Done when: {condition}", { condition: loop.successCondition })}</span
+      >
       ${
         playbookDraft !== null && playbookDraft !== loop.playbook
           ? html`<button class="btn primary" type="button" ?disabled=${loopBusy} @click=${() => savePlaybook(loop)}>
-              Save playbook
+              ${t("Save playbook")}
             </button>`
           : nothing
       }
     </div>
 
-    <h2 class="loop-section-title">Work ledger</h2>
-    ${items.length ? items.map(itemRow) : html`<p class="list-empty">No items yet. Fire the loop.</p>`}
+    <h2 class="loop-section-title">${t("Work ledger")}</h2>
+    ${items.length ? items.map(itemRow) : html`<p class="list-empty">${t("No items yet. Fire the loop.")}</p>`}
     ${
       decided.length
-        ? html`<h2 class="loop-section-title">Decided</h2>
+        ? html`<h2 class="loop-section-title">${t("Decided")}</h2>
             ${decided.map(
               (o) => html`
                 <div class="loop-output loop-output-decided">
@@ -581,7 +615,7 @@ function loopRow(loop: LoopView): TemplateResult {
     <button class="list-row loop-row" type="button" @click=${() => openLoop(loop.id)}>
       ${loopIcon(loop, 18)}<span class="loop-row-name">${loop.name}</span>
       ${healthBadge(loop)}
-      <span class="loop-row-meta">last fire ${ago(loop.lastFiredAt)}</span>
+      <span class="loop-row-meta">${t("last fire {when}", { when: ago(loop.lastFiredAt) })}</span>
     </button>
   `;
 }
@@ -589,17 +623,17 @@ function loopRow(loop: LoopView): TemplateResult {
 function paint(): void {
   if (!loopsHost || appState.currentView !== "loops") return;
   if (activeLoopId) {
-    render(activeDetail ? detailTpl(activeDetail) : html`<p class="list-empty">Loading…</p>`, loopsHost);
+    render(activeDetail ? detailTpl(activeDetail) : html`<p class="list-empty">${t("Loading…")}</p>`, loopsHost);
     return;
   }
   render(
     listPageTpl({
-      title: "Loops",
+      title: t("Loops"),
       rows: loopList.map(loopRow),
       empty: loopsLoading
-        ? "Loading…"
+        ? t("Loading…")
         : (loopsNotice ??
-          "No loops yet. Ask the agent to set one up. The define-loop skill walks through it, shadow run first."),
+          t("No loops yet. Ask the agent to set one up. The define-loop skill walks through it, shadow run first.")),
     }),
     loopsHost,
   );

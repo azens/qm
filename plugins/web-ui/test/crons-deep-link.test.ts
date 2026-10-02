@@ -23,7 +23,7 @@ test("cron index rows keep details and raw schedules out of the summary", () => 
 test("cron index keeps only search in its header controls", () => {
   const page = source.slice(source.indexOf("function drawCronsPage"), source.indexOf("function setCronTab"));
   assert.doesNotMatch(page, /onScope|onRefresh|label: "New cron"/);
-  assert.match(page, /placeholder: "Search crons"/);
+  assert.match(page, /placeholder: t\("Search crons"\)/);
 });
 
 test("reopening a cron refreshes recent runs without a manual refresh control", () => {

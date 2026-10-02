@@ -6322,12 +6322,13 @@
         >
           <path d="m12 19-7-7 7-7M5 12h14" />
         </svg>
-        <span>Back to home</span>
+        <span data-i18n="Back to home">Back to home</span>
       </a>
-      <div class="header-controls" id="header-controls" aria-label="Page controls"></div>
+
+      <div class="header-controls" id="header-controls" aria-label="Page controls" data-i18n-aria-label="Page controls"></div>
       <div class="who hidden" id="who">
         <span class="account-identity"><span id="org-tag"></span><span class="pill" id="who-name"></span></span>
-        <button class="link" id="signout" type="button">Sign out</button>
+        <button class="link" id="signout" type="button" data-i18n="Sign out">Sign out</button>
       </div>
     </header>
 
@@ -6344,7 +6345,7 @@
           <span class="brand-mark" aria-hidden="true"></span>
           <span class="brand-name"><span data-brand-product>QM</span> <span class="brand-suffix">(admin)</span></span>
         </div>
-        <p class="lead" role="status">Checking your access…</p>
+        <p class="lead" role="status" data-i18n="Checking your access…">Checking your access…</p>
       </div>
     </div>
 
@@ -6354,10 +6355,12 @@
           <span class="brand-mark" aria-hidden="true"></span>
           <span class="brand-name"><span data-brand-product>QM</span> <span class="brand-suffix">(admin)</span></span>
         </div>
-        <h1>Sign in through the portal</h1>
-        <p class="lead">This admin surface is reached through the portal. Sign in there to continue.</p>
+        <h1 data-i18n="Sign in through the portal">Sign in through the portal</h1>
+        <p class="lead" data-i18n="This admin surface is reached through the portal. Sign in there to continue.">This admin surface is reached through the portal. Sign in there to continue.</p>
         <div class="card">
-          <div class="body" id="principal-list"><p class="hint">Sign in through the portal to continue.</p></div>
+          <div class="body" id="principal-list">
+            <p class="hint" data-i18n="Sign in through the portal to continue.">Sign in through the portal to continue.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -6368,15 +6371,19 @@
           <span class="brand-mark" aria-hidden="true"></span>
           <span class="brand-name"><span data-brand-product>QM</span> <span class="brand-suffix">(admin)</span></span>
         </div>
-        <h1>Admin is temporarily unavailable</h1>
-        <p class="lead">
-          We couldn't verify your admin access right now. The backend didn't answer. This is usually temporary.
-        </p>
+        <h1 data-i18n="Admin is temporarily unavailable">Admin is temporarily unavailable</h1>
+        <p
+          class="lead"
+          data-i18n="We couldn't verify your admin access right now. The backend didn't answer. This is usually temporary."
+        ></p>
         <div class="card">
           <div class="body">
-            <p class="hint">Trying again resolves most cases. If this keeps happening, the core service may be down.</p>
+            <p
+              class="hint"
+              data-i18n="Trying again resolves most cases. If this keeps happening, the core service may be down."
+            ></p>
             <div class="signin-actions" style="display: flex; gap: 10px; margin-top: 8px; justify-content: center">
-              <button class="link" id="uv-retry" type="button">Try again</button>
+              <button class="link" id="uv-retry" type="button" data-i18n="Try again">Try again</button>
             </div>
           </div>
         </div>
@@ -6389,21 +6396,21 @@
           <span class="brand-mark" aria-hidden="true"></span>
           <span class="brand-name"><span data-brand-product>QM</span> <span class="brand-suffix">(admin)</span></span>
         </div>
-        <h1>You don't have admin access</h1>
-        <p class="lead">
-          The Admin area is limited to governance admins. Your account is signed in and verified. It just isn't granted
-          admin rights.
-        </p>
+        <h1 data-i18n="You don't have admin access">You don't have admin access</h1>
+        <p
+          class="lead"
+          data-i18n="The Admin area is limited to governance admins. Your account is signed in and verified. It just isn't granted admin rights."
+        ></p>
         <div class="card">
           <div class="body">
-            <p class="notebox">Signed in as <b id="na-sub"></b> · <span id="na-org"></span></p>
-            <p class="hint">
-              Admin rights come from your organization's admin grants. If you need access, ask an existing admin to
-              grant it.
-            </p>
+            <p class="notebox"><span data-i18n="Signed in as">Signed in as</span> <b id="na-sub"></b> · <span id="na-org"></span></p>
+            <p
+              class="hint"
+              data-i18n="Admin rights come from your organization's admin grants. If you need access, ask an existing admin to grant it."
+            ></p>
             <div class="signin-actions" style="display: flex; gap: 10px; margin-top: 8px; justify-content: center">
-              <a class="link" href="/">Back to your surfaces</a>
-              <button class="link" id="na-signout" type="button">Sign out</button>
+              <a class="link" href="/" data-i18n="Back to your surfaces">Back to your surfaces</a>
+              <button class="link" id="na-signout" type="button" data-i18n="Sign out">Sign out</button>
             </div>
           </div>
         </div>
@@ -6411,112 +6418,110 @@
     </div>
 
     <div class="admin-app hidden" id="app-view">
-      <aside class="admin-sidebar" aria-label="Admin navigation">
+      <aside class="admin-sidebar" data-i18n-aria-label="Admin navigation">
         <div class="brand">
           <span class="brand-mark" aria-hidden="true"></span>
           <span class="brand-name"
             ><span id="brand-product" data-brand-product>QM</span> <span class="brand-suffix">(admin)</span></span
           >
         </div>
-        <div class="tab-section">Admin</div>
+        <div class="tab-section" data-i18n="Admin">Admin</div>
         <nav class="tabs" id="tabs"></nav>
       </aside>
 
-      <main class="admin-main" id="main" aria-label="Admin content">
+      <main class="admin-main" id="main" aria-label="Admin content" data-i18n-aria-label="Admin content">
         <div class="admin-inner">
           <div class="shellbar" id="shellbar"></div>
 
           <div id="view-onboarding" class="hidden">
             <div class="setup-head">
-              <p class="governance-eyebrow">Temporary setup guide</p>
-              <h1>Onboarding</h1>
-              <p class="lead">
-                Get this deployment ready for real conversations. Secrets are validated, encrypted in durable storage,
-                and never displayed again.
-              </p>
+              <p class="governance-eyebrow" data-i18n="Temporary setup guide">Temporary setup guide</p>
+              <h1 data-i18n="Onboarding">Onboarding</h1>
+              <p
+                class="lead"
+                data-i18n="Get this deployment ready for real conversations. Secrets are validated, encrypted in durable storage, and never displayed again."
+              ></p>
             </div>
             <template data-onboarding-ui="steps"></template>
             <template data-onboarding-ui="provider"></template>
             <template data-onboarding-ui="registry"></template>
             <section class="card">
               <div class="head">
-                <h2>Custom providers</h2>
-                <p>
-                  Point the deployment at any OpenAI- or Anthropic-compatible endpoint: a vendor like DeepSeek, or a
-                  gateway like LiteLLM fronting many models. Keys are validated, stored write-only, and the models join
-                  the picker.
-                </p>
+                <h2 data-i18n="Custom providers">Custom providers</h2>
+                <p
+                  data-i18n="Point the deployment at any OpenAI- or Anthropic-compatible endpoint: a vendor like DeepSeek, or a gateway like LiteLLM fronting many models. Keys are validated, stored write-only, and the models join the picker."
+                ></p>
               </div>
               <div class="body">
                 <table class="table" id="custom-provider-table">
                   <thead>
                     <tr>
-                      <th>Provider</th>
-                      <th>Protocol</th>
-                      <th>Endpoint</th>
-                      <th>Models</th>
-                      <th>Key</th>
+                      <th data-i18n="Provider">Provider</th>
+                      <th data-i18n="Protocol">Protocol</th>
+                      <th data-i18n="Endpoint">Endpoint</th>
+                      <th data-i18n="Models">Models</th>
+                      <th data-i18n="Key">Key</th>
                       <th></th>
                     </tr>
                   </thead>
                   <tbody id="custom-provider-rows"></tbody>
                 </table>
-                <p class="muted" id="custom-provider-empty" hidden>No custom providers registered.</p>
+                <p class="muted" id="custom-provider-empty" hidden data-i18n="No custom providers registered.">No custom providers registered.</p>
               </div>
               <div class="foot">
-                <button type="button" id="onboarding-add-custom-provider">+ Add provider</button>
+                <button type="button" id="onboarding-add-custom-provider" data-i18n="+ Add provider">+ Add provider</button>
               </div>
             </section>
           </div>
 
           <div id="view-governance">
-            <p id="governance-loading" class="hint hidden" role="status">Loading settings…</p>
+            <p id="governance-loading" class="hint hidden" role="status"></p>
             <aside class="environment-notice admin-notice hidden" id="environment-notice" role="status">
               <div>
                 <strong id="environment-notice-title"></strong>
                 <p id="environment-notice-detail"></p>
               </div>
-              <button type="button" id="environment-notice-open">Open environment</button>
+              <button type="button" id="environment-notice-open"></button>
             </aside>
             <section class="governance-overview" id="governance-overview" aria-labelledby="governance-overview-title">
               <div class="governance-overview-head">
-                <h2 id="governance-overview-title">Effective state</h2>
-                <p>Resolved for this scope now</p>
+                <h2 id="governance-overview-title" data-i18n="Effective state">Effective state</h2>
+                <p data-i18n="Resolved for this scope now">Resolved for this scope now</p>
               </div>
               <div class="governance-status-grid">
                 <div class="governance-status" id="governance-status-posture">
-                  <span class="k">Autonomy</span><span class="v">Loading</span
-                  ><span class="detail">Security posture</span>
+                  <span class="k" data-i18n="Autonomy">Autonomy</span><span class="v"></span
+                  ><span class="detail"></span>
                 </div>
                 <div class="governance-status" id="governance-status-sharing">
-                  <span class="k">Sharing</span><span class="v">Loading</span
-                  ><span class="detail">Cross-context reads</span>
+                  <span class="k" data-i18n="Sharing">Sharing</span><span class="v"></span
+                  ><span class="detail"></span>
                 </div>
                 <div class="governance-status" id="governance-status-egress">
-                  <span class="k">Network</span><span class="v">Loading</span
-                  ><span class="detail">Outbound enforcement</span>
+                  <span class="k" data-i18n="Network">Network</span><span class="v"></span
+                  ><span class="detail"></span>
                 </div>
                 <div class="governance-status" id="governance-status-audience">
-                  <span class="k">Slack audience</span><span class="v">Loading</span
-                  ><span class="detail">External participants</span>
+                  <span class="k" data-i18n="Slack audience">Slack audience</span><span class="v"></span
+                  ><span class="detail"></span>
                 </div>
                 <div class="governance-status" id="governance-status-model">
-                  <span class="k">Intelligence</span><span class="v">Loading</span
-                  ><span class="detail">Base model</span>
+                  <span class="k" data-i18n="Intelligence">Intelligence</span><span class="v"></span
+                  ><span class="detail"></span>
                 </div>
               </div>
             </section>
             <div class="governance-layout">
-              <nav class="governance-sections" aria-label="Governance sections">
-                <a href="#governance-autonomy" aria-current="true">Autonomy</a>
-                <a href="#governance-boundaries">Data boundaries</a>
-                <a href="#governance-intelligence">Models &amp; browsing</a>
-                <a href="#governance-credentials">Credentials</a>
+              <nav class="governance-sections" data-i18n-aria-label="Governance sections">
+                <a href="#governance-autonomy" aria-current="true" data-i18n="Autonomy">Autonomy</a>
+                <a href="#governance-boundaries" data-i18n="Data boundaries">Data boundaries</a>
+                <a href="#governance-intelligence" data-i18n="Models &amp; browsing">Models & browsing</a>
+                <a href="#governance-credentials" data-i18n="Credential settings">Credentials</a>
               </nav>
               <div class="governance-content">
                 <div class="governance-group" id="governance-autonomy">
-                  <h2>Autonomy</h2>
-                  <p>How agents reason, act, and respond without supervision.</p>
+                  <h2 data-i18n="Autonomy">Autonomy</h2>
+                  <p data-i18n="How agents reason, act, and respond without supervision.">How agents reason, act, and respond without supervision.</p>
                 </div>
                 <template data-governance-card="card-security-posture"></template>
                 <template data-governance-card="card-auto-flagger"></template>
@@ -6525,8 +6530,8 @@
                 <template data-settings-card="card-soul"></template>
                 <template data-governance-card="card-ambient-policy"></template>
                 <div class="governance-group" id="governance-boundaries">
-                  <h2>Data boundaries</h2>
-                  <p>What can leave a scope, which audiences can see it, and how deployment authority is carried.</p>
+                  <h2 data-i18n="Data boundaries">Data boundaries</h2>
+                  <p data-i18n="What can leave a scope, which audiences can see it, and how deployment authority is carried.">What can leave a scope, which audiences can see it, and how deployment authority is carried.</p>
                 </div>
                 <template data-governance-card="card-sharing-posture"></template>
                 <template data-governance-card="card-egress"></template>
@@ -6535,16 +6540,16 @@
                 <template data-integrations-card="card-channel-header-pin-default"></template>
                 <template data-integrations-card="card-ack-emoji"></template>
                 <div class="governance-group" id="governance-intelligence">
-                  <h2>Models &amp; browsing</h2>
-                  <p>The models, browser runtime, and organization context available on future turns.</p>
+                  <h2 data-i18n="Models &amp; browsing">Models & browsing</h2>
+                  <p data-i18n="The models, browser runtime, and organization context available on future turns.">The models, browser runtime, and organization context available on future turns.</p>
                 </div>
                 <template data-settings-card="card-base-model"></template>
                 <template data-settings-card="card-webui-models"></template>
                 <template data-settings-card="card-branding"></template>
                 <template data-settings-card="card-feature-flags"></template>
                 <div class="governance-group" id="governance-credentials">
-                  <h2>Credentials</h2>
-                  <p>Shared server-side authority available to agents in this organization.</p>
+                  <h2 data-i18n="Credential settings">Credentials</h2>
+                  <p data-i18n="Shared server-side authority available to agents in this organization.">Shared server-side authority available to agents in this organization.</p>
                 </div>
                 <template data-settings-card="card-service-credentials"></template>
               </div>
@@ -6565,10 +6570,10 @@
 
     <dialog class="review-dialog policy-test-dialog" id="policy-test-dialog" aria-labelledby="policy-test-title">
       <div class="review-dialog-head">
-        <h2 id="policy-test-title">Test a command</h2>
+        <h2 id="policy-test-title" data-i18n="Test a command">Test a command</h2>
       </div>
       <div class="review-dialog-body">
-        <label for="policy-sample"
+        <label for="policy-sample" data-i18n="Command"
           >Command<input
             type="text"
             id="policy-sample"
@@ -6576,20 +6581,18 @@
             autocomplete="off"
             spellcheck="false"
         /></label>
-        <div class="policy-result" id="policy-result" aria-live="polite">
-          Enter a sample command to test the scope policy.
-        </div>
+        <div class="policy-result" id="policy-result" aria-live="polite"></div>
       </div>
       <div class="review-dialog-foot">
-        <button type="button" id="policy-test-close">Close</button
-        ><button id="policy-simulate" class="primary" type="button">Test command</button>
+        <button type="button" id="policy-test-close" data-i18n="Close"></button
+        ><button id="policy-simulate" class="primary" type="button" data-i18n="Test command">Test command</button>
       </div>
     </dialog>
 
     <dialog class="review-dialog" id="governance-review" aria-labelledby="governance-review-title">
       <div class="review-dialog-head">
-        <p class="governance-eyebrow">Review change</p>
-        <h2 id="governance-review-title">Confirm governance change</h2>
+        <p class="governance-eyebrow" data-i18n="Review change">Review change</p>
+        <h2 id="governance-review-title" data-i18n="Confirm governance change">Confirm governance change</h2>
         <p id="governance-review-subtitle"></p>
       </div>
       <div class="review-dialog-body">
@@ -6597,8 +6600,8 @@
         <p class="review-dialog-warning admin-notice" id="governance-review-warning"></p>
       </div>
       <div class="review-dialog-foot">
-        <button type="button" id="governance-review-cancel">Cancel</button
-        ><button type="button" class="review-dialog-confirm" id="governance-review-confirm">Confirm change</button>
+        <button type="button" id="governance-review-cancel" data-i18n="Cancel"></button
+        <button type="button" class="review-dialog-confirm" id="governance-review-confirm"></button>
       </div>
     </dialog>
 
@@ -6607,6 +6610,24 @@
     <script>
       "__GOVERNANCE_UI__";
       governanceUI.mountCards();
+      const _t = (key, vars) => governanceUI.t(key, vars);
+      const I18N_TEXT_ATTRS = ["aria-label", "title", "placeholder"];
+      function translateStaticMarkup(root = document) {
+        root.querySelectorAll("[data-i18n]").forEach((el) => {
+          const text = _t(el.getAttribute("data-i18n"));
+          if (!el.firstElementChild) {
+            el.textContent = text;
+            return;
+          }
+          for (const node of el.childNodes) if (node.nodeType === Node.TEXT_NODE) node.nodeValue = text;
+        });
+        I18N_TEXT_ATTRS.forEach((attr) => {
+          root.querySelectorAll(`[data-i18n-${attr}]`).forEach((el) => {
+            el.setAttribute(attr, _t(el.getAttribute(`data-i18n-${attr}`)));
+          });
+        });
+      }
+      translateStaticMarkup();
       const themeMedia = window.matchMedia("(prefers-color-scheme: dark)");
       function syncAdminTheme() {
         const saved = localStorage.getItem("theme") || "system";
@@ -6620,7 +6641,11 @@
         if (event.key === "theme") syncAdminTheme();
       });
       const $ = (id) => document.getElementById(id);
-      const EFFECT_LABELS = { allow: "Allow", deny: "Deny", require_approval: "Require approval" };
+      const EFFECT_LABELS = {
+        allow: "Allow",
+        deny: "Deny",
+        require_approval: "Require approval",
+      };
       const SECTIONS = [
         {
           views: ["governance", "models", "credentials", "connectors", "slack-settings", "customize", "users", "spend"],
@@ -6635,9 +6660,13 @@
         },
         { views: ["design-system"] },
       ];
+      const effectLabel = (key) => _t(EFFECT_LABELS[key] || key);
+      const sectionLabel = (label) => (label ? _t(label) : "");
 
       const VIEWS = [...SECTIONS.flatMap((s) => s.views), "onboarding", "user", "ackemoji", "keychain"];
       let permissions = [];
+      let connectorTip = null;
+      const connectorTipText = () => connectorTip?.querySelector("p") ?? document.createElement("p");
       function prepareParityCards() {
         const content = document.querySelector("#view-governance .governance-content");
         const anchor = $("governance-credentials");
@@ -6648,7 +6677,8 @@
         providers.className = "card sv-models";
         providers.id = "card-custom-providers";
         providers.innerHTML =
-          '<div class="head"><h2>Custom providers</h2><p>OpenAI Chat Completions, OpenAI Responses, and Anthropic Messages endpoints. Their models join the pickers above and below.</p></div><div class="body"><div class="tablewrap" id="model-custom-provider-table"><table><thead><tr><th>Provider</th><th>Protocol</th><th>Endpoint</th><th>Models</th><th>Key</th><th></th></tr></thead><tbody id="model-custom-provider-rows"></tbody></table></div><div id="custom-provider-summary" class="hint">Loading providers…</div></div><div class="foot"><button type="button" id="add-custom-provider">+ Add provider</button></div>';
+          '<div class="head"><h2 data-i18n="Custom providers">Custom providers</h2><p data-i18n="OpenAI Chat Completions, OpenAI Responses, and Anthropic Messages endpoints. Their models join the pickers above and below.">OpenAI Chat Completions, OpenAI Responses, and Anthropic Messages endpoints. Their models join the pickers above and below.</p></div><div class="body"><div class="tablewrap" id="model-custom-provider-table"><table><thead><tr><th data-i18n="Provider">Provider</th><th data-i18n="Protocol">Protocol</th><th data-i18n="Endpoint">Endpoint</th><th data-i18n="Models">Models</th><th data-i18n="Key">Key</th><th></th></tr></thead><tbody id="model-custom-provider-rows"></tbody></table></div><div id="custom-provider-summary" class="hint"></div></div><div class="foot"><button type="button" id="add-custom-provider" data-i18n="+ Add provider">+ Add provider</button></div>';
+        translateStaticMarkup(providers);
 
         const governanceAmbient = governanceUI.createCard("card-governance-org-ambient");
         $("card-command-policy").after(governanceAmbient);
@@ -6657,7 +6687,8 @@
         keychains.className = "card sv-credentials";
         keychains.id = "card-personal-keychains";
         keychains.innerHTML =
-          '<div class="head"><h2>Personal keychains</h2></div><div class="body"><div class="keychain-summary"><strong id="keychain-user-count">—</strong> users with keychain entries · <strong id="keychain-standing-count">—</strong> standing grants</div></div><div class="foot"><button type="button" class="viewlink" data-viewlink="users">View users ›</button></div>';
+          '<div class="head"><h2 data-i18n="Personal keychains">Personal keychains</h2></div><div class="body"><div class="keychain-summary"></div></div><div class="foot"><button type="button" class="viewlink" data-viewlink="users" data-i18n="View users ›">View users ›</button></div>';
+        translateStaticMarkup(keychains);
         $("card-feature-flags").classList.remove("hidden");
 
         [
@@ -6686,21 +6717,22 @@
         ].forEach((card) => content.appendChild(card));
 
         const connectorView = $("view-connectors");
-        const connectorTip = document.createElement("aside");
+        connectorTip = document.createElement("aside");
         connectorTip.className = "connector-dm-tip admin-notice hidden";
         connectorTip.id = "connector-dm-tip";
         connectorTip.setAttribute("role", "note");
         connectorTip.appendChild(document.createElement("p"));
-        connectorTip.querySelector("p").textContent =
-          "Tip: the easiest way to change these settings is to ask " +
-          ($("brand-product").textContent || "Agent") +
-          " in a DM. It can make the edit for you and confirm what changed.";
+        connectorTipText().textContent = _t(
+          "Tip: the easiest way to change these settings is to ask {agent} in a DM. It can make the edit for you and confirm what changed.",
+          { agent: $("brand-product").textContent || _t("Agent") },
+        );
         connectorView.before(connectorTip);
         const builtIns = document.createElement("section");
         builtIns.className = "card";
         builtIns.id = "card-built-in-connectors";
         builtIns.innerHTML =
-          '<div class="head"><h2>Built-in connectors</h2></div><div class="body" id="built-in-connectors">Loading connectors…</div>';
+          '<div class="head"><h2 data-i18n="Built-in connectors">Built-in connectors</h2></div><div class="body" id="built-in-connectors"></div>';
+        translateStaticMarkup(builtIns);
         $("card-slack-installation").classList.add("sv-slack-settings");
         [
           "card-slack-installation",
@@ -6723,7 +6755,8 @@
       dialog.setAttribute("aria-labelledby", "sc-dialog-title");
       dialog.setAttribute("aria-describedby", "sc-dialog-description");
       dialog.innerHTML =
-        '<div class="project-dialog-head"><div><h2 id="sc-dialog-title">Add credential</h2><p id="sc-dialog-description">Connect a service securely, then choose what the agent can access.</p></div><button class="project-icon-button" type="button" id="sc-dialog-close" aria-label="Close credential dialog">×</button></div><div class="project-dialog-actions" id="sc-dialog-actions"></div>';
+        '<div class="project-dialog-head"><div><h2 id="sc-dialog-title">Add credential</h2><p id="sc-dialog-description" data-i18n="Connect a service securely, then choose what the agent can access.">Connect a service securely, then choose what the agent can access.</p></div><button class="project-icon-button" type="button" id="sc-dialog-close" data-i18n-aria-label="Close credential dialog">×</button></div><div class="project-dialog-actions" id="sc-dialog-actions"></div>';
+      translateStaticMarkup(dialog);
       $("card-service-credentials").appendChild(dialog);
       dialog.insertBefore($("sc-editor"), $("sc-dialog-actions"));
       $("sc-dialog-actions").append($("sc-reset"), $("sc-save"));
@@ -6748,7 +6781,7 @@
       });
       function openScDialog() {
         const dialog = $("sc-dialog");
-        $("sc-dialog-title").textContent = scEditing ? "Edit credential" : "Add credential";
+        $("sc-dialog-title").textContent = scEditing ? _t("Edit credential") : _t("Add credential");
         setStatus("st-service-credentials", "", "");
         $("sc-dialog-actions").prepend($("st-service-credentials"));
         if (!dialog.open) dialog.showModal();
@@ -6776,7 +6809,7 @@
         onboarding: "Onboarding",
         governance: "Governance",
         models: "Models",
-        credentials: "Credentials",
+        credentials: "Credential settings",
         customize: "Customize",
         connectors: "Connectors",
         users: "Users",
@@ -6801,6 +6834,7 @@
         ackemoji: "Ack emoji",
         "design-system": "Design system",
       };
+      const viewTitle = (v) => _t(VIEW_TITLE[v] || titleCase(v));
       const SCOPED = new Set([
         "governance",
         "metrics",
@@ -6840,9 +6874,11 @@
 
       const brandSelfLabel = () =>
         document.querySelector('meta[name="brand-self-label"]')?.getAttribute("content") || "QM";
-      // The header's product name and the tab title follow the org's assistant label.
       for (const el of document.querySelectorAll("[data-brand-product]")) el.textContent = brandSelfLabel();
-      document.title = `${brandSelfLabel()} Admin`;
+      document.title = `${brandSelfLabel()} ${_t("Admin console")}`;
+      $("home-link").querySelector("span").textContent = _t("Back to home");
+      $("main").setAttribute("aria-label", _t("Admin content"));
+      document.querySelector(".admin-sidebar").setAttribute("aria-label", _t("Admin navigation"));
       let page = 1;
 
       const FOCUS_STALE_MS = 60000;
@@ -6868,7 +6904,7 @@
           } catch {}
           return { ok: res.ok, status: res.status, data };
         } catch {
-          return { ok: false, status: 0, data: { message: "Network request failed." } };
+          return { ok: false, status: 0, data: { message: _t("Network request failed.") } };
         }
       }
 
@@ -6880,16 +6916,16 @@
             headers: { accept: "application/json" },
           });
           if (!res.ok) {
-            let msg = "Failed (" + res.status + ")";
+            let msg = _t("Failed ({status})", { status: res.status });
             try {
               const j = await res.json();
               if (j && j.message) msg = j.message;
             } catch {}
-            alert("Couldn't start impersonation: " + msg);
+            alert(_t("Couldn't start impersonation: {reason}", { reason: msg }));
             return;
           }
         } catch (e) {
-          alert("Couldn't start impersonation: " + (e && e.message ? e.message : e));
+          alert(_t("Couldn't start impersonation: {reason}", { reason: e && e.message ? e.message : e }));
           return;
         }
         window.open("/web-ui/", "_blank", "noopener");
@@ -6898,28 +6934,29 @@
         const b = document.createElement("button");
         b.type = "button";
         b.className = "link";
-        b.textContent = "Open web UI as this person ↗";
-        b.title = "View the assistant web UI as " + target + " (audited)";
+        b.textContent = _t("Open web UI as this person ↗");
+        b.title = _t("View the assistant web UI as {user} (audited)", { user: target });
         b.onclick = () => openWebUiAs(target);
         return b;
       }
-      const fmtTime = (ts) => new Date(ts).toLocaleString();
+      const UI_LOCALE = () => governanceUI.currentLocale();
+      const fmtTime = (ts) => new Date(ts).toLocaleString(UI_LOCALE());
       const sameLocalDate = (a, b) =>
         a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-      const fmtClock = (d) => d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+      const fmtClock = (d) => d.toLocaleTimeString(UI_LOCALE(), { hour: "numeric", minute: "2-digit" });
       function relTime(ts) {
-        if (!ts) return "Never";
+        if (!ts) return _t("Never");
         const d = new Date(ts);
         const now = new Date();
         const mins = Math.floor((now.getTime() - d.getTime()) / 60000);
-        if (mins >= 0 && mins < 1) return "now";
-        if (mins >= 0 && mins < 60) return mins + (mins === 1 ? " min" : " mins");
-        if (sameLocalDate(d, now)) return "Today " + fmtClock(d);
+        if (mins >= 0 && mins < 1) return _t("now");
+        if (mins >= 0 && mins < 60) return _t("{minutes} min", { minutes: mins });
+        if (sameLocalDate(d, now)) return _t("Today {time}", { time: fmtClock(d) });
         const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-        if (sameLocalDate(d, yesterday)) return "Yesterday " + fmtClock(d);
+        if (sameLocalDate(d, yesterday)) return _t("Yesterday {time}", { time: fmtClock(d) });
         return (
           d.toLocaleDateString(
-            [],
+            UI_LOCALE(),
             d.getFullYear() === now.getFullYear()
               ? { month: "short", day: "numeric" }
               : { month: "short", day: "numeric", year: "numeric" },
@@ -6930,7 +6967,7 @@
       }
       const fmtHistoryTime = relTime;
       function fmtHistoryCreated(createdAt, lastActivity) {
-        if (!createdAt) return "Never";
+        if (!createdAt) return _t("Never");
         const created = new Date(createdAt);
         return lastActivity && sameLocalDate(created, new Date(lastActivity))
           ? fmtClock(created)
@@ -7020,7 +7057,7 @@
         }
         card.classList.toggle("dirty", !!card.querySelector("button.dirty"));
         const st = statusId ? $(statusId) : null;
-        if (dirty && statusId) setStatus(statusId, "Unsaved changes", "dirty", true);
+        if (dirty && statusId) setStatus(statusId, _t("Unsaved changes"), "dirty", true);
         else if (
           st &&
           (st.classList.contains("dirty") || st.classList.contains("saving") || st.classList.contains("muted"))
@@ -7090,8 +7127,8 @@
       function sessionCountsLabel(sessions, background) {
         const parts = [];
         if (sessions) parts.push(plural(sessions, "conversation"));
-        if (background) parts.push(Number(background).toLocaleString() + " background");
-        return parts.join(" · ") || "no conversations";
+        if (background) parts.push(governanceUI.formatNumber(Number(background)) + " " + _t("background"));
+        return parts.join(" · ") || _t("no conversations");
       }
       function linkedStacked(href, primary, secondary) {
         const d = stacked(primary, secondary);
@@ -7135,9 +7172,11 @@
       }
       const shortId = (id, len = 8) => String(id || "").slice(0, len) || "-";
       const titleCase = (s) =>
-        String(s || "")
-          .replace(/[_-]/g, " ")
-          .replace(/\b\w/g, (m) => m.toUpperCase());
+        _t(
+          String(s || "")
+            .replace(/[_-]/g, " ")
+            .replace(/\b\w/g, (m) => m.toUpperCase()),
+        );
       function labelRole(role) {
         return role === "org_admin" ? "admin" : String(role || "").replace(/_/g, " ");
       }
@@ -7219,12 +7258,12 @@
         if (!me.ok) {
           $("who").classList.add("hidden");
 
-          if (me.status !== 401) return showView("unavailable-view", "Admin is temporarily unavailable.");
-          return showView("signin-view", "Sign in through the portal to continue.");
+          if (me.status !== 401) return showView("unavailable-view", _t("Admin is temporarily unavailable."));
+          return showView("signin-view", _t("Sign in through the portal to continue."));
         }
         $("org-tag").textContent = me.data.org;
-        $("org-tag").title = "Organization: " + me.data.org;
-        $("who-name").title = "Signed in as " + me.data.principal;
+        $("org-tag").title = _t("Organization: {org}", { org: me.data.org });
+        $("who-name").title = _t("Signed in as {user}", { user: me.data.principal });
         orgId = me.data.org;
         $("who-name").textContent = me.data.principal;
         permissions = Array.isArray(me.data.permissions) ? me.data.permissions : [];
@@ -7232,10 +7271,10 @@
           $("who").classList.remove("hidden");
           $("na-sub").textContent = me.data.principal;
           $("na-org").textContent = me.data.org;
-          return showView("notadmin-view", "You don't have admin access.");
+          return showView("notadmin-view", _t("You don't have admin access."));
         }
         $("who").classList.remove("hidden");
-        showView("app-view", "Signed in as " + me.data.principal);
+        showView("app-view", _t("Signed in as {user}", { user: me.data.principal }));
 
         if (!new URLSearchParams(location.search).get("scope")) scope = "org:" + orgId;
         route();
@@ -7282,7 +7321,7 @@
           if (s.label) {
             const h = document.createElement("div");
             h.className = "tab-section";
-            h.textContent = s.label;
+            h.textContent = sectionLabel(s.label);
             nav.appendChild(h);
           }
           s.views.forEach((v) => {
@@ -7291,7 +7330,7 @@
             b.className = "tab" + (s.label ? "" : " tab-top") + (v === view ? " active" : "");
             if (v === "design-system") b.classList.add("tab-footer");
             b.type = "button";
-            b.appendChild(document.createTextNode(VIEW_TITLE[v] || v[0].toUpperCase() + v.slice(1)));
+            b.appendChild(document.createTextNode(viewTitle(v)));
             if (v === view) b.setAttribute("aria-current", "page");
             b.onclick = () => setView(v);
 
@@ -7504,8 +7543,34 @@
       }
       function governanceScopeName(scopeId = scope) {
         return scopeKind(scopeId) === "org"
-          ? "Organization · " + scopeId.split(":").slice(1).join(":")
+          ? _t("Organization · {scope}", { scope: scopeId.split(":").slice(1).join(":") })
           : shortName(scopeId);
+      }
+      function confirmDiscardGovernanceDraft(destination) {
+        if (governanceSaveInFlight()) {
+          void reviewGovernanceChange({
+            title: _t("Governance save in progress"),
+            subtitle: _t("Wait for the current save to finish before leaving."),
+            facts: [
+              [_t("Current scope"), governanceScopeName()],
+              [_t("Destination view"), destination],
+            ],
+            warning: _t("The change may already be committing and cannot be safely discarded."),
+            confirmLabel: null,
+          });
+          return Promise.resolve(false);
+        }
+        return reviewGovernanceChange({
+          title: _t("Discard unsaved governance changes?"),
+          subtitle: _t("This page has a draft that has not been applied."),
+          facts: [
+            [_t("Current scope"), governanceScopeName()],
+          [_t("Destination view"), destination],
+          ],
+          warning: _t("Leaving now discards every unsaved setting on this Governance page."),
+          confirmLabel: _t("Discard and leave"),
+          danger: true,
+        });
       }
       function commitGo(st) {
         history.pushState(st, "", stateToUrl(st));
@@ -7514,34 +7579,10 @@
       function go(st) {
         const leavingDraft = hasGovernanceDraft() && (st.view !== view || st.scope !== scope);
         if (!leavingDraft) return commitGo(st);
-        if (governanceSaveInFlight()) {
-          void reviewGovernanceChange({
-            title: "Governance save in progress",
-            subtitle: "Wait for the current save to finish before leaving.",
-            facts: [
-              ["Current scope", governanceScopeName()],
-              ["Destination", VIEW_TITLE[st.view] || titleCase(st.view)],
-            ],
-            warning: "The change may already be committing and cannot be safely discarded.",
-            confirmLabel: null,
-          });
-          return;
-        }
-        void reviewGovernanceChange({
-          title: "Discard unsaved governance changes?",
-          subtitle: "This page has a draft that has not been applied.",
-          facts: [
-            ["Current scope", governanceScopeName()],
-            ["Destination", VIEW_TITLE[st.view] || titleCase(st.view)],
-          ],
-          warning: "Leaving now discards every unsaved setting on this Governance page.",
-          confirmLabel: "Discard and leave",
-          danger: true,
-        }).then((confirmed) => {
-          if (confirmed) {
-            if (view === "governance") governanceReadyScope = null;
-            commitGo(st);
-          }
+        void confirmDiscardGovernanceDraft(viewTitle(st.view)).then((confirmed) => {
+          if (!confirmed) return;
+          if (view === "governance") governanceReadyScope = null;
+          commitGo(st);
         });
       }
       function setView(v) {
@@ -7588,30 +7629,7 @@
         if (next.view === view && next.scope === scope) return;
         const current = { view, scope, session: null, page };
         history.pushState(current, "", stateToUrl(current));
-        if (governanceSaveInFlight()) {
-          void reviewGovernanceChange({
-            title: "Governance save in progress",
-            subtitle: "Wait for the current save to finish before leaving.",
-            facts: [
-              ["Current scope", governanceScopeName()],
-              ["Destination", VIEW_TITLE[next.view] || titleCase(next.view)],
-            ],
-            warning: "The change may already be committing and cannot be safely discarded.",
-            confirmLabel: null,
-          });
-          return;
-        }
-        void reviewGovernanceChange({
-          title: "Discard unsaved governance changes?",
-          subtitle: "This page has a draft that has not been applied.",
-          facts: [
-            ["Current scope", governanceScopeName()],
-            ["Destination", VIEW_TITLE[next.view] || titleCase(next.view)],
-          ],
-          warning: "Leaving now discards every unsaved setting on this Governance page.",
-          confirmLabel: "Discard and leave",
-          danger: true,
-        }).then((confirmed) => {
+        void confirmDiscardGovernanceDraft(viewTitle(next.view)).then((confirmed) => {
           if (!confirmed) return;
           allowGovernancePop = true;
           history.back();
@@ -7625,12 +7643,14 @@
 
       let scopeDir = null;
       let environmentDir = [];
-      let scopeDirNote = "Loading scopes…";
+      let scopeDirNote = _t("Loading scopes…");
       async function loadScopeDirectory() {
         const r = await api("GET", "/api/scopes");
         if (!r.ok) {
           scopeDirNote =
-            r.status === 403 ? "Only an org admin can list scopes." : r.data?.message || "Failed to load scopes.";
+            r.status === 403
+              ? _t("Only an org admin can list scopes.")
+              : r.data?.message || _t("Failed to load scopes.");
           if (historyIsIndex()) renderScopeIndex();
           return;
         }
@@ -7651,7 +7671,7 @@
       }
 
       function scopeTitle(id) {
-        return scopeKind(id) === "org" ? "All scopes" : dirLabel(id) || id;
+        return scopeKind(id) === "org" ? _t("All scopes") : dirLabel(id) || id;
       }
 
       function shortName(scopeId) {
@@ -7706,9 +7726,14 @@
           const count = document.createElement("span");
           count.className = "log-count";
           const number = Number(value);
-          const noun = number === 1 ? label.replace(/s$/, "") : label;
-          count.textContent =
-            (Number.isFinite(number) ? number.toLocaleString() : String(value)) + " " + noun.toLowerCase();
+          const noun = (text) => {
+            const label = _t(text);
+            return UI_LOCALE() === "en" ? label.toLowerCase() : label;
+          };
+          count.textContent = governanceUI.pluralize(number, {
+            one: _t("{count} {noun}", { noun: noun(label.replace(/s$/, "")) }),
+            other: _t("{count} {noun}", { noun: noun(label) }),
+          });
           return count;
         };
         if (opts.back) {
@@ -7745,8 +7770,12 @@
             b.type = "button";
             b.className = "shell-tab" + (tab.active ? " active" : "");
             b.setAttribute("aria-pressed", String(!!tab.active));
-            if (logView) b.textContent = tab.label;
-            else b.textContent = tab.count != null ? tab.label + " " + Number(tab.count).toLocaleString() : tab.label;
+            if (logView) b.textContent = _t(tab.label);
+            else
+              b.textContent =
+                tab.count != null
+                  ? _t(tab.label) + " " + governanceUI.formatNumber(Number(tab.count))
+                  : _t(tab.label);
             b.onclick = tab.onClick;
             wrap.appendChild(b);
           });
@@ -7781,6 +7810,7 @@
         (opts.actions || []).forEach((n) => bar.appendChild(n));
       }
       function searchField({ placeholder = "Search…", onInput = () => {}, value = "", disabled = false }) {
+        placeholder = _t(placeholder);
         const wrap = document.createElement("div");
         wrap.className = "shell-search admin-search";
         const input = document.createElement("input");
@@ -7801,7 +7831,7 @@
         const clear = document.createElement("button");
         clear.type = "button";
         clear.className = "icon-button admin-search-clear";
-        clear.setAttribute("aria-label", "Clear search");
+        clear.setAttribute("aria-label", _t("Clear search"));
         clear.textContent = "×";
         clear.disabled = disabled;
         clear.onclick = () => {
@@ -7836,7 +7866,7 @@
 
       function defaultShell(extras = {}) {
         extras = { actions: view === "credentials" ? [scAddButton] : [], ...extras };
-        const title = VIEW_TITLE[view] || titleCase(view);
+        const title = viewTitle(view);
         if (SCOPED.has(view) && !orgWideView()) {
           pageShell({
             back: {
@@ -7967,20 +7997,20 @@
           const draftBefore = JSON.stringify(governanceUI.settings.collect("soul"));
           const expectedVersion = governanceUI.settings.collect("soul").expectedVersion;
           const confirmed = await reviewGovernanceChange({
-            title: "Restore SOUL version " + immutable.version + "?",
-            subtitle: "The saved instructions from this revision will replace the current SOUL.",
+            title: _t("Restore SOUL version {version}?", { version: immutable.version }),
+            subtitle: _t("The saved instructions from this revision will replace the current SOUL."),
             facts: [
-              ["Scope", governanceScopeName(targetScope)],
-              ["Current", "Version " + expectedVersion],
-              ["Restore", "Version " + immutable.version],
+              [_t("Scope"), governanceScopeName(targetScope)],
+              [_t("Current"), _t("Version {version}", { version: expectedVersion })],
+              [_t("Restore"), _t("Version {version}", { version: immutable.version })],
             ],
-            warning:
+            warning: _t(
               "This does not erase history. A new revision will be created, and future turns will use it immediately.",
-            confirmLabel: "Restore version " + immutable.version,
-            danger: true,
+            ),
+            confirmLabel: _t("Restore version {version}", { version: immutable.version }),
           });
           if (!confirmed || scope !== targetScope || governanceReq !== targetGeneration) return;
-          setStatus("st-soul", "Restoring…", "saving", true);
+          setStatus("st-soul", _t("Restoring…"), "saving", true);
           const r = await api("PUT", "/api/scopes/" + encodeURIComponent(targetScope) + "/soul", {
             content: immutable.content,
             expectedVersion,
@@ -7991,8 +8021,8 @@
             return setStatus(
               "st-soul",
               r.status === 409
-                ? "SOUL changed; latest revision loaded and your draft was preserved."
-                : r.data?.message || "Restore failed.",
+                ? _t("SOUL changed; latest revision loaded and your draft was preserved.")
+                : r.data?.message || _t("Restore failed."),
               "err",
               true,
             );
@@ -8000,13 +8030,13 @@
           const fresh = await api("GET", "/api/scopes/" + encodeURIComponent(targetScope) + "?view=customize");
           if (scope !== targetScope || governanceReq !== targetGeneration) return;
           if (!fresh.ok)
-            return setStatus("st-soul", "Restored, but the latest version could not be refreshed.", "warn", true);
+            return setStatus("st-soul", _t("Restored, but the latest version could not be refreshed."), "warn", true);
           if (JSON.stringify(governanceUI.settings.collect("soul")) === draftBefore)
             governanceUI.settings.load(fresh.data, targetScope, "soul");
           else governanceUI.settings.refreshSoul(fresh.data);
           sectionSnapshots.set("soul", governanceUI.settings.states.get("soul").baseline);
           if (!governanceUI.settings.states.get("soul").dirty)
-            setStatus("st-soul", "Version " + immutable.version + " restored as a new revision", "ok", true);
+            setStatus("st-soul", _t("Version {version} restored as a new revision", { version: immutable.version }), "ok", true);
         },
       });
       function setGovernanceStatus(id, value, detail, tone) {
@@ -8015,17 +8045,29 @@
         root.querySelector(".v").textContent = value;
         root.querySelector(".detail").textContent = detail;
       }
+
+      const GOVERNANCE_STATUS_TILES = [
+        ["governance-status-posture", "Security posture"],
+        ["governance-status-sharing", "Cross-context reads"],
+        ["governance-status-egress", "Outbound enforcement"],
+        ["governance-status-audience", "External participants"],
+        ["governance-status-model", "Base model"],
+      ];
+      function resetGovernanceStatus() {
+        for (const [id, detail] of GOVERNANCE_STATUS_TILES)
+          setGovernanceStatus(id, _t("Loading"), _t(detail), "neutral");
+      }
       function renderGovernanceOverview(data) {
         const posture = data.securityPosture || "auto";
         let postureTone = "ok";
         if (posture === "dangerous") postureTone = "danger";
         else if (posture === "auto") postureTone = "warn";
-        setGovernanceStatus("governance-status-posture", titleCase(posture), "Effective security posture", postureTone);
+        setGovernanceStatus("governance-status-posture", titleCase(posture), _t("Effective security posture"), postureTone);
         const sharingPosture = data.sharingPosture || "isolated";
         setGovernanceStatus(
           "governance-status-sharing",
           titleCase(sharingPosture),
-          "Effective sharing posture",
+          _t("Effective sharing posture"),
           sharingPosture === "open" ? "danger" : "ok",
         );
         const allowCount = (data.egress?.allowedHosts || []).length;
@@ -8039,19 +8081,19 @@
         const policyCount = allowCount + denyCount;
         const inactiveEgressDetail =
           enforcement.reason === "control_plane_unconfigured"
-            ? "Backend supports policy; control plane inactive"
-            : "Backend cannot enforce host policy";
+            ? _t("Backend supports policy; control plane inactive")
+            : _t("Backend cannot enforce host policy");
         let egressDetail = inactiveEgressDetail;
         if (enforcement.active) {
           egressDetail = policyCount
             ? plural(policyCount, "effective rule")
-            : "Policy enforced by " + enforcement.backend;
+            : _t("Policy enforced by {backend}", { backend: titleCase(enforcement.backend) });
         } else if (policyCount) {
           egressDetail = plural(policyCount, "draft rule") + " · " + inactiveEgressDetail;
         }
         setGovernanceStatus(
           "governance-status-egress",
-          enforcement.active ? titleCase(enforcement.fidelity) + " enforced" : "Unavailable",
+          enforcement.active ? _t("{fidelity} enforced", { fidelity: titleCase(enforcement.fidelity) }) : _t("Unavailable"),
           egressDetail,
           enforcement.active ? "ok" : "warn",
         );
@@ -8059,19 +8101,19 @@
           const external = !!data.externalSlackParticipants;
           setGovernanceStatus(
             "governance-status-audience",
-            external ? "External enabled" : "Internal only",
-            external ? "Guests may see agent output" : "Organization boundary",
+            external ? _t("External enabled") : _t("Internal only"),
+            external ? _t("Guests may see agent output") : _t("Organization boundary"),
             external ? "danger" : "ok",
           );
         } else {
-          setGovernanceStatus("governance-status-audience", "Inherited", "Resolved at organization scope", "neutral");
+          setGovernanceStatus("governance-status-audience", _t("Inherited"), _t("Resolved at organization scope"), "neutral");
         }
-        const model = data.baseModel || data.baseModelDefault || "Deployment default";
+        const model = data.baseModel || data.baseModelDefault || _t("Deployment default");
         const option = (data.baseModelOptions || []).find((candidate) => candidate.id === model);
         setGovernanceStatus(
           "governance-status-model",
           option?.name || model,
-          data.baseModel ? "Local override" : "Effective default",
+          data.baseModel ? _t("Local override") : _t("Effective default"),
           "neutral",
         );
       }
@@ -8095,16 +8137,20 @@
         notice.classList.toggle("hidden", !attachment);
         if (!attachment) return;
         const name = attachment.environmentName || shortName(attachment.environmentId);
-        $("environment-notice-title").textContent = "Uses named environment " + name;
-        $("environment-notice-detail").textContent =
-          "Computer files and working memory resolve to this environment. Governance and conversation history remain scoped here.";
-        $("environment-notice-open").textContent = "Open " + name;
+        $("environment-notice-title").textContent = _t("Uses named environment {name}", { name });
+        $("environment-notice-detail").textContent = _t(
+          "Computer files and working memory resolve to this environment. Governance and conversation history remain scoped here.",
+        );
+        $("environment-notice-open").textContent = _t("Open {name}", { name });
         $("environment-notice-open").onclick = () =>
           go({ view: "governance", scope: attachment.environmentId, session: null, page: 1 });
       }
       function setGovernancePending(pending) {
         const root = $("view-governance");
-        if (pending) $("governance-loading").textContent = "Loading settings…";
+        if (pending) {
+          $("governance-loading").textContent = _t("Loading settings…");
+          resetGovernanceStatus();
+        }
         root.classList.toggle("governance-pending", pending);
         root.setAttribute("aria-busy", String(pending));
         $("governance-loading").classList.toggle("hidden", !pending);
@@ -8128,19 +8174,19 @@
         if (!r.ok) {
           if (requestedView === "credentials") {
             governanceUI.settings.credentialLoading(
-              r.status === 403 ? "You don't administer this scope." : "Could not load credentials.",
+              r.status === 403 ? _t("You don't administer this scope.") : _t("Could not load credentials."),
               true,
             );
           }
           if (requestedView === "governance" && governanceReadyScope !== requestedScope) {
             $("governance-loading").textContent =
               r.status === 403
-                ? "You don't administer this scope."
-                : "Could not load settings. Select Governance to retry.";
+                ? _t("You don't administer this scope.")
+                : _t("Could not load settings. Select Governance to retry.");
           }
           setStatus(
             "st-policy",
-            r.status === 403 ? "You don't administer this scope." : r.data?.message || "Failed to load.",
+            r.status === 403 ? _t("You don't administer this scope.") : r.data?.message || _t("Failed to load."),
             "err",
           );
           return;
@@ -8327,7 +8373,7 @@
         if (wasOpen) scAddButton.focus();
       }
       function serviceCredentialPrincipalLabel(grantee) {
-        if (grantee.startsWith("org:")) return "Everyone in this organization";
+        if (grantee.startsWith("org:")) return _t("Everyone in this organization");
         if (grantee.startsWith("channel:")) {
           const label = dirLabel(grantee);
           return label ? "#" + label + " (" + grantee + ")" : grantee;
@@ -8358,30 +8404,32 @@
         };
         const targetScope = scope;
         const principals = c.grantees.some((g) => g.startsWith("org:"))
-          ? "everyone in the organization"
+          ? _t("everyone in the organization")
           : c.grantees.map(serviceCredentialPrincipalLabel).join(", ");
         const recent =
           c.usageCount == null || c.usageUnavailable
-            ? " Recent usage is unavailable."
+            ? " " + _t("Recent usage is unavailable.")
             : c.recentUsagePrincipals.length
-              ? " Recent users in the retained window: " +
-                c.recentUsagePrincipals.map((id) => serviceCredentialPrincipalLabel("personal:" + id)).join(", ") +
-                "."
-              : " No successful use appears in the retained window.";
+              ? " " +
+                _t("Recent users in the retained window: {users}.", {
+                  users: c.recentUsagePrincipals
+                    .map((id) => serviceCredentialPrincipalLabel("personal:" + id))
+                    .join(", "),
+                })
+              : " " + _t("No successful use appears in the retained window.");
         const confirmed = await reviewGovernanceChange({
-          title: "Delete “" + (c.name || c.slug) + "”?",
-          subtitle: "This credential currently grants broker access to " + principals + "." + recent,
+          title: _t("Delete “{name}”?", { name: c.name || c.slug }),
+          subtitle: _t("This credential currently grants broker access to {principals}.") + "." + recent,
           facts: [
-            ["Scope", governanceScopeName(targetScope)],
-            ["Credential", c.name || c.slug],
-            ["Slug", c.slug],
+            [_t("Scope"), governanceScopeName(targetScope)],
+            [_t("Credential"), c.name || c.slug],
+            [_t("Slug"), c.slug],
           ],
-          warning:
-            "Deletion immediately revokes every grant and removes the stored secret. Existing agent work that depends on “" +
-            c.slug +
-            "” will fail. This cannot be undone.",
-          confirmLabel: "Delete credential",
-          danger: true,
+          warning: _t(
+            "Deletion immediately revokes every grant and removes the stored secret. Existing agent work that depends on “{slug}” will fail. This cannot be undone.",
+            { slug: c.slug },
+          ),
+          confirmLabel: _t("Delete credential"),
         });
         if (!confirmed || targetScope !== scope) return;
         const r = await api("PUT", "/api/scopes/" + encodeURIComponent(targetScope) + "/service-credentials", {
@@ -8393,14 +8441,14 @@
         if (r.ok) {
           resetScForm();
           await loadScope();
-          setStatus("st-service-credentials", "Deleted", "ok");
+          setStatus("st-service-credentials", _t("Deleted"), "ok");
         } else {
           const conflictState = r.status === 409 ? await refreshServiceCredentialConflict() : false;
-          let message = r.data?.message || "Delete failed.";
+          let message = r.data?.message || _t("Delete failed.");
           if (r.status === 409) {
             message = conflictState
-              ? "Credential changed; the latest state is shown. Review it before deleting."
-              : "Credential changed, but the latest state could not be loaded. Refresh the page before deleting.";
+              ? _t("Credential changed; the latest state is shown. Review it before deleting.")
+              : _t("Credential changed, but the latest state could not be loaded. Refresh the page before deleting.");
           }
           setStatus("st-service-credentials", message, "err");
         }
@@ -8423,7 +8471,7 @@
           return;
         }
         $("sc-save").disabled = true;
-        setStatus("st-service-credentials", "Saving...", "saving", true);
+        setStatus("st-service-credentials", _t("Saving..."), "saving", true);
         let r;
         try {
           r = await api("PUT", "/api/scopes/" + encodeURIComponent(targetScope) + "/service-credentials", body);
@@ -8432,7 +8480,7 @@
           updateScFormDirty();
           setStatus(
             "st-service-credentials",
-            "Save failed because the admin service could not be reached. Your draft is preserved; try again.",
+            _t("Save failed because the admin service could not be reached. Your draft is preserved; try again."),
             "err",
             true,
           );
@@ -8444,7 +8492,7 @@
           if (scope !== targetScope) return;
           governanceUI.settings.credentialState.commit(body);
           if (!governanceUI.settings.credentialState.dirty) resetScForm();
-          setStatus("st-service-credentials", "Saved", "ok");
+          setStatus("st-service-credentials", _t("Saved"), "ok");
         } else {
           let conflictState = false;
           try {
@@ -8453,25 +8501,27 @@
             updateScFormDirty();
             setStatus(
               "st-service-credentials",
-              "Save failed because the admin service could not be reached. Your draft is preserved; try again.",
+              _t("Save failed because the admin service could not be reached. Your draft is preserved; try again."),
               "err",
               true,
             );
             return;
           }
           updateScFormDirty();
-          let message = r.data?.message || "Save failed.";
+          let message = r.data?.message || _t("Save failed.");
           if (r.status === 403) {
-            message = "Not authorized for this scope.";
+            message = _t("Not authorized for this scope.");
           } else if (r.status === 409) {
             if (conflictState === "missing") {
-              message =
-                "This credential was deleted elsewhere. Your draft is preserved, but it remains an edit and cannot recreate the credential. Cancel the edit before creating a new credential.";
+              message = _t(
+                "This credential was deleted elsewhere. Your draft is preserved, but it remains an edit and cannot recreate the credential. Cancel the edit before creating a new credential.",
+              );
             } else if (conflictState === "present") {
-              message = "Credential changed; latest revision loaded and your draft was preserved.";
+              message = _t("Credential changed; latest revision loaded and your draft was preserved.");
             } else {
-              message =
-                "Credential changed, but the latest revision could not be loaded. Your draft is preserved; refresh the page before retrying.";
+              message = _t(
+                "Credential changed, but the latest revision could not be loaded. Your draft is preserved; refresh the page before retrying.",
+              );
             }
           }
           setStatus("st-service-credentials", message, "err");
@@ -8534,7 +8584,7 @@
       let twoWayToggleId = 0;
       function twoWayToggle({ label, options, value, onChange, disabled = false }) {
         if (options.length !== 2 || options[0].value === options[1].value)
-          throw new Error("A two-way toggle needs two distinct options.");
+          throw new Error(_t("A two-way toggle needs two distinct options."));
         const group = document.createElement("fieldset");
         group.className = "two-way-toggle";
         group.disabled = disabled;
@@ -8583,6 +8633,7 @@
         return governanceUI.collect("command-policy");
       }
       $("policy-test-open").onclick = () => {
+        $("policy-result").textContent = _t("Enter a sample command to test the scope policy.");
         $("policy-test-dialog").showModal();
         $("policy-sample").focus();
       };
@@ -8592,7 +8643,7 @@
         const result = $("policy-result");
         if (!command.trim()) {
           result.dataset.tone = "";
-          result.textContent = "Enter a sample command first.";
+          result.textContent = _t("Enter a sample command first.");
           return;
         }
         let policy;
@@ -8600,12 +8651,12 @@
           policy = collectPolicy();
         } catch (err) {
           result.dataset.tone = "danger";
-          result.textContent = err instanceof Error ? err.message : "Policy is invalid.";
+          result.textContent = err instanceof Error ? err.message : _t("Policy is invalid.");
           return;
         }
         $("policy-simulate").disabled = true;
         result.dataset.tone = "";
-        result.textContent = "Evaluating with the server’s command scanner…";
+        result.textContent = _t("Evaluating with the server’s command scanner…");
         const simulateBody = { command };
         if (loadedCommandPolicyPresent || $("card-command-policy").classList.contains("dirty"))
           simulateBody.policy = policy;
@@ -8617,7 +8668,7 @@
         $("policy-simulate").disabled = false;
         if (!response.ok) {
           result.dataset.tone = "danger";
-          result.textContent = response.data?.message || "Simulation failed.";
+          result.textContent = response.data?.message || _t("Simulation failed.");
           return;
         }
         const decision = response.data.decision;
@@ -8627,19 +8678,19 @@
         result.dataset.tone = tone;
         let ruleLabel = null;
         if (response.data.ruleSource === "organization") {
-          ruleLabel = "Organization rule " + (response.data.ruleIndex + 1);
+          ruleLabel = _t("Organization rule {index}", { index: response.data.ruleIndex + 1 });
         } else if (response.data.ruleSource === "scope") {
-          ruleLabel = "This scope’s rule " + (response.data.ruleIndex + 1);
+          ruleLabel = _t("This scope’s rule {index}", { index: response.data.ruleIndex + 1 });
         }
         result.textContent = ruleLabel
           ? ruleLabel +
-            " matches" +
+            " " +
+            _t("matches") +
             (response.data.matched ? " “" + response.data.matched + "”" : "") +
             " → " +
-            (EFFECT_LABELS[decision] || decision) +
+            effectLabel(decision) +
             (response.data.reason ? " · " + response.data.reason : "")
-          : "No scope-policy rule matches → " +
-            (EFFECT_LABELS[decision] || decision) +
+          : _t("No scope-policy rule matches → {effect}", { effect: effectLabel(decision) }) +
             (response.data.reason ? " · " + response.data.reason : "");
       }
       $("policy-simulate").onclick = simulatePolicy;
@@ -8688,22 +8739,27 @@
       ]);
       const sectionSnapshots = new Map();
       function autoFlaggerTestSummary(data) {
-        if (!data.sampled) return data.message || "No past screenings to replay yet.";
-        const pct = (value) => (value == null ? "n/a" : (value * 100).toFixed(1) + "%");
-        const parts = ["Flagged " + data.flagged + " of " + data.scored + " scored (" + pct(data.flagRate) + ")"];
+        if (!data.sampled) return data.message || _t("No past screenings to replay yet.");
+        const pct = (value) => (value == null ? "n/a" : governanceUI.formatNumber(value, { style: "percent", maximumFractionDigits: 1 }));
+        const parts = [
+          _t("Flagged {flagged} of {scored} scored ({rate})", {
+            flagged: data.flagged,
+            scored: data.scored,
+            rate: pct(data.flagRate),
+          }),
+        ];
         if (data.baseline) {
           parts.push(
-            "current rubric flags " +
-              pct(data.baseline.flagRate) +
-              " · " +
-              plural(data.baseline.changed, "verdict") +
-              " changed",
+            _t("current rubric flags {rate} · {changed} changed", {
+              rate: pct(data.baseline.flagRate),
+              changed: plural(data.baseline.changed, "verdict"),
+            }),
           );
         }
-        if (data.unscreened) parts.push(plural(data.unscreened, "sample") + " came back unscreened");
-        if (data.errors) parts.push(plural(data.errors, "sample") + " errored");
-        if (data.partial) parts.push("stopped at the time limit — partial result");
-        parts.push("sampled " + data.sampled + " · " + Math.round(data.durationMs / 100) / 10 + "s");
+        if (data.unscreened) parts.push(plural(data.unscreened, "sample") + " " + _t("came back unscreened"));
+        if (data.errors) parts.push(plural(data.errors, "sample") + " " + _t("errored"));
+        if (data.partial) parts.push(_t("stopped at the time limit — partial result"));
+        parts.push(_t("sampled {count} · {duration}s", { count: data.sampled, duration: Math.round(data.durationMs / 100) / 10 }));
         return parts.join(" · ");
       }
       function sectionButton(key) {
@@ -8757,52 +8813,56 @@
           const before = JSON.parse(sectionSnapshots.get(key) || "{}").posture || "auto";
           const dangerous = body.posture === "dangerous";
           return reviewGovernanceChange({
-            title: dangerous ? "Enable Dangerous autonomy?" : "Change security posture?",
-            subtitle: "Review the immutable change below before it is applied.",
+            title: dangerous ? _t("Enable Dangerous autonomy?") : _t("Change security posture?"),
+            subtitle: _t("Review the immutable change below before it is applied."),
             facts: [
-              ["Scope", governanceScopeName()],
-              ["Current", titleCase(before)],
-              ["Proposed", titleCase(body.posture)],
+              [_t("Scope"), governanceScopeName()],
+              [_t("Current"), titleCase(before)],
+              [_t("Proposed"), titleCase(body.posture)],
             ],
             warning: dangerous
-              ? "Dangerous disables posture-based content screening and tool approval gates. Deployment-required screening still applies. Predeclared command approvals, hard denials, identity, authorization, credential scope, revocation, and audit remain enforced."
-              : "This changes the effective tools and approval behavior for future turns in this scope.",
-            confirmLabel: dangerous ? "Enable Dangerous" : "Apply posture",
-            danger: dangerous,
+              ? _t(
+                  "Dangerous disables posture-based content screening and tool approval gates. Deployment-required screening still applies. Predeclared command approvals, hard denials, identity, authorization, credential scope, revocation, and audit remain enforced.",
+                )
+              : _t("This changes the effective tools and approval behavior for future turns in this scope."),
+            confirmLabel: dangerous ? _t("Enable Dangerous") : _t("Apply posture"),
           });
         }
         if (key === "sharing-posture") {
           const before = JSON.parse(sectionSnapshots.get(key) || "{}").posture || "isolated";
           const open = body.posture === "open";
           return reviewGovernanceChange({
-            title: open ? "Enable Open sharing?" : "Return to Isolated sharing?",
-            subtitle: "This applies to future live human turns in the selected scope.",
+            title: open ? _t("Enable Open sharing?") : _t("Return to Isolated sharing?"),
+            subtitle: _t("This applies to future live human turns in the selected scope."),
             facts: [
-              ["Scope", governanceScopeName()],
-              ["Current", titleCase(before)],
-              ["Proposed", titleCase(body.posture)],
+              [_t("Scope"), governanceScopeName()],
+              [_t("Current"), titleCase(before)],
+              [_t("Proposed"), titleCase(body.posture)],
             ],
             warning: open
-              ? "Open can reveal a speaker's private information in shared replies. It does not carry credentials, history, writes, automation, or another person's resources. Organization, personal, and room policy must all allow it."
-              : "Cross-context resources will again require explicit shares or grants.",
-            confirmLabel: open ? "Enable Open" : "Use Isolated",
-            danger: open,
+              ? _t(
+                  "Open can reveal a speaker's private information in shared replies. It does not carry credentials, history, writes, automation, or another person's resources. Organization, personal, and room policy must all allow it.",
+                )
+              : _t("Cross-context resources will again require explicit shares or grants."),
+            confirmLabel: open ? _t("Enable Open") : _t("Use Isolated"),
           });
         }
         if (key === "external-slack-participants") {
           const before = !!JSON.parse(sectionSnapshots.get(key) || "{}").on;
           return reviewGovernanceChange({
-            title: body.on ? "Allow external Slack audiences?" : "Return Slack to internal-only?",
-            subtitle: "This organization-wide audience boundary applies to future Slack turns.",
+            title: body.on ? _t("Allow external Slack audiences?") : _t("Return Slack to internal-only?"),
+            subtitle: _t("This organization-wide audience boundary applies to future Slack turns."),
             facts: [
-              ["Scope", governanceScopeName()],
-              ["Current", before ? "External audiences enabled" : "Internal only"],
-              ["Proposed", body.on ? "External audiences enabled" : "Internal only"],
+              [_t("Scope"), governanceScopeName()],
+              [_t("Current"), before ? _t("External audiences enabled") : _t("Internal only")],
+              [_t("Proposed"), body.on ? _t("External audiences enabled") : _t("Internal only")],
             ],
             warning: body.on
-              ? "Agent replies and anything read in a mixed Slack room can be visible to guests or Slack Connect participants. External users still cannot drive the agent."
-              : "Mixed-audience Slack rooms will stop receiving agent replies after this change.",
-            confirmLabel: body.on ? "Allow external audiences" : "Require internal audiences",
+              ? _t(
+                  "Agent replies and anything read in a mixed Slack room can be visible to guests or Slack Connect participants. External users still cannot drive the agent.",
+                )
+              : _t("Mixed-audience Slack rooms will stop receiving agent replies after this change."),
+            confirmLabel: body.on ? _t("Allow external audiences") : _t("Require internal audiences"),
             danger: !!body.on,
           });
         }
@@ -8815,20 +8875,22 @@
           const added = after.filter((m) => !before.includes(m));
           const removed = before.filter((m) => !after.includes(m));
           if (!added.length && !removed.length) return Promise.resolve(true);
-          const show = (list) => (list.length ? list.join(", ") : "none");
+          const show = (list) => (list.length ? list.join(", ") : _t("none"));
           return reviewGovernanceChange({
-            title: "Change internal member overrides?",
-            subtitle: "These users count as internal members throughout the organization, not just for mentions.",
+            title: _t("Change internal member overrides?"),
+            subtitle: _t("These users count as internal members throughout the organization, not just for mentions."),
             facts: [
-              ["Scope", governanceScopeName()],
-              ["Adding", show(added)],
-              ["Removing", show(removed)],
-              ["Total after", String(after.length)],
+              [_t("Scope"), governanceScopeName()],
+              [_t("Adding"), show(added)],
+              [_t("Removing"), show(removed)],
+              [_t("Total after"), String(after.length)],
             ],
             warning: added.length
-              ? "These users receive internal-member access. Rooms containing only internal members may use organization credentials, and replies are visible to everyone there. Only add trusted colleagues."
-              : "Removed users without another source of internal membership return to external treatment after the directory refreshes.",
-            confirmLabel: "Apply overrides",
+              ? _t(
+                  "These users receive internal-member access. Rooms containing only internal members may use organization credentials, and replies are visible to everyone there. Only add trusted colleagues.",
+                )
+              : _t("Removed users without another source of internal membership return to external treatment after the directory refreshes."),
+            confirmLabel: _t("Apply overrides"),
             danger: added.length > 0,
           });
         }
@@ -8840,12 +8902,11 @@
         const draftBefore = JSON.stringify(governanceUI.collect("sharing-posture"));
         if (
           !(await reviewGovernanceChange({
-            title: "Follow organization sharing?",
-            subtitle: "Remove this scope's sharing override.",
-            facts: [["Scope", governanceScopeName()]],
-            warning:
-              "The organization's sharing setting will apply. A personal or room Isolated override still takes precedence.",
-            confirmLabel: "Follow organization",
+            title: _t("Follow organization sharing?"),
+            subtitle: _t("Remove this scope's sharing override."),
+            facts: [[_t("Scope"), governanceScopeName()]],
+            warning: _t("The organization's sharing setting will apply. A personal or room Isolated override still takes precedence."),
+            confirmLabel: _t("Follow organization"),
           })) ||
           requestedScope !== scope ||
           requestedGeneration !== governanceReq
@@ -8856,14 +8917,20 @@
         });
         if (requestedScope !== scope || requestedGeneration !== governanceReq) return;
         if (result.ok)
-          await refreshPolicySetting("sharing-posture", requestedScope, requestedGeneration, draftBefore, "Saved");
-        else setStatus("st-sharing-posture", "Could not reset sharing.", "err");
+          await refreshPolicySetting(
+            "sharing-posture",
+            requestedScope,
+            requestedGeneration,
+            draftBefore,
+            _t("Saved"),
+          );
+        else setStatus("st-sharing-posture", _t("Could not reset sharing."), "err");
       };
       async function refreshPolicySetting(key, requestedScope, requestedGeneration, draftBefore, message) {
         const fresh = await api("GET", "/api/scopes/" + encodeURIComponent(requestedScope) + "?view=governance");
         if (requestedScope !== scope || requestedGeneration !== governanceReq) return;
         if (!fresh.ok)
-          return governanceUI.status(key, "Saved, but the current setting could not be refreshed.", "warn");
+          return governanceUI.status(key, _t("Saved, but the current setting could not be refreshed."), "warn");
         const state = governanceUI.states.get(key);
         const currentDraft = state.collect();
         const changed = JSON.stringify(currentDraft) !== draftBefore;
@@ -8882,11 +8949,11 @@
         const windowField = $("auto-flagger-window");
         const requested = Number(windowField.value);
         if (!Number.isInteger(requested) || requested < 1 || requested > 500) {
-          return setStatus("st-auto-flagger-test", "Window must be a whole number between 1 and 500.", "err", true);
+          return setStatus("st-auto-flagger-test", _t("Window must be a whole number between 1 and 500."), "err", true);
         }
         setStatus(
           "st-auto-flagger-test",
-          "Replaying the last " + requested + " screenings through this rubric…",
+          _t("Replaying the last {count} screenings through this rubric…", { count: requested }),
           "",
           true,
         );
@@ -8901,7 +8968,7 @@
           });
           if (requestedScope !== scope) return;
           if (!r.ok) {
-            return setStatus("st-auto-flagger-test", r.data?.message || "Test run failed.", "err", true);
+            return setStatus("st-auto-flagger-test", r.data?.message || _t("Test run failed."), "err", true);
           }
           setStatus("st-auto-flagger-test", autoFlaggerTestSummary(r.data), r.data.errors ? "warn" : "ok", true);
         } finally {
@@ -8916,13 +8983,13 @@
           reset: true,
         });
         if (requestedScope !== scope || requestedGeneration !== governanceReq) return;
-        if (!r.ok) return setStatus("st-auto-flagger", r.data?.message || "Reset failed.", "err");
+        if (!r.ok) return setStatus("st-auto-flagger", r.data?.message || _t("Reset failed."), "err");
         await refreshPolicySetting(
           "auto-flagger",
           requestedScope,
           requestedGeneration,
           draftBefore,
-          "Default restored",
+          _t("Default restored"),
         );
       };
 
@@ -8935,7 +9002,7 @@
           try {
             body = SAVE[key]();
           } catch (err) {
-            setStatus(SAVE_ST[key], err instanceof Error ? err.message : "Could not save.", "err");
+            setStatus(SAVE_ST[key], err instanceof Error ? err.message : _t("Could not save."), "err");
             return;
           }
           if (
@@ -8947,7 +9014,7 @@
           const saveRequest = String(++governanceSaveSeq);
           btn.dataset.saveRequest = saveRequest;
           btn.disabled = true;
-          setStatus(SAVE_ST[key], "Saving...", "saving", true);
+          setStatus(SAVE_ST[key], _t("Saving..."), "saving", true);
           const isBranding = key === "branding";
           const brandingBody = isBranding ? { ...savedBranding, ...body } : body;
           const r = await api(
@@ -8980,8 +9047,8 @@
                 if (fresh.ok) {
                   governanceUI.settings.refreshSoul(fresh.data);
                   sectionSnapshots.set(key, governanceUI.states.get(key).baseline);
-                  if (!governanceUI.states.get(key).dirty) governanceUI.status(key, "Saved", "ok");
-                } else governanceUI.status(key, "Saved, but the latest version could not be refreshed.", "warn");
+                  if (!governanceUI.states.get(key).dirty) governanceUI.status(key, _t("Saved"), "ok");
+                } else governanceUI.status(key, _t("Saved, but the latest version could not be refreshed."), "warn");
                 return;
               }
               if (key === "command-policy") loadedCommandPolicyPresent = true;
@@ -8994,7 +9061,7 @@
                 if (fresh.ok && !governanceUI.states.get(key).dirty) {
                   governanceUI.load(fresh.data, requestedScope, key);
                   sectionSnapshots.set(key, JSON.stringify(governanceUI.collect(key)));
-                  governanceUI.status(key, "Saved", "ok");
+                  governanceUI.status(key, _t("Saved"), "ok");
                 }
               }
               return;
@@ -9003,15 +9070,15 @@
               if (key === "command-policy") loadedCommandPolicyPresent = true;
               captureSection(key);
             }
-            setStatus(SAVE_ST[key], "Saved", "ok");
+            setStatus(SAVE_ST[key], _t("Saved"), "ok");
           } else {
             if (key === "soul" && r.status === 409) await refreshSoulConflict();
             updateSectionDirty(key);
-            let message = r.data?.message || "Save failed.";
+            let message = r.data?.message || _t("Save failed.");
             if (key === "soul" && r.status === 409) {
-              message = "SOUL changed; latest revision loaded and your draft was preserved.";
+              message = _t("SOUL changed; latest revision loaded and your draft was preserved.");
             } else if (r.status === 403) {
-              message = "Not authorized for this scope.";
+              message = _t("Not authorized for this scope.");
             }
             setStatus(SAVE_ST[key], message, "err");
           }
@@ -9322,7 +9389,7 @@
           root.textContent = "";
           const loading = document.createElement("div");
           loading.className = "loadingline";
-          loading.textContent = "Loading " + (VIEW_TITLE[view] || view).toLowerCase() + "...";
+          loading.textContent = _t("Loading {view}…", { view: viewTitle(view).toLowerCase() });
           root.appendChild(loading);
         }
         const r = await api("GET", path);
@@ -9388,11 +9455,11 @@
         deliver: ["Slack deliver", "The final Slack post/update round-trip"],
         capture: ["Memory capture", "Post-turn fact extraction, off the critical path"],
       };
-      const phaseLabel = (key) => (PHASE_META[key] || [titleCase(key)])[0];
-      const phaseDesc = (key) => (PHASE_META[key] || [])[1] || "";
+      const phaseLabel = (key) => _t((PHASE_META[key] || [titleCase(key)])[0]);
+      const phaseDesc = (key) => _t((PHASE_META[key] || [])[1] || "");
       function turnKindWords(s) {
-        if (s.provisioned === true) return s.coldStart === true ? "cold machine boot" : "warm machine";
-        if (s.provisioned === false) return "no machine";
+        if (s.provisioned === true) return s.coldStart === true ? _t("cold machine boot") : _t("warm machine");
+        if (s.provisioned === false) return _t("no machine");
         return "";
       }
       function sparkline(daily, valueOf = (r) => r.p50) {
@@ -9558,7 +9625,7 @@
           }
           const msg = document.createElement("span");
           msg.className = "mono";
-          msg.textContent = firstLine(e.message || "(no message)", 160);
+          msg.textContent = firstLine(e.message || _t("(no message)"), 160);
           msg.title = e.message || "";
           const meta = document.createElement("span");
           meta.className = "subline";
@@ -9569,7 +9636,7 @@
         if (errs.length > max) {
           const more = document.createElement("div");
           more.className = "subline";
-          more.textContent = "…and " + (errs.length - max) + " more";
+          more.textContent = _t("…and {count} more", { count: errs.length - max });
           box.appendChild(more);
         }
         return box;
@@ -9608,25 +9675,25 @@
         });
       }
       function cronName(c, previewAction = false) {
-        if (!c) return "Cron";
+        if (!c) return _t("Cron");
         if (c.title || c.message) return c.title || c.message;
         if (previewAction && c.action) return firstLine(c.action, 96);
-        return "Cron " + shortId(c.id);
+        return _t("Cron {id}", { id: shortId(c.id) });
       }
       function wakeOriginLabel(trigger) {
         switch (String(trigger || "").toLowerCase()) {
           case "cron":
-            return "Cron";
+            return _t("Cron");
           case "monitor":
-            return "Monitor wake";
+            return _t("Monitor wake");
           case "webhook":
-            return "Webhook wake";
+            return _t("Webhook wake");
           default:
-            return "Background wake";
+            return _t("Background wake");
         }
       }
       function plural(n, one, many = one + "s") {
-        return `${Number(n || 0).toLocaleString()} ${Number(n || 0) === 1 ? one : many}`;
+        return governanceUI.pluralize(Number(n || 0), { one: _t("{count} " + one), other: _t("{count} " + many) });
       }
       function historyCategory(kind) {
         return kind === "cron" || kind === "background" ? "background" : kind;
@@ -9634,7 +9701,7 @@
 
       const KIND_LABEL = { conversation: "Conversations", cron: "Crons", background: "Background" };
       function historyModeLabel(kind) {
-        return KIND_LABEL[kind] || KIND_LABEL.conversation;
+        return _t(KIND_LABEL[kind] || KIND_LABEL.conversation);
       }
       function historyKindMatches(s, kind) {
         if (kind === "conversation") return s.category !== "background";
@@ -9688,36 +9755,40 @@
         const minute = minutes.values.length === 1 ? minutes.values[0] : null;
         const hour = hours.values.length === 1 ? hours.values[0] : null;
         if (minute != null && hour != null && dom.any && months.any) {
-          const suffix = hour < 12 ? "AM" : "PM";
-          const time = (hour % 12 || 12) + ":" + String(minute).padStart(2, "0") + " " + suffix;
+          const time = _t("{time} {suffix}", {
+            time: String(hour % 12 || 12) + ":" + String(minute).padStart(2, "0"),
+            suffix: hour < 12 ? "AM" : "PM",
+          });
           const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
           const full = ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"];
-          if (dow.any) return "daily " + time;
-          if (dow.values.join(",") === "1,2,3,4,5") return "weekdays " + time;
+          if (dow.any) return _t("daily {time}", { time });
+          if (dow.values.join(",") === "1,2,3,4,5") return _t("weekdays {time}", { time });
           return (
-            (dow.values.length === 1 ? full[dow.values[0]] : dow.values.map((d) => days[d]).join(", ")) + " " + time
+            _t(dow.values.length === 1 ? full[dow.values[0]] : dow.values.map((d) => days[d]).join(", ")) + " " + time
           );
         }
         if (minute != null && hours.any && dom.any && months.any && dow.any)
-          return minute === 0 ? "hourly" : "hourly at :" + String(minute).padStart(2, "0");
+          return minute === 0
+            ? _t("hourly")
+            : _t("hourly at :{minute}", { minute: String(minute).padStart(2, "0") });
         return "cron " + clean;
       }
       function fmtSchedule(sch) {
-        if (!sch) return "None";
+        if (!sch) return _t("None");
         if (sch.cron) {
           const label = humanCron(sch.cron);
           return (
             label +
-            (sch.timezone ? " (" + sch.timezone + ")" : " (default timezone)") +
+            (sch.timezone ? " (" + sch.timezone + ")" : " (" + _t("default timezone") + ")") +
             (label === "cron " + sch.cron ? "" : " · " + sch.cron)
           );
         }
         if (sch.everyMs != null) return shortSchedule(sch);
-        return sch.firstFireAt ? "once at " + fmtTime(sch.firstFireAt) : "Never";
+        return sch.firstFireAt ? _t("once at {time}", { time: fmtTime(sch.firstFireAt) }) : _t("Never");
       }
 
       function shortSchedule(sch) {
-        if (!sch) return "Never";
+        if (!sch) return _t("Never");
         if (sch.cron) {
           const label = humanCron(sch.cron);
           return label.startsWith("cron ") ? sch.cron : label;
@@ -9730,20 +9801,21 @@
             [1000, "s"],
           ];
           for (const [n, u] of units)
-            if (sch.everyMs >= n && sch.everyMs % n === 0) return "every " + sch.everyMs / n + u;
-          return "every " + sch.everyMs + " ms";
+            if (sch.everyMs >= n && sch.everyMs % n === 0)
+              return _t("every {count}{unit}", { count: sch.everyMs / n, unit: u });
+          return _t("every {count} ms", { count: sch.everyMs });
         }
-        return sch.firstFireAt ? "once" : "Never";
+        return sch.firstFireAt ? _t("once") : _t("Never");
       }
       function destinationSummary(dest) {
-        if (!dest) return "None";
+        if (!dest) return _t("None");
         return (dest.type || "destination") + " -> " + (dest.target || "-");
       }
       function destinationDetails(dest) {
-        if (!dest) return "No delivery destination";
+        if (!dest) return _t("No delivery destination");
         const bits = [];
         if (dest.audienceScopeId) bits.push(dest.audienceScopeId);
-        if (dest.onBehalfOf) bits.push("on behalf of " + dest.onBehalfOf);
+        if (dest.onBehalfOf) bits.push(_t("on behalf of {who}", { who: dest.onBehalfOf }));
         return bits.join(" / ");
       }
       let artifactRenderGeneration = 0;
@@ -9866,7 +9938,7 @@
         btn.type = "button";
         btn.className = "rowbtn";
         btn.textContent = "⋯";
-        btn.setAttribute("aria-label", "Actions");
+        btn.setAttribute("aria-label", _t("Actions"));
         btn.setAttribute("aria-haspopup", "menu");
         btn.setAttribute("aria-expanded", "false");
         const menu = document.createElement("div");
@@ -9934,7 +10006,7 @@
             const x = document.createElement("button");
             x.type = "button";
             x.textContent = "✕";
-            x.setAttribute("aria-label", "Remove " + labelOf(id));
+            x.setAttribute("aria-label", _t("Remove {scope}", { scope: labelOf(id) }));
             x.style.cssText =
               "border:none; background:transparent; cursor:pointer; color:var(--muted); font-size:11px; line-height:1; padding:0 1px;";
             x.onclick = (e) => {
@@ -9952,7 +10024,7 @@
         const addBtn = document.createElement("button");
         addBtn.type = "button";
         addBtn.className = "rowbtn";
-        addBtn.textContent = "+ Add scope ▾";
+        addBtn.textContent = _t("+ Add scope ▾");
         addBtn.setAttribute("aria-haspopup", "listbox");
         addBtn.setAttribute("aria-expanded", "false");
 
@@ -9963,7 +10035,7 @@
         filterWrap.className = "scope-filter";
         const filter = document.createElement("input");
         filter.type = "text";
-        filter.placeholder = "Filter scopes…";
+        filter.placeholder = _t("Filter scopes…");
         filter.spellcheck = false;
         filter.setAttribute("autocapitalize", "none");
         filter.style.cssText =
@@ -9984,13 +10056,13 @@
           return b;
         };
         bulk.append(
-          mkLink("Select all", () => {
+          mkLink(_t("Select all"), () => {
             choices.forEach((c) => selected.add(c.scopeId));
             renderChips();
             renderList();
             onChange();
           }),
-          mkLink("Clear", () => {
+          mkLink(_t("Clear"), () => {
             selected.clear();
             renderChips();
             renderList();
@@ -10007,7 +10079,7 @@
           if (!shown.length) {
             const p = document.createElement("div");
             p.className = "scope-note";
-            p.textContent = "No scopes match.";
+            p.textContent = _t("No scopes match.");
             list.appendChild(p);
             return;
           }
@@ -10113,7 +10185,8 @@
         event?.stopPropagation?.();
         const revoke = user.admin?.isAdmin;
         const principalId = user.principalId;
-        if (!confirm((revoke ? "Revoke admin access for " : "Make admin: ") + principalId + "?")) return;
+        if (!confirm(_t(revoke ? "Revoke admin access for {who}?" : "Make admin: {who}?", { who: principalId })))
+          return;
         const button = event?.currentTarget;
         if (button) button.disabled = true;
         setStatus("st-users", "");
@@ -10130,9 +10203,9 @@
               )
             : await api("POST", "/api/grants", { principalId, role: "org_admin", scopeId: "org:" + orgId });
           if (r.ok) await renderData();
-          else setStatus("st-users", r.data?.message || "Could not update admin access.", "err");
+          else setStatus("st-users", r.data?.message || _t("Could not update admin access."), "err");
         } catch {
-          setStatus("st-users", "Network error. Try again.", "err");
+          setStatus("st-users", _t("Network error. Try again."), "err");
         } finally {
           if (button) button.disabled = false;
         }
@@ -10140,15 +10213,15 @@
       async function revokeExternalUser(m) {
         const question =
           m.status === "active"
-            ? 'Revoke access for "' + m.email + '"? They will no longer be able to sign in.'
-            : 'Remove "' + m.email + '" from the list?';
+            ? _t('Revoke access for "{email}"? They will no longer be able to sign in.', { email: m.email })
+            : _t('Remove "{email}" from the list?', { email: m.email });
         if (!confirm(question)) return;
         const r = await api("DELETE", "/api/external-users/" + encodeURIComponent(m.email));
         if (r.ok) renderData();
         else
           setStatus(
             "st-external",
-            r.status === 403 ? "Only an admin may revoke." : r.data?.message || "Revoke failed.",
+            r.status === 403 ? _t("Only an admin may revoke.") : r.data?.message || _t("Revoke failed."),
             "err",
           );
       }
@@ -10162,9 +10235,8 @@
         return [g.status || "unknown", kind];
       }
       function keychainExpiry(ts) {
-        if (!ts) return "No expiry";
-        const prefix = ts <= Date.now() ? "Expired " : "Expires ";
-        return prefix + fmtTime(ts);
+        if (!ts) return _t("No expiry");
+        return _t(ts <= Date.now() ? "Expired {when}" : "Expires {when}", { when: fmtTime(ts) });
       }
       function keychainPersonLabel(p) {
         return p.displayName ? `${p.displayName} (${p.principalId})` : p.principalId;
@@ -10204,7 +10276,7 @@
         if (typeof p === "object" && typeof p.text === "string") return p.text;
 
         if (typeof p === "object" && typeof p.thinking === "string")
-          return p.thinking || (p.redacted ? "[redacted thinking]" : "");
+          return p.thinking || (p.redacted ? _t("[redacted thinking]") : "");
         try {
           return JSON.stringify(p, null, 2);
         } catch {
@@ -10501,6 +10573,7 @@
         return ok;
       }
       function copyButton(label, getText) {
+        label = _t(label);
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "copy";
@@ -10508,7 +10581,7 @@
         btn.onclick = async (ev) => {
           ev.stopPropagation();
           const ok = await copyText(getText());
-          btn.textContent = ok ? "Copied" : "Copy failed";
+          btn.textContent = ok ? _t("Copied") : _t("Copy failed");
           if (ok) btn.classList.add("copied");
           setTimeout(() => {
             btn.textContent = label;
@@ -10555,7 +10628,7 @@
           const syncExpanded = () => {
             const expanded = block.classList.contains("expanded");
             card.setAttribute("aria-expanded", String(expanded));
-            card.title = expanded ? "Click to collapse tool text" : "Click to expand tool text";
+            card.title = expanded ? _t("Click to collapse tool text") : _t("Click to expand tool text");
             if (truncated) card.textContent = expanded ? primaryText : preview;
           };
           card.tabIndex = 0;
@@ -10586,25 +10659,35 @@
           if (delivery.shadow) {
             const sb = document.createElement("span");
             sb.className = "entry-label";
-            sb.title = "Recorded for observability, never sent to the human (shadow-mode rollout)";
-            sb.textContent = "not sent";
+            sb.title = _t("Recorded for observability, never sent to the human (shadow-mode rollout)");
+            sb.textContent = _t("not sent");
             drow.appendChild(sb);
           }
           drow.appendChild(badge(deliverySurfaceLabel(delivery), "info"));
           const mirror = slackMirrorRef(delivery);
           if (mirror) {
-            const ml = navLink("View in Slack mirror ↗", { view: "slack", container: mirror.container, ts: mirror.ts });
-            ml.title = "Jump to this message in the mirrored Slack channel " + mirror.container;
+            const ml = navLink(_t("View in Slack mirror ↗"), {
+              view: "slack",
+              container: mirror.container,
+              ts: mirror.ts,
+            });
+            ml.title = _t("Jump to this message in the mirrored Slack channel {container}", {
+              container: mirror.container,
+            });
             drow.appendChild(ml);
           }
           const dwhen = document.createElement("span");
           dwhen.className = "when";
-          dwhen.textContent = `${delivery.shadow ? "shadow" : "delivered"} · ${fmtTime(delivery.createdAt)}`;
+          dwhen.textContent = `${_t(delivery.shadow ? "not sent" : "delivered")} · ${fmtTime(delivery.createdAt)}`;
           drow.appendChild(dwhen);
           const pre = document.createElement("pre");
-          const from = delivery.destination?.onBehalfOf ? `from ${delivery.destination.onBehalfOf}\n` : "";
-          const to = delivery.destination?.target ? `to ${delivery.destination.target}\n` : "";
-          const recipientLine = delivery.recipientThreadRef ? `recipient thread ${delivery.recipientThreadRef}\n` : "";
+          const from = delivery.destination?.onBehalfOf
+            ? _t("from {who}", { who: delivery.destination.onBehalfOf }) + "\n"
+            : "";
+          const to = delivery.destination?.target ? _t("to {target}", { target: delivery.destination.target }) + "\n" : "";
+          const recipientLine = delivery.recipientThreadRef
+            ? _t("recipient thread {ref}", { ref: delivery.recipientThreadRef }) + "\n"
+            : "";
           pre.textContent = `${from}${to}${recipientLine}${delivery.text || ""}`.trim();
           dv.append(drow, pre);
           const files = deliveryFileBadges(delivery.attachments);
@@ -10675,7 +10758,7 @@
         governanceUI.history.scopeIndex(root, {
           ready: !!scopeDir,
           note: scopeDirNote,
-          title: VIEW_TITLE.history,
+          title: viewTitle("history"),
           rows: scopeDir ? scopeRows() : [],
           sort: scopeSort,
           pageShell,
@@ -10690,10 +10773,10 @@
           scopeTitle,
           sortControl: () =>
             twoWayToggle({
-              label: "Sort sessions",
+              label: _t("Sort sessions"),
               options: [
-                { value: "human", label: "Human activity" },
-                { value: "all", label: "All activity" },
+                { value: "human", label: _t("Human activity") },
+                { value: "all", label: _t("All activity") },
               ],
               value: scopeSort,
               onChange: (value) => {
@@ -10713,7 +10796,7 @@
           scope,
           orgScope: "org:" + orgId,
           environments: environmentDir,
-          title: VIEW_TITLE.history,
+          title: viewTitle("history"),
           kindLabels: KIND_LABEL,
           historyModeLabel,
           go,
@@ -10755,8 +10838,12 @@
         };
         const info = document.createElement("span");
         info.className = "pageinfo";
-        info.textContent = `${offset + 1}–${Math.min(offset + limit, total)} of ${total}`;
-        wrap.append(btn("← Prev", cur - 1, cur <= 1), info, btn("Next →", cur + 1, cur >= pages));
+        info.textContent = _t("{from}–{to} of {total}", {
+          from: offset + 1,
+          to: Math.min(offset + limit, total),
+          total,
+        });
+        wrap.append(btn(_t("← Prev"), cur - 1, cur <= 1), info, btn(_t("Next →"), cur + 1, cur >= pages));
         return wrap;
       }
 
@@ -11114,15 +11201,15 @@
       }
       function deliverySurfaceLabel(event) {
         const type = event?.destination?.type;
-        if (type === "principal") return "Slack DM";
-        if (type === "slack") return "Slack";
-        if (type === "web") return "Web";
-        return type || "Unknown surface";
+        if (type === "principal") return _t("Slack DM");
+        if (type === "slack") return _t("Slack");
+        if (type === "web") return _t("Web");
+        return type || _t("Unknown surface");
       }
 
       function deliveryLabel(event) {
-        if (event.shadow) return "Shadow delivery";
-        return `${deliverySurfaceLabel(event)} delivery`;
+        if (event.shadow) return _t("Shadow delivery");
+        return _t("{surface} delivery", { surface: deliverySurfaceLabel(event) });
       }
 
       function slackMirrorRef(event) {
@@ -11207,11 +11294,12 @@
         return n ? Math.max(1, Math.round(n / 4)) : 0;
       }
       function fmtTokens(n) {
-        if (!n) return "0 tokens";
-        if (n < 20) return "< 20 tokens";
-        if (n < 1000) return n.toLocaleString() + " tokens";
-        if (n < 1000000) return (n / 1000).toFixed(n >= 10000 ? 0 : 1) + "k tokens";
-        return (n / 1000000).toFixed(1) + "m tokens";
+        if (!n) return _t("0 tokens");
+        if (n < 20) return _t("< 20 tokens");
+        if (n < 1000) return _t("{count} tokens", { count: governanceUI.formatNumber(n) });
+        if (n < 1000000)
+          return _t("{count}k tokens", { count: (n / 1000).toFixed(n >= 10000 ? 0 : 1) });
+        return _t("{count}m tokens", { count: (n / 1000000).toFixed(1) });
       }
 
       function blockText(o) {
@@ -11294,31 +11382,39 @@
         }
         const sys = systemToText(req.system);
         const sections = [
-          { key: "transport", label: "Transport", note: "model + headers", text: transportText(transport) },
+          { key: "transport", label: _t("Transport"), note: _t("model + headers"), text: transportText(transport) },
           {
             key: "system",
-            label: "System prompt",
-            note: sys.cacheSplit ? "verbatim · cache split shown" : "verbatim",
+            label: _t("System prompt"),
+            note: sys.cacheSplit ? _t("verbatim · cache split shown") : _t("verbatim"),
             text: sys.text,
           },
           {
             key: "messages",
-            label: "Messages",
+            label: _t("Messages"),
             note: messages.length
-              ? messages.length + " message" + (messages.length === 1 ? "" : "s")
-              : "not re-captured per step; the transcript is the record",
+              ? governanceUI.pluralize(messages.length, {
+                  one: _t("{count} message"),
+                  other: _t("{count} messages"),
+                })
+              : _t("not re-captured per step; the transcript is the record"),
             text: messages.map(messageEntryText).join("\n\n"),
           },
           {
             key: "tools",
-            label: "Tool schemas",
-            note: Array.isArray(req.tools) ? req.tools.length + " tool" + (req.tools.length === 1 ? "" : "s") : "tools",
+            label: _t("Tool schemas"),
+            note: Array.isArray(req.tools)
+              ? governanceUI.pluralize(req.tools.length, { one: _t("{count} tool"), other: _t("{count} tools") })
+              : _t("tools"),
             text: req.tools == null ? "" : stringify(req.tools),
           },
           {
             key: "params",
-            label: "Request params",
-            note: Object.keys(params).length + " field" + (Object.keys(params).length === 1 ? "" : "s"),
+            label: _t("Request params"),
+            note: governanceUI.pluralize(Object.keys(params).length, {
+              one: _t("{count} field"),
+              other: _t("{count} fields"),
+            }),
             text: Object.keys(params).length ? stringify(params) : "",
           },
         ].filter((s) => s.text);
@@ -11414,6 +11510,7 @@
         return el;
       }
       function rawJsonLink(requests, label = "Raw JSON") {
+        label = _t(label);
         const a = document.createElement("a");
         a.className = "context-raw";
         let payload;
@@ -11466,7 +11563,7 @@
             box.appendChild(img);
           } else {
             box.textContent = "img";
-            box.title = "Large image. Click to preview full size";
+            box.title = _t("Large image. Click to preview full size");
           }
         }
         return box;
@@ -11475,7 +11572,7 @@
         if (!f.openable) return;
         const check = await api("GET", "/api/files/read?id=" + encodeURIComponent(f.id));
         if (!check.ok) {
-          alert(check.data?.message || `Couldn't open file (${check.status}).`);
+          alert(check.data?.message || _t("Couldn't open file ({status}).", { status: check.status }));
           return;
         }
         const href = API_BASE + "/api/files/download?id=" + encodeURIComponent(f.id);
@@ -11496,6 +11593,21 @@
       function renderLive(root, d) {
         governanceUI.artifacts.live(root, d, artifactContext());
       }
+
+      function repaintLocale() {
+        translateStaticMarkup();
+        document.title = `${brandSelfLabel()} ${_t("Admin console")}`;
+        $("home-link").querySelector("span").textContent = _t("Back to home");
+        connectorTipText().textContent = _t(
+          "Tip: the easiest way to change these settings is to ask {agent} in a DM. It can make the edit for you and confirm what changed.",
+          { agent: $("brand-product").textContent || _t("Agent") },
+        );
+        $("sc-dialog-title").textContent = scEditing ? _t("Edit credential") : _t("Add credential");
+        if ($("app-view").classList.contains("hidden")) return;
+        render(urlToState());
+      }
+
+      governanceUI.onLocaleChange(repaintLocale);
 
       refresh();
     </script>

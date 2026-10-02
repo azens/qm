@@ -5,6 +5,7 @@ import { ArrowUpLeft, Box, Brain, Clock3, Ellipsis, Files, GitFork, KeyRound, Ro
 import { api } from "./core-bridge";
 import { closeFormMenus, icon, toggleFormMenu } from "./ui";
 import { tip } from "./tooltip";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 /** A session's context carried into the crons/files/memory views so the whole
  * view stays scoped to that project and keeps the session top bar. */
@@ -126,30 +127,30 @@ export function sessionTopbarTpl(o: SessionTopbarOpts): TemplateResult {
         : nothing
     }
   `;
-  const tool = (t: SessionTool, glyph: Parameters<typeof icon>[0], hint: string) => {
-    const count = t === "crons" || t === "apps" ? (o.toolCount?.(t) ?? null) : null;
+  const tool = (toolId: SessionTool, glyph: Parameters<typeof icon>[0], hint: string) => {
+    const count = toolId === "crons" || toolId === "apps" ? (o.toolCount?.(toolId) ?? null) : null;
     return html`
       <button
-        class="session-tool ${o.activeTool === t ? "active" : ""}"
+        class="session-tool ${o.activeTool === toolId ? "active" : ""}"
         type="button"
         aria-label=${hint}
         ${tip(hint)}
-        @click=${() => o.onTool(t)}
+        @click=${() => o.onTool(toolId)}
       >
         ${icon(glyph, 15)}${count ? html`<span class="session-tool-count">${count}</span>` : nothing}
       </button>
     `;
   };
-  const sheetTool = (t: SessionTool, glyph: Parameters<typeof icon>[0], hint: string) => {
-    const count = t === "crons" || t === "apps" ? (o.toolCount?.(t) ?? null) : null;
+  const sheetTool = (toolId: SessionTool, glyph: Parameters<typeof icon>[0], hint: string) => {
+    const count = toolId === "crons" || toolId === "apps" ? (o.toolCount?.(toolId) ?? null) : null;
     return html`
       <button
-        class="menu-option ${o.activeTool === t ? "active" : ""}"
+        class="menu-option ${o.activeTool === toolId ? "active" : ""}"
         type="button"
         role="menuitem"
         @click=${() => {
           closeFormMenus();
-          o.onTool(t);
+          o.onTool(toolId);
         }}
       >
         ${icon(glyph, 17)}
@@ -176,22 +177,22 @@ export function sessionTopbarTpl(o: SessionTopbarOpts): TemplateResult {
       }
       ${
         o.onTitle
-          ? html`<button class="session-heading as-link" type="button" ${tip("Back to this chat")} @click=${o.onTitle}>
+          ? html`<button class="session-heading as-link" type="button" ${tip(t("Back to this chat"))} @click=${o.onTitle}>
               ${heading}
             </button>`
           : html`<div class="session-heading">${heading}</div>`
       }
       ${sessionStatusMark(o.status)}
       <div class="topbar-actions session-tools">
-        ${tool("crons", Clock3, "Crons")} ${tool("apps", Rocket, "Apps")} ${tool("files", Files, "Files")}
-        ${tool("skills", Box, "Skills")} ${tool("memory", Brain, "Memory")}
-        ${tool("keychain", KeyRound, "Your keychain")}
+        ${tool("crons", Clock3, t("Crons"))} ${tool("apps", Rocket, t("Apps"))} ${tool("files", Files, t("Files"))}
+        ${tool("skills", Box, t("Skills"))} ${tool("memory", Brain, t("Memory"))}
+        ${tool("keychain", KeyRound, t("Your keychain"))}
       </div>
       <div class="topbar-actions form-menu-control session-tools-more" data-align="right" data-drop="down">
         <button
           class="icon-btn menu-button session-tools-more-btn"
           type="button"
-          aria-label="Session tools"
+          aria-label=${t("Session tools")}
           aria-haspopup="menu"
           aria-expanded="false"
           @click=${toggleFormMenu}
@@ -199,10 +200,10 @@ export function sessionTopbarTpl(o: SessionTopbarOpts): TemplateResult {
           ${icon(Ellipsis, 20)}
         </button>
         <div class="menu-popover" role="menu" hidden>
-          <div class="menu-title">This conversation's workspace</div>
-          ${sheetTool("crons", Clock3, "Crons")} ${sheetTool("apps", Rocket, "Apps")}
-          ${sheetTool("files", Files, "Files")} ${sheetTool("skills", Box, "Skills")}
-          ${sheetTool("memory", Brain, "Memory")} ${sheetTool("keychain", KeyRound, "Your keychain")}
+          <div class="menu-title">${t("This conversation's workspace")}</div>
+          ${sheetTool("crons", Clock3, t("Crons"))} ${sheetTool("apps", Rocket, t("Apps"))}
+          ${sheetTool("files", Files, t("Files"))} ${sheetTool("skills", Box, t("Skills"))}
+          ${sheetTool("memory", Brain, t("Memory"))} ${sheetTool("keychain", KeyRound, t("Your keychain"))}
         </div>
       </div>
     </header>

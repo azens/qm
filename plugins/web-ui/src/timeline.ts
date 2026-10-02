@@ -1,5 +1,6 @@
 import { postCallText, postResultOk } from "./surface-post.ts";
 import type { PendingApproval, ToolActivity, WorkBlock } from "./core-bridge.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 export interface ToolPayload {
   sessionId?: string;
@@ -268,7 +269,7 @@ export function sessionToolView(
     sessions.find((row) => row.id === target || row.title === target) ??
     sessions.find((row) => result.result?.includes(`(sessionId ${row.id})`));
   const sessionId = session?.id ?? result.sessionId;
-  let chipTitle = session?.title || result.title || call.name || "Subagent";
+  let chipTitle = session?.title || result.title || call.name || t("Subagent");
   let detail = "";
   if (action === "wait") return { action, detail: "for agent messages" };
   if (action === "read" && !target && result.children === undefined) return { action, detail: "subagents" };

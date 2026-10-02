@@ -1,4 +1,6 @@
 import { html, nothing, render } from "lit";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { onLocaleChange } from "../../chassis/src/i18n.ts";
 type Data = Record<string, any>;
 const providerLabels: Record<string, string> = {
   anthropic: "Anthropic",
@@ -21,7 +23,7 @@ const flagLabels: Record<string, string> = {
   fastMode: "Model supports the Anthropic fast tier",
   auxiliary: "Eligible for auxiliary tasks",
 };
-const errorText = (error: unknown) => (error instanceof Error ? error.message : "Request failed.");
+const errorText = (error: unknown) => (error instanceof Error ? error.message : t("Request failed."));
 export class Onboarding {
   context: Data;
   models: Record<string, Data[]> = {};
@@ -46,17 +48,30 @@ export class Onboarding {
   registryTone = "";
   advanced = false;
   steps: Data = {
-    model: { text: "Not ready", tone: "muted", summary: "Add the key the agent will use for its base model." },
-    slack: {
-      text: "Optional",
+    model: {
+      text: { key: "Not ready", vars: {} },
       tone: "muted",
-      summary: "Create the Slack app, install it, then add its bot and Socket Mode tokens.",
+      summary: {
+        key: "Add the key the agent will use for its base model.",
+        vars: {},
+      },
+    },
+    slack: {
+      text: { key: "Optional", vars: {} },
+      tone: "muted",
+      summary: {
+        key: "Create the Slack app, install it, then add its bot and Socket Mode tokens.",
+        vars: {},
+      },
       url: "https://api.slack.com/apps?new_app=1",
     },
     oauth: {
-      text: "Optional",
+      text: { key: "Optional", vars: {} },
       tone: "muted",
-      summary: "Add Google, GitHub, Notion, or other OAuth clients to make those connectors available.",
+      summary: {
+        key: "Add Google, GitHub, Notion, or other OAuth clients to make those connectors available.",
+        vars: {},
+      },
     },
   };
   request = 0;
@@ -75,12 +90,14 @@ export class Onboarding {
       placeholder.replaceWith(fragment.firstElementChild!);
       this.painters.push(draw);
     }
+    onLocaleChange(() => this.draw());
   }
   draw() {
     for (const paint of this.painters) paint();
   }
   label(provider: string) {
-    return providerLabels[provider] || this.context.connectorName(provider);
+    const known = providerLabels[provider];
+    return known ? t(known) : this.context.connectorName(provider);
   }
   resetLookup() {
     this.lookupRequest++;
@@ -105,8 +122,8 @@ export class Onboarding {
           ...["name", "template", "contextWindow", "maxTokens"].filter((field) => spec[field] == null),
           ...["input", "output", "cacheRead", "cacheWrite"].filter((field) => spec.cost?.[field] == null),
         ],
-        source: "Saved administrator definition",
-        message: "Review the saved definition under Advanced overrides. Changes require verification again.",
+        source: t("Saved administrator definition"),
+        message: t("Review the saved definition under Advanced overrides. Changes require verification again."),
       });
     this.draw();
   }
@@ -127,7 +144,7 @@ export class Onboarding {
     const response = await this.context.api("GET", "/api/model-registry");
     if (token !== this.registryRequest) return;
     if (!response.ok) {
-      this.registryMessage = "Could not load models.";
+      this.registryMessage = t("Could not load models.");
       this.registryTone = "err";
       this.draw();
       return;
@@ -149,7 +166,7 @@ export class Onboarding {
     ]);
     if (token !== this.request || view !== this.context.view()) return;
     if (!models.ok || !slack.ok || !catalog.ok || !config.ok) {
-      this.providerMessage = "Setup status could not be loaded. Try again.";
+      this.providerMessage = t("Setup status could not be loaded. Try again.");
       this.providerTone = "err";
       this.draw();
       return;
@@ -171,15 +188,27 @@ export class Onboarding {
     const harnessAuth = models.data.harnessAuth;
     const harnessReady = Boolean(harnessAuth && harnessAuth.provider === provider);
     const ready = Boolean(baseModel) && (Boolean(status?.configured) || harnessReady);
-    let summary = "No base model is configured yet. Pick a provider and model below.";
+    let summary = { key: "No base model is configured yet. Pick a provider and model below.", vars: {} };
     if (baseModel) {
-      summary = baseModel + " cannot run until its " + this.label(provider) + " key is configured.";
+      summary = {
+        key: "{model} cannot run until its {provider} key is configured.",
+        vars: { model: baseModel, provider: this.label(provider) },
+      };
       if (harnessReady)
-        summary = baseModel + " · authenticated by the " + harnessAuth.harnessId + " harness — no API key needed.";
+        summary = {
+          key: "{model} · authenticated by the {harness} harness — no API key needed.",
+          vars: { model: baseModel, harness: harnessAuth.harnessId },
+        };
       if (status?.configured)
-        summary = baseModel + " · " + (status.source === "admin" ? "admin-managed key" : "deployment key");
+        summary = status.source === "admin"
+          ? { key: "{model} · admin-managed key", vars: { model: baseModel } }
+          : { key: "{model} · deployment key", vars: { model: baseModel } };
     }
-    this.steps.model = { text: ready ? "Ready" : "Needs a key", tone: ready ? "ok" : "warn", summary };
+    this.steps.model = {
+      text: { key: ready ? "Ready" : "Needs a key", vars: {} },
+      tone: ready ? "ok" : "warn",
+      summary,
+    };
     if (selection.provider === this.provider && selection.model === this.model && selection.apiKey === this.apiKey) {
       this.provider = provider || this.providers[0]?.provider || "anthropic";
       this.model = (this.models[this.provider] || []).some((m) => m.id === baseModel)
@@ -187,21 +216,36 @@ export class Onboarding {
         : this.models[this.provider]?.[0]?.id || "";
     } else if (!this.model) this.model = this.models[this.provider]?.[0]?.id || "";
     this.steps.slack = {
-      text: slack.data.configured ? "Connected" : "Optional",
+      text: { key: slack.data.configured ? "Connected" : "Optional", vars: {} },
       tone: slack.data.configured ? "ok" : "muted",
       summary: slack.data.configured
-        ? "Connected to " + (slack.data.teamName || slack.data.teamId || "a Slack workspace") + "."
-        : "Create the Slack app, install it, then add its bot and Socket Mode tokens.",
+        ? slack.data.teamName || slack.data.teamId
+          ? { key: "Connected to {workspace}.", vars: { workspace: slack.data.teamName || slack.data.teamId } }
+          : { key: "Connected to a Slack workspace.", vars: {} }
+        : {
+            key: "Create the Slack app, install it, then add its bot and Socket Mode tokens.",
+            vars: {},
+          },
       url: slack.data.createUrl || "https://api.slack.com/apps?new_app=1",
     };
     const configured = (catalog.data.catalog || []).filter((item: Data) => item.configured);
     this.steps.oauth = {
-      text: configured.length ? configured.length + " configured" : "Optional",
+      text: configured.length
+        ? { key: "{count} configured", vars: { count: configured.length } }
+        : { key: "Optional", vars: {} },
       tone: configured.length ? "ok" : "muted",
       summary: configured.length
-        ? configured.map((item: Data) => this.context.connectorName(item.provider)).join(", ") +
-          " available in the web UI."
-        : "Add Google, GitHub, Notion, or other OAuth clients to make those connectors available.",
+        ? {
+            key: "{connectors} available in the web UI.",
+            vars: {
+              connectors: configured.map((item: Data) => this.context.connectorName(item.provider)).join(", "),
+              count: configured.length,
+            },
+          }
+        : {
+            key: "Add Google, GitHub, Notion, or other OAuth clients to make those connectors available.",
+            vars: {},
+          },
     };
     this.context.loaded();
     this.draw();
@@ -228,18 +272,18 @@ export class Onboarding {
       apiKey = this.apiKey.trim(),
       modelId = this.model;
     if (!apiKey) {
-      this.providerMessage = "Enter the provider API key.";
+      this.providerMessage = t("Enter the provider API key.");
       this.providerTone = "err";
       this.draw();
       return;
     }
     this.providerBusy = true;
-    this.providerMessage = "Validating with " + this.context.connectorName(provider) + "…";
+    this.providerMessage = t("Validating with {provider}…", { provider: this.context.connectorName(provider) });
     this.providerTone = "saving";
     this.draw();
     try {
       const saved = await this.context.api("PUT", "/api/model-providers/" + encodeURIComponent(provider), { apiKey });
-      if (!saved.ok) throw new Error(saved.data?.message || "The provider rejected this key.");
+      if (!saved.ok) throw new Error(saved.data?.message || t("The provider rejected this key."));
       const selected = await this.context.api(
         "PUT",
         "/api/scopes/" + encodeURIComponent(this.context.orgScope()) + "/base-model",
@@ -249,8 +293,8 @@ export class Onboarding {
       await this.load();
       await this.context.loadCustomProviders();
       this.providerMessage = selected.ok
-        ? "Key and base model saved."
-        : "Key saved, but the base model could not be changed.";
+        ? t("Key and base model saved.")
+        : t("Key saved, but the base model could not be changed.");
       this.providerTone = selected.ok ? "ok" : "err";
     } catch (error) {
       this.providerMessage = errorText(error);
@@ -265,9 +309,9 @@ export class Onboarding {
     const provider = this.provider;
     if (
       !confirm(
-        "Disable the " +
-          this.context.connectorName(provider) +
-          " model key? Models from this provider will stop working.",
+        t("Disable the {provider} model key? Models from this provider will stop working.", {
+          provider: this.context.connectorName(provider),
+        }),
       )
     )
       return;
@@ -275,10 +319,10 @@ export class Onboarding {
     this.draw();
     try {
       const response = await this.context.api("DELETE", "/api/model-providers/" + encodeURIComponent(provider));
-      if (!response.ok) throw new Error(response.data?.message || "Could not disable this provider.");
+      if (!response.ok) throw new Error(response.data?.message || t("Could not disable this provider."));
       await this.load();
       await this.context.loadCustomProviders();
-      this.providerMessage = "Provider disabled.";
+      this.providerMessage = t("Provider disabled.");
       this.providerTone = "ok";
     } catch (error) {
       this.providerMessage = errorText(error);
@@ -293,7 +337,7 @@ export class Onboarding {
     this.resetLookup();
     const token = this.lookupRequest;
     this.lookingUp = true;
-    this.registryMessage = "Looking up exact model metadata…";
+    this.registryMessage = t("Looking up exact model metadata…");
     this.draw();
     try {
       const response = await this.context.api("POST", "/api/model-registry/lookup", {
@@ -301,9 +345,9 @@ export class Onboarding {
         id: this.registryId.trim(),
       });
       if (token !== this.lookupRequest) return;
-      if (!response.ok) throw new Error(response.data?.message || "Lookup failed. Try again.");
+      if (!response.ok) throw new Error(response.data?.message || t("Lookup failed. Try again."));
       this.showLookup(response.data);
-      this.registryMessage = "Metadata loaded. Review, then verify access.";
+      this.registryMessage = t("Metadata loaded. Review, then verify access.");
     } catch (error) {
       if (token === this.lookupRequest) {
         this.registryMessage = errorText(error);
@@ -317,16 +361,16 @@ export class Onboarding {
     }
   }
   async deleteModel(spec: Data) {
-    if (this.registryBusy || !confirm("Delete " + spec.name + "? New uses will be refused.")) return;
+    if (this.registryBusy || !confirm(t("Delete {name}? New uses will be refused.", { name: spec.name }))) return;
     this.registryBusy = true;
     this.draw();
     try {
       const response = await this.context.api("DELETE", "/api/model-registry/" + encodeURIComponent(spec.id));
-      if (!response.ok) throw new Error(response.data?.message || "Could not delete model.");
+      if (!response.ok) throw new Error(response.data?.message || t("Could not delete model."));
       await this.load();
       this.registryBusy = false;
       this.reset();
-      this.registryMessage = "Model deleted.";
+      this.registryMessage = t("Model deleted.");
       this.registryTone = "ok";
     } catch (error) {
       this.registryMessage = errorText(error);
@@ -337,19 +381,21 @@ export class Onboarding {
     }
   }
   collect() {
-    if (!this.lookup) throw new Error("Look up the model first.");
+    if (!this.lookup) throw new Error(t("Look up the model first."));
     const identity = { provider: this.registryProvider, id: this.registryId.trim() };
     if (JSON.stringify(identity) !== JSON.stringify(this.lookup.identity))
-      throw new Error("Look up the current model before verifying.");
+      throw new Error(t("Look up the current model before verifying."));
     if (this.lookup.kind === "builtin") return { provider: identity.provider, verify: true };
     const value = (field: string) => String(this.draft[field] ?? "").trim();
     const number = (field: string) => {
-      if (!value(field)) throw new Error(field + " is required");
+      if (!value(field)) throw new Error(t("{field} is required", { field: t(fieldLabels[field] ?? field) }));
       const n = Number(value(field));
-      if (!Number.isFinite(n)) throw new Error(field + " must be a number");
+      if (!Number.isFinite(n))
+        throw new Error(t("{field} must be a number", { field: t(fieldLabels[field] ?? field) }));
       return n;
     };
-    if (!value("name") || !value("template")) throw new Error("Display name and a compatible template are required.");
+    if (!value("name") || !value("template"))
+      throw new Error(t("Display name and a compatible template are required."));
     return {
       ...identity,
       name: value("name"),
@@ -371,7 +417,7 @@ export class Onboarding {
         builtin = this.lookup.kind === "builtin",
         id = this.registryId.trim();
       this.registryBusy = true;
-      this.registryMessage = "Checking the model with organization credentials…";
+      this.registryMessage = t("Checking the model with organization credentials…");
       this.registryTone = "";
       this.draw();
       const response = await this.context.api(
@@ -379,11 +425,11 @@ export class Onboarding {
         "/api/model-registry/" + encodeURIComponent(id) + (builtin ? "/enable" : ""),
         body,
       );
-      if (!response.ok) throw new Error(response.data?.message || "Could not verify model.");
+      if (!response.ok) throw new Error(response.data?.message || t("Could not verify model."));
       await this.load();
       this.registryMessage = builtin
         ? response.data.message
-        : "Model verified and enabled with organization credentials. Personal-key access may differ.";
+        : t("Model verified and enabled with organization credentials. Personal-key access may differ.");
       this.registryTone = "ok";
     } catch (error) {
       this.registryMessage = errorText(error);
@@ -428,10 +474,10 @@ export class Onboarding {
         ?disabled=${this.registryBusy}
         @change=${change}
       >
-        <option value="">Choose a compatible template</option>
+        <option value="">${t("Choose a compatible template")}</option>
         ${this.templates.filter((t) => t.provider === this.registryProvider).map((t) => html`<option value=${t.id} .selected=${t.id === this.draft.template}>${t.name}</option>`)}
       </select>`;
-    return html`<label>${fieldLabels[name]} ${input}</label>`;
+    return html`<label>${t(fieldLabels[name] ?? name)} ${input}</label>`;
   }
   template(kind: string) {
     if (kind === "steps")
@@ -440,11 +486,11 @@ export class Onboarding {
           (key, i) =>
             html`<section class="setup-step">
               <span class=${"badge " + this.steps[key].tone} id=${"onboarding-" + key + "-badge"}
-                >${this.steps[key].text}</span
+                >${t(this.steps[key].text.key, this.steps[key].text.vars)}</span
               >
-              <h2>${["1. Model provider", "2. Slack app", "3. OAuth apps"][i]}</h2>
-              <p id=${"onboarding-" + key + "-summary"}>${this.steps[key].summary}</p>
-              ${key === "slack" ? html`<div class="foot"><a class="header-button" id="onboarding-slack-create" href=${this.steps.slack.url} target="_blank" rel="noopener noreferrer">Create Slack app ↗</a><button type="button" data-onboarding-target="slack" @click=${() => this.context.navigate("slack")}>Enter Slack tokens</button></div>` : nothing}${key === "oauth" ? html`<div class="foot"><button type="button" data-onboarding-target="oauth" @click=${() => this.context.navigate("oauth")}>Configure OAuth apps</button></div>` : nothing}
+              <h2>${t(["1. Model provider", "2. Slack app", "3. OAuth apps"][i])}</h2>
+              <p id=${"onboarding-" + key + "-summary"}>${t(this.steps[key].summary.key, this.steps[key].summary.vars)}</p>
+              ${key === "slack" ? html`<div class="foot"><a class="header-button" id="onboarding-slack-create" href=${this.steps.slack.url} target="_blank" rel="noopener noreferrer">${t("Create Slack app ↗")}</a><button type="button" data-onboarding-target="slack" @click=${() => this.context.navigate("slack")}>${t("Enter Slack tokens")}</button></div>` : nothing}${key === "oauth" ? html`<div class="foot"><button type="button" data-onboarding-target="oauth" @click=${() => this.context.navigate("oauth")}>${t("Configure OAuth apps")}</button></div>` : nothing}
             </section>`,
         )}
       </div>`;
@@ -455,15 +501,16 @@ export class Onboarding {
       const status = this.providers.find((p) => p.provider === this.provider);
       return html`<section class="card">
         <div class="head">
-          <h2>Base model</h2>
+          <h2>${t("Base model")}</h2>
           <p>
-            Choose a supported provider and model. Saving validates the key, stores it write-only, and makes the
-            selected model the organization default.
+            ${t(
+              "Choose a supported provider and model. Saving validates the key, stores it write-only, and makes the selected model the organization default.",
+            )}
           </p>
         </div>
         <div class="body setup-form">
           <label
-            >Provider
+            >${t("Provider")}
             <select
               id="onboarding-model-provider"
               .value=${this.provider}
@@ -474,10 +521,10 @@ export class Onboarding {
                 this.draw();
               }}
             >
-              ${choices.map((p) => html`<option value=${p.provider} .selected=${p.provider === this.provider}>${this.label(p.provider) + (p.configured ? " (key configured)" : "")}</option>`)}
+              ${choices.map((p) => html`<option value=${p.provider} .selected=${p.provider === this.provider}>${p.configured ? t("{provider} (key configured)", { provider: this.label(p.provider) }) : this.label(p.provider)}</option>`)}
             </select></label
           ><label
-            >Base model
+            >${t("Base model")}
             <select
               id="onboarding-model-id"
               .value=${this.model}
@@ -490,12 +537,12 @@ export class Onboarding {
               ${(this.models[this.provider] || []).map((model) => html`<option value=${model.id} .selected=${model.id === this.model}>${model.name}</option>`)}
             </select></label
           ><label
-            >API key
+            >${t("API key")}
             <input
               type="password"
               id="onboarding-model-key"
               autocomplete="off"
-              placeholder=${status?.configured ? "•••• set, enter a replacement" : "Write-only API key"}
+              placeholder=${status?.configured ? t("•••• set, enter a replacement") : t("Write-only API key")}
               .value=${this.apiKey}
               ?disabled=${this.providerBusy}
               @input=${(e: Event) => {
@@ -511,14 +558,14 @@ export class Onboarding {
             ?disabled=${this.providerBusy}
             @click=${() => this.connect()}
           >
-            Validate and connect</button
+            ${t("Validate and connect")}</button
           ><button
             class="danger"
             id="onboarding-model-delete"
             ?disabled=${this.providerBusy || !status || status.source === "absent"}
             @click=${() => this.disableProvider()}
           >
-            Disable this provider</button
+            ${t("Disable this provider")}</button
           ><span class=${"status" + (this.providerTone ? " " + this.providerTone : "")} id="st-onboarding-model"
             >${this.providerMessage}</span
           >
@@ -539,50 +586,60 @@ export class Onboarding {
     };
     let summary = spec.name || spec.id;
     if (lookup?.kind === "builtin")
-      summary = `${spec.name} · ${spec.contextWindow.toLocaleString()} context tokens · ${spec.maxTokens.toLocaleString()} maximum output · $${spec.cost.input} input / $${spec.cost.output} output per million tokens`;
+      summary = t("{name} · {context} context tokens · {max} maximum output · ${input} input / ${output} output per million tokens", {
+        name: spec.name,
+        context: spec.contextWindow.toLocaleString(),
+        max: spec.maxTokens.toLocaleString(),
+        input: spec.cost.input,
+        output: spec.cost.output,
+      });
     return html`<section class="card">
       <div class="head">
-        <h2>Models on existing providers</h2>
+        <h2>${t("Models on existing providers")}</h2>
         <p>
-          Start with a provider and model ID. We look up exact catalog or provider metadata before asking for any
-          missing details. Organization credentials are inherited; subscription support is not implied.
+          ${t(
+            "Start with a provider and model ID. We look up exact catalog or provider metadata before asking for any missing details. Organization credentials are inherited; subscription support is not implied.",
+          )}
         </p>
       </div>
       <div class="body">
         <table class="table">
           <thead>
             <tr>
-              <th>Model</th>
-              <th>Provider</th>
-              <th>Template</th>
+              <th>${t("Model")}</th>
+              <th>${t("Provider")}</th>
+              <th>${t("Template")}</th>
               <th></th>
             </tr>
           </thead>
           <tbody id="model-registry-rows">
             ${this.entries.map(({ spec, unavailableReason, verifiedAt }) => {
-              let verification = " — Not verified";
+              const name = `${spec.name || spec.id} (${spec.id})`;
+              let verification = t("Not verified");
               if (verifiedAt)
-                verification = " — Verified with organization credentials " + new Date(verifiedAt).toLocaleString();
-              if (unavailableReason) verification = " — " + unavailableReason;
+                verification = t("Verified with organization credentials {when}", {
+                  when: new Date(verifiedAt).toLocaleString(),
+                });
+              if (unavailableReason) verification = unavailableReason;
               return html`<tr>
-                <td>${(spec.name || spec.id) + " (" + spec.id + ")" + verification}</td>
-                <td>${spec.provider || "Unknown"}</td>
-                <td>${spec.template || "Missing"}</td>
+                <td>${t("{name} — {status}", { name, status: verification })}</td>
+                <td>${spec.provider || t("Unknown")}</td>
+                <td>${spec.template || t("Missing")}</td>
                 <td>
-                  <button ?disabled=${this.registryBusy} @click=${() => this.reset(spec)}>Edit</button
+                  <button ?disabled=${this.registryBusy} @click=${() => this.reset(spec)}>${t("Edit")}</button
                   ><button class="danger" ?disabled=${this.registryBusy} @click=${() => this.deleteModel(spec)}>
-                    Delete
+                    ${t("Delete")}
                   </button>
                 </td>
               </tr>`;
             })}
           </tbody>
         </table>
-        <p class="muted" id="model-registry-empty" ?hidden=${this.entries.length > 0}>No additional models.</p>
+        <p class="muted" id="model-registry-empty" ?hidden=${this.entries.length > 0}>${t("No additional models.")}</p>
       </div>
       <div class="body setup-form">
         <label
-          >Provider
+          >${t("Provider")}
           <select
             id="model-registry-provider"
             .value=${this.registryProvider}
@@ -593,12 +650,12 @@ export class Onboarding {
             <option value="anthropic" .selected=${this.registryProvider === "anthropic"}>Anthropic</option>
           </select></label
         ><label
-          >Model ID
+          >${t("Model ID")}
           <input
             type="text"
             id="model-registry-id"
             autocomplete="off"
-            placeholder="e.g. claude-opus-4-6"
+            placeholder=${t("e.g. claude-opus-4-6")}
             required
             .value=${this.registryId}
             ?disabled=${this.registryBusy || this.editing}
@@ -612,20 +669,29 @@ export class Onboarding {
           ?disabled=${this.registryBusy || this.lookingUp}
           @click=${() => this.lookupModel()}
         >
-          Look up model
+          ${t("Look up model")}
         </button>
       </div>
       <div class="body" id="model-registry-result" ?hidden=${!lookup}>
         <p id="model-registry-source" class="muted">
-          ${lookup ? "Source: " + lookup.source + (lookup.catalogGeneratedAt ? " · catalog " + new Date(lookup.catalogGeneratedAt).toLocaleDateString() : "") : ""}
+          ${lookup
+            ? t(
+                lookup.catalogGeneratedAt ? "Source: {source} · catalog {date}" : "Source: {source}",
+                {
+                  source: lookup.source,
+                  date: new Date(lookup.catalogGeneratedAt ?? 0).toLocaleDateString(),
+                },
+              )
+            : ""}
         </p>
         <p id="model-registry-summary">${summary}</p>
         <p id="model-registry-lookup-note" class="muted">${lookup?.message || ""}</p>
         <div id="model-registry-missing" ?hidden=${!missing.length}>
-          <h3>Complete missing information</h3>
+          <h3>${t("Complete missing information")}</h3>
           <p class="muted">
-            These fields were not available from the exact model record. Use the provider's documentation; choose a
-            compatible template explicitly.
+            ${t(
+              "These fields were not available from the exact model record. Use the provider's documentation; choose a compatible template explicitly.",
+            )}
           </p>
           <div class="setup-form" id="model-registry-missing-fields">
             ${Object.keys(fieldLabels)
@@ -641,17 +707,23 @@ export class Onboarding {
             this.advanced = (e.target as HTMLDetailsElement).open;
           }}
         >
-          <summary>Advanced overrides</summary>
+          <summary>${t("Advanced overrides")}</summary>
           <p class="muted">
-            Review imported values or override them. Pricing is per million tokens. Overrides require verification
-            again.
+            ${t(
+              "Review imported values or override them. Pricing is per million tokens. Overrides require verification again.",
+            )}
           </p>
           <div class="setup-form" id="model-registry-advanced-fields">
             ${Object.keys(fieldLabels)
               .filter((key) => !missing.includes(key))
               .map((key) => this.field(key))}
             <p class="muted" id="model-registry-capabilities">
-              ${template ? `Inherited: ${template.input.join(", ")} input; reasoning ${template.reasoning ? "yes" : "no"}.` : ""}
+              ${template
+                ? t("Inherited: {input} input; reasoning {reasoning}.", {
+                    input: template.input.join(", "),
+                    reasoning: template.reasoning ? t("yes") : t("no"),
+                  })
+                : ""}
             </p>
             ${Object.entries(flagLabels).map(
               ([key, label]) =>
@@ -666,13 +738,13 @@ export class Onboarding {
                       this.draw();
                     }}
                   />
-                  ${label}</label
+                  ${t(label)}</label
                 >`,
             )}
             <details>
-              <summary>Advanced pricing tiers</summary>
+              <summary>${t("Advanced pricing tiers")}</summary>
               <label
-                >JSON array of inputTokensAbove, input, output, cacheRead and cacheWrite<textarea
+                >${t("JSON array of inputTokensAbove, input, output, cacheRead and cacheWrite")}<textarea
                   id="model-registry-tiers"
                   rows="4"
                   placeholder="[]"
@@ -689,11 +761,9 @@ export class Onboarding {
         </details>
       </div>
       <p class="muted" id="model-registry-verification-notice">
-        Verify and enable sends a synthetic connection check using the organization's serving credentials. It may incur
-        a small provider charge (up to 128 output tokens per request; an additional check with fast mode; provider
-        retries may apply). A successful check confirms access now, not pricing, maximum context, every capability, or
-        personal-key access. Failed checks do not save or enable the new definition. Existing saved settings remain
-        unchanged. A failed recheck of those settings removes their verification.
+        ${t(
+          "Verify and enable sends a synthetic connection check using the organization's serving credentials. It may incur a small provider charge (up to 128 output tokens per request; an additional check with fast mode; provider retries may apply). A successful check confirms access now, not pricing, maximum context, every capability, or personal-key access. Failed checks do not save or enable the new definition. Existing saved settings remain unchanged. A failed recheck of those settings removes their verification.",
+        )}
       </p>
       <div class="foot">
         <button
@@ -703,10 +773,10 @@ export class Onboarding {
           @click=${() => this.verify()}
         >
           ${(() => {
-            if (this.registryBusy) return "Verifying…";
-            return lookup?.kind === "builtin" ? "Verify and enable existing model" : "Verify and enable";
+            if (this.registryBusy) return t("Verifying…");
+            return lookup?.kind === "builtin" ? t("Verify and enable existing model") : t("Verify and enable");
           })()}</button
-        ><button id="model-registry-new" ?disabled=${this.registryBusy} @click=${() => this.reset()}>New model</button
+        ><button id="model-registry-new" ?disabled=${this.registryBusy} @click=${() => this.reset()}>${t("New model")}</button
         ><span class=${"status" + (this.registryTone ? " " + this.registryTone : "")} id="st-model-registry"
           >${this.registryMessage}</span
         >

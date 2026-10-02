@@ -70,6 +70,7 @@ import {
 } from "./composer-loadout";
 
 import { createModelPicker } from "./model-picker";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 export type ComposerMenu = "effort" | "model" | "settings" | "loadout";
 
@@ -388,7 +389,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
     syncRuntimeSelection(agent);
     const config = actualScope === null ? null : await loadRuntimeConfig(actualScope, refresh, options.runtimeAccount);
     if (request !== runtimeRequest) return;
-    if (!config) composerState.error = "Could not load runtime settings.";
+    if (!config) composerState.error = t("Could not load runtime settings.");
     if (config && !loadoutRestored) {
       restoreLoadoutSelection();
       loadoutRestored = true;
@@ -489,7 +490,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       placeLoadout();
     } catch (e) {
       if (request !== runtimeRequest || scopeId !== scopeKey()) return;
-      composerState.error = errMessage(e, "Could not update the scope default.");
+      composerState.error = errMessage(e, t("Could not update the scope default."));
       ctx.chat.drawActiveChat(agent);
     }
   }
@@ -504,15 +505,15 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       return html`<div class="composer-wrap">
         ${header} ${composerApprovalPanel(ctx.chat.activePendingApprovals())}
         <p role="status">
-          ${composerState.error || activeRuntimeConfig?.unavailableReason || "Selected model is unavailable. Choose a replacement to continue."}
+          ${composerState.error || activeRuntimeConfig?.unavailableReason || t("Selected model is unavailable. Choose a replacement to continue.")}
           ${selected}
         </p>
         <label
-          >Replacement model
+          >${t("Replacement model")}
           ${fieldSelect({
-            ariaLabel: "Replacement model",
+            ariaLabel: t("Replacement model"),
             value: "",
-            options: html`<option value="" selected>Select a model…</option>
+            options: html`<option value="" selected>${t("Select a model…")}</option>
               ${getModelOptions(scopeKey()).map((option) => html`<option value=${option.value}>${option.harnessLabel} · ${option.label}</option>`)}`,
             onChange: async (value) => {
               const option = modelOptionFor(value, scopeKey());
@@ -527,7 +528,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
           })}
         </label>
         <button type="button" @click=${() => void refreshRuntimeSelection(ctx.chat.state.scopeId, agent, true)}>
-          Refresh models
+          ${t("Refresh models")}
         </button>
       </div>`;
     }
@@ -538,21 +539,21 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
     const attachingDisabled = inputBlocked;
     let placeholder =
       options.placeholder ??
-      (appEditSlug(ctx.chat.state.threadRef, appState.me?.user) ? "Describe a change…" : "Ask anything");
-    if (inputBlocked) placeholder = runtimePending ? "Loading runtime…" : "Approve or deny to continue";
-    else if (agent.state.isStreaming) placeholder = "Queue a message for after this turn…";
+      (appEditSlug(ctx.chat.state.threadRef, appState.me?.user) ? t("Describe a change…") : t("Ask anything"));
+    if (inputBlocked) placeholder = runtimePending ? t("Loading runtime…") : t("Approve or deny to continue");
+    else if (agent.state.isStreaming) placeholder = t("Queue a message for after this turn…");
     let composerNotice: TemplateResult | typeof nothing = nothing;
     if (composerState.processingFiles) {
-      composerNotice = html`<div class="composer-note">Preparing files...</div>`;
+      composerNotice = html`<div class="composer-note">${t("Preparing files...")}</div>`;
     } else if (!approvalPauses.length && runtimePending) {
       composerNotice = composerState.error
         ? html`<div class="composer-error">
             ${composerState.error}
             <button type="button" @click=${() => void refreshRuntimeSelection(ctx.chat.state.scopeId, agent, true)}>
-              Retry
+              ${t("Retry")}
             </button>
           </div>`
-        : html`<div class="composer-note">Loading runtime settings…</div>`;
+        : html`<div class="composer-note">${t("Loading runtime settings…")}</div>`;
     } else if (composerState.error) {
       composerNotice = html`<div class="composer-error">${composerState.error}</div>`;
     }
@@ -570,7 +571,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
           !options.prepareSubmit && activeRuntimeConfig?.upgradeAvailable
             ? html`<div class="runtime-upgrade">
                 <span
-                  >The org now recommends
+                  >${t("The org now recommends")}
                   ${modelOptionFor(`${activeRuntimeConfig.orgDefault.harnessId}:${activeRuntimeConfig.orgDefault.modelId}`, scopeKey())?.harnessLabel ?? activeRuntimeConfig.orgDefault.harnessId}
                   ·
                   ${modelOptionFor(`${activeRuntimeConfig.orgDefault.harnessId}:${activeRuntimeConfig.orgDefault.modelId}`, scopeKey())?.buttonLabel ?? activeRuntimeConfig.orgDefault.modelId}.</span
@@ -579,11 +580,11 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
                   type="button"
                   @click=${() => changeScopeRuntime({ harnessId: activeRuntimeConfig!.orgDefault.harnessId, modelId: activeRuntimeConfig!.orgDefault.modelId }, agent)}
                 >
-                  Upgrade
+                  ${t("Upgrade")}
                 </button>
-                <button type="button" @click=${() => changeScopeRuntime({ keep: true }, agent)}>Keep mine</button>
+                <button type="button" @click=${() => changeScopeRuntime({ keep: true }, agent)}>${t("Keep mine")}</button>
                 <button type="button" @click=${() => changeScopeRuntime({ inherit: true }, agent)}>
-                  Inherit future defaults
+                  ${t("Inherit future defaults")}
                 </button>
               </div>`
             : nothing
@@ -602,7 +603,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
                             ? html`<button
                                 type="button"
                                 class="composer-image-open"
-                                aria-label=${`Preview ${a.fileName}`}
+                                aria-label=${t("Preview {name}", { name: a.fileName })}
                                 @click=${() => openImagePreview(a)}
                               >
                                 <img
@@ -621,8 +622,8 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
                                 <button
                                   type="button"
                                   class="chip-open"
-                                  aria-label="View pasted text"
-                                  ${tip("View pasted text")}
+                                  aria-label=${t("View pasted text")}
+                                  ${tip(t("View pasted text"))}
                                   @click=${() => openPasteView(a.id, agent)}
                                 >
                                   ${icon(FileText, 14)}
@@ -638,8 +639,8 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
                         <button
                           type="button"
                           class="chip-x"
-                          aria-label="Remove attachment"
-                          ${tip("Remove")}
+                          aria-label=${t("Remove attachment")}
+                          ${tip(t("Remove"))}
                           @click=${() => removeAttachment(a.id, agent)}
                         >
                           ${icon(X, 13)}
@@ -682,8 +683,8 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
             <button
               class="icon-btn composer-attach"
               type="button"
-              aria-label="Attach files"
-              ${tip("Attach files")}
+              aria-label=${t("Attach files")}
+              ${tip(t("Attach files"))}
               ?disabled=${attachingDisabled}
               @click=${() => pickFiles()}
             >
@@ -710,12 +711,12 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       >
         <div class="project-dialog paste-dialog" role="dialog" aria-modal="true" aria-labelledby="paste-dialog-title">
           <div class="project-dialog-head">
-            <div><h2 id="paste-dialog-title">Pasted text</h2></div>
+            <div><h2 id="paste-dialog-title">${t("Pasted text")}</h2></div>
             <button
               class="chip-x"
               type="button"
-              aria-label="Close"
-              ${tip("Close")}
+              aria-label=${t("Close")}
+              ${tip(t("Close"))}
               @click=${() => closePasteView(agent)}
             >
               ${icon(X, 16)}
@@ -731,9 +732,9 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
           >
   ${view.initial}</textarea>
           <div class="project-dialog-actions">
-            <button class="btn" type="button" @click=${() => removeAttachment(view.id, agent)}>Remove</button>
-            <button class="btn" type="button" @click=${() => insertPasteIntoDraft(agent)}>Insert into message</button>
-            <button class="btn primary" type="button" @click=${() => closePasteView(agent)}>Done</button>
+            <button class="btn" type="button" @click=${() => removeAttachment(view.id, agent)}>${t("Remove")}</button>
+            <button class="btn" type="button" @click=${() => insertPasteIntoDraft(agent)}>${t("Insert into message")}</button>
+            <button class="btn primary" type="button" @click=${() => closePasteView(agent)}>${t("Done")}</button>
           </div>
         </div>
       </div>
@@ -786,22 +787,22 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       return html`<button
         class="send-btn"
         type="submit"
-        aria-label="Send"
-        ${tip("Send")}
+        aria-label=${t("Send")}
+        ${tip(t("Send"))}
         ?disabled=${!composerCanSend()}
       >
         ${icon(ArrowUp, 16)}
       </button>`;
     }
     return html`
-      <button class="stop-btn" type="button" aria-label="Stop" ${tip("Stop")} @click=${() => stopStreaming(agent)}>
+      <button class="stop-btn" type="button" aria-label=${t("Stop")} ${tip(t("Stop"))} @click=${() => stopStreaming(agent)}>
         ${icon(Square, 16)}
       </button>
       <button
         class="send-btn"
         type="submit"
-        ${tip("Queue for after this turn")}
-        aria-label="Queue for after this turn"
+        ${tip(t("Queue for after this turn"))}
+        aria-label=${t("Queue for after this turn")}
         ?disabled=${!composerCanSend()}
       >
         ${icon(ArrowUp, 16)}
@@ -822,17 +823,17 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       ctx.chat.hasLiveRun() &&
       harnessSupportsSteer(currentModelOption()?.harnessId ?? "");
     const steerTip = (): string => {
-      if (steerable) return "Steer the running task with this instead of waiting";
-      return "Nothing running can take this. It will go out as its own turn";
+      if (steerable) return t("Steer the running task with this instead of waiting");
+      return t("Nothing running can take this. It will go out as its own turn");
     };
     return html`
-      <div class="queued-strip" role="list" aria-label="Queued messages">
+      <div class="queued-strip" role="list" aria-label=${t("Queued messages")}>
         ${steering.map(
           (q) => html`
             <div class="queued-chip queued-steering" role="listitem" aria-busy="true">
-              <span class="queued-tag">Steering</span>
-              <span class="queued-text" dir="auto" ${tip(q.text || "Files, no text")}
-                >${q.text || (q.hasAttachments ? "(files)" : "")}</span
+              <span class="queued-tag">${t("Steering")}</span>
+              <span class="queued-text" dir="auto" ${tip(q.text || t("Files, no text"))}
+                >${q.text || (q.hasAttachments ? t("(files)") : "")}</span
               >
             </div>
           `,
@@ -842,7 +843,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
             ? html` <div class="queued-chip queued-editing" role="listitem">
                 <textarea
                   class="queued-edit-input"
-                  aria-label="Edit queued message"
+                  aria-label=${t("Edit queued message")}
                   rows="3"
                   .value=${live(queuedEdit.text)}
                   ?disabled=${queuedEdit.saving}
@@ -869,7 +870,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
                   ?disabled=${queuedEdit.saving}
                   @click=${() => void saveQueuedEdit(agent)}
                 >
-                  Save
+                  ${t("Save")}
                 </button>
                 <button
                   type="button"
@@ -877,14 +878,14 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
                   ?disabled=${queuedEdit.saving}
                   @click=${() => cancelQueuedEdit(agent)}
                 >
-                  Cancel
+                  ${t("Cancel")}
                 </button>
               </div>`
             : html`
                 <div class="queued-chip" role="listitem">
-                  <span class="queued-tag">Queued</span>
-                  <span class="queued-text" dir="auto" ${tip(q.text || "Files, no text")}
-                    >${q.text || (q.hasAttachments ? "(files)" : "")}</span
+                  <span class="queued-tag">${t("Queued")}</span>
+                  <span class="queued-text" dir="auto" ${tip(q.text || t("Files, no text"))}
+                    >${q.text || (q.hasAttachments ? t("(files)") : "")}</span
                   >
                   <button
                     type="button"
@@ -893,12 +894,12 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
                     ${tip(steerTip())}
                     @click=${() => void steerQueued(agent, q)}
                   >
-                    ${icon(CornerDownRight, 13)}<span>Steer</span>
+                    ${icon(CornerDownRight, 13)}<span>${t("Steer")}</span>
                   </button>
                   <button
                     type="button"
                     class="queued-steer"
-                    aria-label="Edit queued message"
+                    aria-label=${t("Edit queued message")}
                     @click=${() => {
                       const edit = (queuedEdit = {
                         runId: q.runId,
@@ -921,13 +922,13 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
                       });
                     }}
                   >
-                    Edit
+                    ${t("Edit")}
                   </button>
                   <button
                     type="button"
                     class="chip-x"
-                    aria-label="Remove queued message"
-                    ${tip("Remove")}
+                    aria-label=${t("Remove queued message")}
+                    ${tip(t("Remove"))}
                     @click=${() => void removeQueued(agent, q)}
                   >
                     ${icon(X, 13)}
@@ -946,7 +947,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
     const decide = (decision: ApprovalDecision): void => {
       if (!ctx.chat.state.resolvingApprovals.has(decision.requestId)) resolve(decision);
     };
-    return html`<div class="composer-approval-panel" role="group" aria-label="Command approval">
+    return html`<div class="composer-approval-panel" role="group" aria-label=${t("Command approval")}>
       ${approvals.map(
         (a) =>
           html`<div class="composer-approval">
@@ -958,7 +959,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
                 ?disabled=${ctx.chat.state.resolvingApprovals.has(a.requestId)}
                 @click=${() => decide({ requestId: a.requestId, approved: false })}
               >
-                Deny
+                ${t("Deny")}
               </button>
               <button
                 class="approval-btn"
@@ -966,7 +967,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
                 ?disabled=${ctx.chat.state.resolvingApprovals.has(a.requestId)}
                 @click=${() => decide({ requestId: a.requestId, approved: true, scope: "once" })}
               >
-                Allow once
+                ${t("Allow once")}
               </button>
               ${
                 a.grantModes?.session === false
@@ -977,7 +978,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
                       ?disabled=${ctx.chat.state.resolvingApprovals.has(a.requestId)}
                       @click=${() => decide({ requestId: a.requestId, approved: true, scope: "session" })}
                     >
-                      Allow for session
+                      ${t("Allow for session")}
                     </button>`
               }
               ${
@@ -989,7 +990,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
                       ?disabled=${ctx.chat.state.resolvingApprovals.has(a.requestId)}
                       @click=${() => decide({ requestId: a.requestId, approved: true, scope: "always" })}
                     >
-                      Allow always
+                      ${t("Allow always")}
                     </button>`
               }
             </div>
@@ -1188,14 +1189,14 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
     if (!slash.open) return nothing;
     if (slash.loading && slash.matches.length === 0) {
       return html`<div class="slash-popover">
-        <div class="menu-title">Skills</div>
-        <div class="slash-empty">Loading skills…</div>
+        <div class="menu-title">${t("Skills")}</div>
+        <div class="slash-empty">${t("Loading skills…")}</div>
       </div>`;
     }
     const active = clampedActive(slash.matches.length);
     return html`
-      <div class="slash-popover" role="listbox" aria-label="Skills">
-        <div class="menu-title">Skills</div>
+      <div class="slash-popover" role="listbox" aria-label=${t("Skills")}>
+        <div class="menu-title">${t("Skills")}</div>
         ${slash.matches.map((m, i) => slashRow(m, i === active, agent))}
       </div>
     `;
@@ -1227,8 +1228,21 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
   }
 
   function scopeBadge(scope: string): string {
-    return scope ? scope.charAt(0).toUpperCase() + scope.slice(1) : "";
+    return SCOPE_BADGE_LABELS[scope]
+      ? t(SCOPE_BADGE_LABELS[scope]!)
+      : scope
+        ? scope.charAt(0).toUpperCase() + scope.slice(1)
+        : "";
   }
+
+  const SCOPE_BADGE_LABELS: Record<string, string> = {
+    personal: "Personal",
+    channel: "Channel",
+    group: "Group",
+    team: "Team",
+    org: "Organization",
+    project: "Project",
+  };
 
   function submitComposer(e: Event, agent: Agent): void {
     e.preventDefault();
@@ -1331,7 +1345,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
     composerState.error = "";
     void ctx.chat.stopLiveRun().catch(() => {
       if (agent !== ctx.chat.state.agent) return;
-      composerState.error = "Could not request stop. Try again.";
+      composerState.error = t("Could not request stop. Try again.");
       ctx.chat.drawActiveChat(agent);
     });
     focusComposerEnd();
@@ -1369,7 +1383,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
     const transientIds = new Set(skipped.filter((s) => !s.permanent).flatMap((s) => (s.id ? [s.id] : [])));
     const sendable = staged.filter((a) => !droppedIds.has(a.id));
     if (!text && !uploaded.length) {
-      if (stillHere()) restoreStagedOnFailure(text, sendable, composerState.error || "Could not queue the files.");
+      if (stillHere()) restoreStagedOnFailure(text, sendable, composerState.error || t("Could not queue the files."));
       return ctx.chat.drawActiveChat(agent);
     }
     if (!(await enqueueTurn(agent, threadRef, text, uploaded, queuedFilesKey(sendable)))) {
@@ -1407,7 +1421,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       return true;
     } catch (err) {
       failedQueueSend = { threadRef, text, filesKey, idempotencyKey };
-      composerState.error = errMessage(err, "Could not queue the message.");
+      composerState.error = errMessage(err, t("Could not queue the message."));
       return false;
     }
   }
@@ -1440,8 +1454,8 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       if (ctx.chat.state.threadRef === edit.threadRef)
         composerState.error =
           error instanceof ApiError && error.status === 409
-            ? "That message changed or already started. Your edit was not saved."
-            : errMessage(error, "Could not edit the queued message.");
+            ? t("That message changed or already started. Your edit was not saved.")
+            : errMessage(error, t("Could not edit the queued message."));
     } finally {
       edit.saving = false;
       if (ctx.chat.state.threadRef === edit.threadRef) ctx.chat.drawActiveChat(agent);
@@ -1456,7 +1470,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       await withdrawRun(queued.runId);
     } catch (err) {
       if (!(err instanceof ApiError && (err.status === 409 || err.status === 404))) {
-        composerState.error = errMessage(err, "Could not remove the queued message.");
+        composerState.error = errMessage(err, t("Could not remove the queued message."));
         return ctx.chat.drawActiveChat(agent);
       }
     }
@@ -1495,13 +1509,13 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
         }
       } else if (outcome.reason === "queued_changed") {
         if (agent === ctx.chat.state.agent && threadRef === ctx.chat.state.threadRef)
-          composerState.error = "The queued message changed. Try steering it again.";
+          composerState.error = t("The queued message changed. Try steering it again.");
       } else if (outcome.reason === "queued_started" || outcome.reason === "not_found") {
         forgetQueuedRun(threadRef, queued.runId);
       }
     } catch (err) {
       if (agent === ctx.chat.state.agent && threadRef === ctx.chat.state.threadRef)
-        composerState.error = errMessage(err, "Could not confirm steering. Try again.");
+        composerState.error = errMessage(err, t("Could not confirm steering. Try again."));
     } finally {
       pendingSteers.delete(queued.runId);
     }
@@ -1537,7 +1551,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
         if (skipped.length) throw new Error(skipped.map((file) => file.note).join(" "));
         await submit(text, { ...selection, ...(uploaded.length ? { attachments: uploaded } : {}) });
       } catch (error) {
-        restoreStagedOnFailure(text, attachments, errMessage(error, "Could not send message."));
+        restoreStagedOnFailure(text, attachments, errMessage(error, t("Could not send message.")));
         persistDraft();
       } finally {
         submitting = false;
@@ -1567,7 +1581,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       ctx.chat.state.pendingSend = null;
       if (ctx.chat.state.threadRef && ctx.chat.state.sessionId === null) dropPendingSession(ctx.chat.state.threadRef);
       renderList();
-      composerState.error = errMessage(err, "Could not send message.");
+      composerState.error = errMessage(err, t("Could not send message."));
       ctx.chat.drawActiveChat(agent);
     }
   }
@@ -1590,8 +1604,8 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       text,
       retryable,
       retryable.length
-        ? "Couldn't attach the files, so the message wasn't sent. Try again."
-        : "Nothing could be attached, so the message wasn't sent.",
+        ? t("Couldn't attach the files, so the message wasn't sent. Try again.")
+        : t("Nothing could be attached, so the message wasn't sent."),
     );
     persistDraft();
     ctx.chat.drawActiveChat(agent);
@@ -1622,7 +1636,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
     composerState.draft = !typedSince || typedSince === text ? text : `${text}\n${composerState.draft}`;
     const { kept, note } = mergeStagedAttachments(attachments, composerState.attachments);
     composerState.attachments = kept;
-    composerState.error = combineNote(last.errorMessage || PENDING_APPROVAL_REASON, note);
+    composerState.error = combineNote(last.errorMessage || t(PENDING_APPROVAL_REASON), note);
     persistDraft();
     ctx.chat.drawActiveChat(agent);
   }
@@ -1751,7 +1765,7 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
     )
       return;
     if (composerState.processingFiles) {
-      composerState.error = "Still preparing the previous drop. Try again in a moment.";
+      composerState.error = t("Still preparing the previous drop. Try again in a moment.");
       ctx.chat.drawActiveChat(agent);
       return;
     }
@@ -1769,8 +1783,8 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       let message: string;
       if (err instanceof FolderDropError) message = err.message;
       else if (isFolderReadError(err))
-        message = "That drop included a folder this browser can't read. Zip it and drop the archive instead.";
-      else message = errMessage(err, "Could not attach that file.");
+        message = t("That drop included a folder this browser can't read. Zip it and drop the archive instead.");
+      else message = errMessage(err, t("Could not attach that file."));
       composerState.error = combineNote(plan.note ?? "", message);
     } finally {
       composerState.processingFiles = false;
@@ -1834,12 +1848,12 @@ export function createComposerSurface(ctx: ConvCtx, options: ComposerOptions = {
       html`
         <div class="attachment-preview-head">
           <span dir="auto">${attachment.fileName}</span>
-          <button type="button" class="btn compact" @click=${() => dialog.close()}>Close</button>
+          <button type="button" class="btn compact" @click=${() => dialog.close()}>${t("Close")}</button>
         </div>
         <div class="attachment-preview-body">
           <button
             type="button"
-            aria-label="Toggle actual image size"
+            aria-label=${t("Toggle actual image size")}
             @click=${(event: Event) => (event.currentTarget as HTMLElement).classList.toggle("actual-size")}
           >
             <img src=${src} alt=${attachment.fileName} />

@@ -21,7 +21,7 @@ function resolveView(pathname: string, search: string): string {
     slice("function decodePathSegment(seg) {", "let transcriptObserver"),
     "urlToState().view;",
   ].join("\n");
-  const context = vm.createContext({
+  const context = vm.createContext({ _t: (key: string, vars?: Record<string, string | number>) => key.replace(/\{(\w+)\}/g, (m, name) => String(vars?.[name] ?? m)),
     URLSearchParams,
     API_BASE: "/admin",
     scope: "org",

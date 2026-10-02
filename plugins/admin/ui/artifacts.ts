@@ -1,6 +1,8 @@
 import { html, nothing, render } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { ifDefined } from "lit/directives/if-defined.js";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { formatNumber, onLocaleChange, pluralize } from "../../chassis/src/i18n.ts";
 import { card, bareCard, table, renderer } from "./shared.ts";
 import { mountPacks, skillDetail, removeSkill } from "./artifacts-skills.ts";
 export type Data = Record<string, any>;
@@ -17,6 +19,7 @@ type Row = {
 const empty = (text: string) => html`<p class="empty">${text}</p>`;
 export const badge = (text: unknown, tone = "muted") => html`<span class=${"badge " + tone}>${text}</span>`;
 const queries = new Map<string, string>();
+const count = (n: number, one: string, other: string) => pluralize(n, { one: t(one), other: t(other) });
 export function dense(items: Data[], rowOf: (item: Data) => Row, open: (item: Data) => void, message: string) {
   if (!items.length) return empty(message);
   return html`<div class="dense-list">
@@ -59,7 +62,13 @@ export function dense(items: Data[], rowOf: (item: Data) => Row, open: (item: Da
     )}
   </div>`;
 }
-function scopeList(items: Data[], c: Context, noun: string, latest: (r: Data) => number, message: string) {
+function scopeList(
+  items: Data[],
+  c: Context,
+  forms: [string, string],
+  latest: (r: Data) => number,
+  message: string,
+) {
   const groups = new Map<string, Data>();
   for (const item of items) {
     const id = item.ownerScopeId || item.scopeId;
@@ -72,7 +81,7 @@ function scopeList(items: Data[], c: Context, noun: string, latest: (r: Data) =>
     [...groups.values()].sort((a, b) => b.latest - a.latest),
     (g) => ({
       name: c.shortName(g.scopeId),
-      preview: c.plural(g.count, noun),
+      preview: count(g.count, forms[0], forms[1]),
       time: c.relTime(g.latest),
       href: c.stateToUrl({ view: c.view, scope: g.scopeId, ...(c.scopeKind(g.scopeId) === "org" ? { own: "1" } : {}) }),
     }),
@@ -107,7 +116,7 @@ function searchShell(c: Context, key: string, shell: Data, placeholder: string, 
   }
   return q.trim().toLowerCase();
 }
-const listShell = (c: Context, title: string, count: string) => ({
+const listShell = (c: Context, title: string, countText: string) => ({
   ...(c.index
     ? {}
     : {
@@ -117,7 +126,7 @@ const listShell = (c: Context, title: string, count: string) => ({
         },
       }),
   title: c.index ? title : c.shortName(c.scope),
-  count,
+  count: countText,
 });
 export function files(root: HTMLElement, d: Data, c: Context) {
   const render = renderer(root);
@@ -136,7 +145,7 @@ export function files(root: HTMLElement, d: Data, c: Context) {
     return {
       icon: html`<span
         class="file-thumb"
-        title=${ifDefined(large ? "Large image. Click to preview full size" : undefined)}
+        title=${ifDefined(large ? t("Large image. Click to preview full size") : undefined)}
         >${(() => {
           if (large) return "img";
           return kind === "file" ? "" : kind.slice(1);
@@ -162,11 +171,11 @@ export function files(root: HTMLElement, d: Data, c: Context) {
   };
   const draw = () => {
     const local = items.filter((f) => !query || (f.name || c.fileName(f.path)).toLowerCase().includes(query));
-    render(
+    render(() =>
       bareCard(
-        html`${c.index ? html`<div class=${"file-scope-index" + (query ? " hidden" : "")}>${scopeList(all, c, "file", (f) => f.createdAt || 0, "No documents saved yet.")}${capped ? empty("Only the newest 2,000 files are indexed, so a scope with only older files won't appear.") : nothing}</div>` : nothing}
+        html`${c.index ? html`<div class=${"file-scope-index" + (query ? " hidden" : "")}>${scopeList(all, c, ["{count} file", "{count} files"], (f) => f.createdAt || 0, t("No documents saved yet."))}${capped ? empty(t("Only the newest 2,000 files are indexed, so a scope with only older files won't appear.")) : nothing}</div>` : nothing}
           <div class=${c.index && !query ? "hidden" : ""}>
-            ${dense(remote ?? local, row, c.downloadFile, query ? "No files match." : "No documents saved yet.")}
+            ${dense(remote ?? local, row, c.downloadFile, query ? t("No files match.") : t("No documents saved yet."))}
           </div>`,
       ),
     );
@@ -195,8 +204,11 @@ export function files(root: HTMLElement, d: Data, c: Context) {
   query = searchShell(
     c,
     "files",
-    { ...listShell(c, "Files", items.length ? c.plural(items.length, "file") : ""), actions: [uploadBox(c)] },
-    c.index ? "Search all files…" : "Search files…",
+    {
+      ...listShell(c, t("Files"), items.length ? count(items.length, "{count} file", "{count} files") : ""),
+      actions: [uploadBox(c)],
+    },
+    c.index ? t("Search all files…") : t("Search files…"),
     onQuery,
   );
   onQuery(query);
@@ -206,13 +218,14 @@ export function uploadBox(c: Context) {
     dragging = false,
     message = "",
     tone = "muted";
-  const holder = document.createDocumentFragment();
+  const box = document.createElement("div");
+  let unsubscribe: (() => void) | undefined;
 
   const upload = async (files: FileList | File[]) => {
     const picked = [...files].filter((f) => f && f.size >= 0);
     if (!picked.length || busy) return;
     busy = true;
-    message = "Uploading " + c.plural(picked.length, "file") + "...";
+    message = t("Uploading {count} files…", { count: formatNumber(picked.length) });
     tone = "saving";
     draw();
     let uploaded = 0;
@@ -228,17 +241,23 @@ export function uploadBox(c: Context) {
           body: file,
         });
         if (!response.ok)
-          throw new Error(c.uploadErrorMessage(await response.text(), "Upload failed (" + response.status + ")."));
+          throw new Error(c.uploadErrorMessage(await response.text(), t("Upload failed ({status}).", { status: response.status })));
         uploaded++;
       }
-      message = "Uploaded " + c.plural(picked.length, "file") + ".";
+      message = t("Uploaded {count} files.", { count: formatNumber(picked.length) });
       tone = "ok";
       c.invalidate();
       await c.reload();
     } catch (error) {
-      message =
-        (uploaded ? "Uploaded " + uploaded + " of " + picked.length + " before failure. " : "") +
-        (error instanceof Error ? error.message : "Upload failed.");
+      message = uploaded
+        ? t("Uploaded {uploaded} of {total} before failure. {error}", {
+            uploaded: formatNumber(uploaded),
+            total: formatNumber(picked.length),
+            error: error instanceof Error ? error.message : t("Upload failed."),
+          })
+        : error instanceof Error
+          ? error.message
+          : t("Upload failed.");
       tone = "err";
       if (uploaded) {
         c.invalidate();
@@ -252,63 +271,78 @@ export function uploadBox(c: Context) {
     }
   };
   const hasFiles = (e: DragEvent) => Array.from(e.dataTransfer?.types || []).includes("Files");
-  const draw = () =>
+  const paint = () => {
+    box.className = "file-upload" + (dragging ? " dragging" : "");
     render(
-      html`<div
-        class=${"file-upload" + (dragging ? " dragging" : "")}
-        @dragenter=${(e: DragEvent) => {
-          if (hasFiles(e)) {
-            e.preventDefault();
-            dragging = true;
-            draw();
-          }
-        }}
-        @dragover=${(e: DragEvent) => {
-          if (hasFiles(e)) e.preventDefault();
-        }}
-        @dragleave=${(e: DragEvent) => {
-          if (!(e.relatedTarget instanceof Node) || !(e.currentTarget as Node).contains(e.relatedTarget)) {
-            dragging = false;
-            draw();
-          }
-        }}
-        @drop=${(e: DragEvent) => {
-          if (hasFiles(e)) {
-            e.preventDefault();
-            dragging = false;
-            void upload(e.dataTransfer?.files || []);
-          }
-        }}
-      >
-        <div class="file-upload-actions">
-          <span class=${"status " + tone}>${message}</span
-          ><button type="button" class="primary upload-button" ?disabled=${busy} @click=${() => input.click()}>
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.8"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"></path></svg
-            ><span>Upload</span></button
-          ><input
-            type="file"
-            multiple
-            class="hidden"
-            @change=${(e: Event) => upload((e.target as HTMLInputElement).files || [])}
-          />
-        </div>
+      html`<div class="file-upload-actions">
+        <span class=${"status " + tone}>${message}</span
+        ><button type="button" class="primary upload-button" ?disabled=${busy} @click=${() => input.click()}>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 16V3m-5 5 5-5 5 5M4 15v5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-5"></path></svg
+          ><span>${t("Upload")}</span></button
+        ><input
+          type="file"
+          multiple
+          class="hidden"
+          @change=${(e: Event) => upload((e.target as HTMLInputElement).files || [])}
+        />
       </div>`,
-      holder,
+      box,
     );
+  };
+  let mounted = false;
+  const draw = () => {
+    unsubscribe?.();
+    unsubscribe = onLocaleChange(() => {
+      if (mounted && !box.isConnected) {
+        unsubscribe?.();
+        unsubscribe = undefined;
+        return;
+      }
+      paint();
+    });
+    paint();
+  };
+  const observer = new MutationObserver(() => {
+    if (box.isConnected) {
+      mounted = true;
+      observer.disconnect();
+    }
+  });
+  observer.observe(document.body, { childList: true, subtree: true });
+  box.addEventListener("dragenter", (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragging = true;
+    draw();
+  });
+  box.addEventListener("dragover", (e) => {
+    if (hasFiles(e)) e.preventDefault();
+  });
+  box.addEventListener("dragleave", (e) => {
+    if (e.relatedTarget instanceof Node && box.contains(e.relatedTarget)) return;
+    dragging = false;
+    draw();
+  });
+  box.addEventListener("drop", (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragging = false;
+    void upload(e.dataTransfer?.files || []);
+  });
   draw();
-  const input = holder.querySelector("input")!;
-  return holder.firstElementChild;
+  const input = box.querySelector("input")!;
+  return box;
 }
 export function deployments(root: HTMLElement, d: Data, c: Context) {
   const render = renderer(root);
@@ -331,9 +365,9 @@ export function deployments(root: HTMLElement, d: Data, c: Context) {
     target: "_blank",
   });
   const draw = (q: string) =>
-    render(
+    render(() =>
       bareCard(
-        html`${c.index ? html`<div class=${q ? "hidden" : ""}>${scopeList(all, c, "app", (r) => r.lastAccessAt || r.createdAt || 0, "No apps yet.")}</div>` : nothing}
+        html`${c.index ? html`<div class=${q ? "hidden" : ""}>${scopeList(all, c, ["{count} app", "{count} apps"], (r) => r.lastAccessAt || r.createdAt || 0, t("No apps yet."))}</div>` : nothing}
           <div class=${c.index && !q ? "hidden" : ""}>
             ${dense(
               items.filter((r) => !q || (r.name || r.id).toLowerCase().includes(q)),
@@ -343,8 +377,8 @@ export function deployments(root: HTMLElement, d: Data, c: Context) {
                 if (href) window.open(href, "_blank", "noopener,noreferrer");
               },
               (() => {
-                if (q) return "No apps match.";
-                return c.index ? "No apps yet." : "No apps in this scope.";
+                if (q) return t("No apps match.");
+                return c.index ? t("No apps yet.") : t("No apps in this scope.");
               })(),
             )}
           </div>`,
@@ -354,8 +388,8 @@ export function deployments(root: HTMLElement, d: Data, c: Context) {
     searchShell(
       c,
       "deployments",
-      listShell(c, "Apps", c.plural(items.length, "app")),
-      c.index ? "Search all apps…" : "Search apps…",
+      listShell(c, t("Apps"), count(items.length, "{count} app", "{count} apps")),
+      c.index ? t("Search all apps…") : t("Search apps…"),
       draw,
     ),
   );
@@ -365,14 +399,14 @@ export function memory(root: HTMLElement, d: Data, c: Context) {
   if (Array.isArray(d.scopes)) return memoryIndex(root, d, c);
   if (c.scopeDir)
     c.pageShell({
-      back: { label: "← Memory", onClick: () => c.go({ view: "memory", scope: "org:" + c.orgId, session: null }) },
-      title: c.orgWide ? "Org-wide" : c.shortName(c.scope),
+      back: { label: t("← Memory"), onClick: () => c.go({ view: "memory", scope: "org:" + c.orgId, session: null }) },
+      title: c.orgWide ? t("Org-wide") : c.shortName(c.scope),
     });
   let baseline = d.content || "";
   let draft = c.memoryDraft() ?? baseline;
   let saving = false,
-    message = draft !== baseline ? "Unsaved changes" : "",
     tone = "";
+  let message = draft !== baseline ? () => t("Unsaved changes") : () => "";
   const save = async () => {
     if (saving) return;
     saving = true;
@@ -383,15 +417,15 @@ export function memory(root: HTMLElement, d: Data, c: Context) {
       if (response.ok) {
         baseline = submitted;
         c.setMemoryDraft(draft === submitted ? null : draft);
-        message = draft === submitted ? "Saved ✓" : "Unsaved changes";
+        message = draft === submitted ? () => t("Saved ✓") : () => t("Unsaved changes");
         tone = draft === submitted ? "ok" : "";
       } else {
         message =
-          response.status === 403 ? "You don't administer this scope." : response.data?.message || "Save failed.";
+          response.status === 403 ? () => t("You don't administer this scope.") : () => response.data?.message || t("Save failed.");
         tone = "err";
       }
     } catch {
-      message = "Save failed.";
+      message = () => t("Save failed.");
       tone = "err";
     } finally {
       saving = false;
@@ -399,33 +433,33 @@ export function memory(root: HTMLElement, d: Data, c: Context) {
     }
   };
   const draw = () =>
-    render(
+    render(() =>
       html`<section class="card memory-editor">
         <div class="head">
-          <h2>Notebook</h2>
-          <p>What the agent remembers in this scope. Changes apply when you save.</p>
+          <h2>${t("Notebook")}</h2>
+          <p>${t("What the agent remembers in this scope. Changes apply when you save.")}</p>
         </div>
         <div class="body">
           <div>
-            <label for="memory-text">Notebook contents</label
+            <label for="memory-text">${t("Notebook contents")}</label
             ><textarea
               id="memory-text"
               spellcheck="false"
-              aria-label="Notebook contents"
+              aria-label=${t("Notebook contents")}
               style="min-height:340px;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;font-size:12px"
-              placeholder="No memory stored for this scope yet. Anything you write here, the agent will remember."
+              placeholder=${t("No memory stored for this scope yet. Anything you write here, the agent will remember.")}
               .value=${draft}
               @input=${(e: Event) => {
                 draft = (e.target as HTMLTextAreaElement).value;
                 c.setMemoryDraft(draft);
-                message = draft !== baseline ? "Unsaved changes" : "";
+                message = draft !== baseline ? () => t("Unsaved changes") : () => "";
                 tone = "";
                 draw();
               }}
             ></textarea>
             <div class="foot">
-              <button class="primary" ?disabled=${saving} @click=${save}>Save</button
-              ><span class=${"status" + (tone ? " " + tone : "")} id="st-memory" role="status">${message}</span>
+              <button class="primary" ?disabled=${saving} @click=${save}>${t("Save")}</button
+              ><span class=${"status" + (tone ? " " + tone : "")} id="st-memory" role="status">${message()}</span>
             </div>
           </div>
         </div>
@@ -450,29 +484,30 @@ function memoryIndex(root: HTMLElement, d: Data, c: Context) {
     ...(c.scopeKind(s.scopeId) === "org" ? { mem: "edit" } : {}),
   });
   const draw = (q: string) =>
-    render(
+    render(() =>
       html`<div class="memory-notebooks">
-        <div class="memory-columns"><span>Notebook</span><span>Size</span><span>Last updated</span></div>
+        <div class="memory-columns"><span>${t("Notebook")}</span><span>${t("Size")}</span><span>${t("Last updated")}</span></div>
         ${dense(
           scopes.filter(
             (s: Data) => !q || [s.label, c.shortName(s.scopeId), s.scopeId].join(" ").toLowerCase().includes(q),
           ),
           (s) => ({
             name: c.scopeKind(s.scopeId) === "org" ? "org" : s.label || c.shortName(s.scopeId),
-            preview: s.hasMemory ? c.fmtBytes(s.bytes || 0) : "empty",
-            time: s.updatedAt ? c.relTime(s.updatedAt) : "Never",
+            preview: s.hasMemory ? c.fmtBytes(s.bytes || 0) : t("empty"),
+            time: s.updatedAt ? c.relTime(s.updatedAt) : t("Never"),
             href: c.stateToUrl(state(s)),
           }),
           (s) => c.go(state(s)),
-          q ? "No notebooks match your search." : "No notebooks yet. The agent hasn't remembered anything.",
+          q ? t("No notebooks match your search.") : t("No notebooks yet. The agent hasn't remembered anything."),
         )}
       </div>`,
     );
   c.pageShell({
-    title: "Memory",
-    count: c.plural(written.length, "notebook"),
-    search: { placeholder: "Search notebooks…", onInput: (value: string) => draw(value.trim().toLowerCase()) },
-    context: written.length && !hasTimestamps ? "sorted by size (this backend keeps no edit history)" : "",
+    title: t("Memory"),
+    count: count(written.length, "{count} notebook", "{count} notebooks"),
+    search: { placeholder: t("Search notebooks…"), onInput: (value: string) => draw(value.trim().toLowerCase()) },
+    context:
+      written.length && !hasTimestamps ? t("sorted by size (this backend keeps no edit history)") : "",
   });
   draw("");
 }
@@ -483,9 +518,11 @@ export function skills(root: HTMLElement, d: Data, c: Context) {
     .filter((s: Data) => s.status !== "archived")
     .sort((a: Data, b: Data) => lastUse(b) - lastUse(a) || (a.name || "").localeCompare(b.name || ""));
   const items = c.own ? all.filter((s: Data) => c.scopeKind(s.ownerScopeId) === "org") : all;
-  const count =
-    c.plural(items.length, "skill") +
-    (c.index && items.length ? " · " + c.plural(new Set(items.map((s: Data) => s.ownerScopeId)).size, "scope") : "");
+  const summary =
+    count(items.length, "{count} skill", "{count} skills") +
+    (c.index && items.length
+      ? " · " + count(new Set(items.map((s: Data) => s.ownerScopeId)).size, "{count} scope", "{count} scopes")
+      : "");
   const packs = document.createElement("div"),
     detail = document.createElement("div");
   const identity = (s: Data) => (s.name || s.id) + "\0" + (s.createdBy || "");
@@ -500,73 +537,75 @@ export function skills(root: HTMLElement, d: Data, c: Context) {
   let query = "";
   const draw = (q = query) => {
     query = q;
-    const shown = items.filter(
-      (s: Data) => !q || ((s.name || s.id) + " " + (s.description || "")).toLowerCase().includes(q),
-    );
-    const rows = shown.map((s: Data) => [
-      {
-        node: html`<div>
-          <div class="primaryline">${s.name || s.id}</div>
-          <div class="subline">${s.description || c.shortId(s.id)}</div>
-        </div>`,
-      },
-      ...(c.index ? [{ text: c.shortName(s.ownerScopeId), cls: "mono" }] : []),
-      { text: c.titleCase(s.status || "unknown"), cls: "subline" },
-      c.createdByCell(s),
-      {
-        text: (() => {
-          if (s.lastUsedAt) return c.fmtHistoryTime(s.lastUsedAt);
-          return lastUse(s) ? "never · imported " + c.fmtHistoryTime(lastUse(s)) : "never";
-        })(),
-        cls: s.lastUsedAt ? "num" : "num subline",
-      },
-      {
-        node: html`<button
-          type="button"
-          class="rowbtn danger"
-          ?disabled=${pending.has(s.id)}
-          @click=${async (e: Event) => {
-            e.stopPropagation();
-            if (pending.has(s.id)) return;
-            pending.add(s.id);
-            draw();
-            try {
-              await removeSkill(s, c);
-            } finally {
-              pending.delete(s.id);
+    render(() => {
+      const shown = items.filter(
+        (s: Data) => !q || ((s.name || s.id) + " " + (s.description || "")).toLowerCase().includes(q),
+      );
+      const rows = shown.map((s: Data) => [
+        {
+          node: html`<div>
+            <div class="primaryline">${s.name || s.id}</div>
+            <div class="subline">${s.description || c.shortId(s.id)}</div>
+          </div>`,
+        },
+        ...(c.index ? [{ text: c.shortName(s.ownerScopeId), cls: "mono" }] : []),
+        { text: c.titleCase(s.status || "unknown"), cls: "subline" },
+        c.createdByCell(s),
+        {
+          text: (() => {
+            if (s.lastUsedAt) return c.fmtHistoryTime(s.lastUsedAt);
+            return lastUse(s)
+              ? t("never · imported {when}", { when: c.fmtHistoryTime(lastUse(s)) })
+              : t("never");
+          })(),
+          cls: s.lastUsedAt ? "num" : "num subline",
+        },
+        {
+          node: html`<button
+            type="button"
+            class="rowbtn danger"
+            ?disabled=${pending.has(s.id)}
+            @click=${async (e: Event) => {
+              e.stopPropagation();
+              if (pending.has(s.id)) return;
+              pending.add(s.id);
               draw();
-            }
-          }}
-        >
-          Remove
-        </button>`,
-      },
-    ]);
-    render(
-      html`${c.index ? packs : nothing}${card(
-        "Installed skills",
+              try {
+                await removeSkill(s, c);
+              } finally {
+                pending.delete(s.id);
+                draw();
+              }
+            }}
+          >
+            ${t("Remove")}
+          </button>`,
+        },
+      ]);
+      return html`${c.index ? packs : nothing}${card(
+        t("Installed skills"),
         "",
-        html`${c.index ? html`<div class=${q ? "hidden" : ""}>${scopeList(all, c, "skill", lastUse, "No skills yet.")}</div>` : nothing}
+        html`${c.index ? html`<div class=${q ? "hidden" : ""}>${scopeList(all, c, ["{count} skill", "{count} skills"], lastUse, t("No skills yet."))}</div>` : nothing}
           <div class=${c.index && !q ? "hidden" : ""}>
             ${table(
-              ["Skill", ...(c.index ? ["Scope"] : []), "Status", "Created by", "Last used", ""],
+              [t("Skill"), ...(c.index ? [t("Scope")] : []), t("Status"), t("Created by"), t("Last used"), ""],
               rows,
               (() => {
-                if (q) return "No skills match.";
-                return c.index ? "No skills yet." : "No skills in this scope.";
+                if (q) return t("No skills match.");
+                return c.index ? t("No skills yet.") : t("No skills in this scope.");
               })(),
               (i: number) => open(shown[i]),
               { className: "skills-table" },
             )}
           </div>`,
-      )}${detail}`,
-    );
+      )}${detail}`;
+    });
   };
   query = searchShell(
     c,
     "skills",
-    listShell(c, "Skills", count),
-    c.index ? "Search all skills…" : "Search skills…",
+    listShell(c, t("Skills"), summary),
+    c.index ? t("Search all skills…") : t("Search skills…"),
     draw,
   );
   draw();
@@ -595,7 +634,7 @@ export function crons(root: HTMLElement, d: Data, c: Context) {
     name: c.firstLine(c.cronName(r, true), 72),
     preview: [
       c.index ? c.shortName(r.ownerScopeId) : "",
-      cronStatus(r) === "enabled" ? "" : cronStatus(r),
+      cronStatus(r) === "enabled" ? "" : t(cronStatus(r)),
       c.firstLine(
         (() => {
           if (r.title) return r.action || r.message || "";
@@ -606,14 +645,14 @@ export function crons(root: HTMLElement, d: Data, c: Context) {
     ]
       .filter(Boolean)
       .join(" · "),
-    time: c.shortSchedule(r.schedule) + " · " + (r.lastFiredAt ? c.relTime(r.lastFiredAt) : "never fired"),
+    time: c.shortSchedule(r.schedule) + " · " + (r.lastFiredAt ? c.relTime(r.lastFiredAt) : t("never fired")),
     cls: cronStatus(r) === "enabled" ? "" : "dim",
     href: c.stateToUrl({ view: "crons", scope: c.scope, cron: r.id }),
   });
   const draw = (q: string) =>
-    render(
+    render(() =>
       bareCard(
-        html`${c.index ? html`<div class=${q ? "hidden" : ""}>${scopeList(all, c, "cron", (r) => r.lastFiredAt || r.createdAt || 0, "No crons yet.")}</div>` : nothing}
+        html`${c.index ? html`<div class=${q ? "hidden" : ""}>${scopeList(all, c, ["{count} cron", "{count} crons"], (r) => r.lastFiredAt || r.createdAt || 0, t("No crons yet."))}</div>` : nothing}
           <div class=${c.index && !q ? "hidden" : ""}>
             ${dense(
               sorted.filter(
@@ -622,8 +661,8 @@ export function crons(root: HTMLElement, d: Data, c: Context) {
               row,
               (r) => c.go({ view: "crons", scope: c.scope, session: null, cron: r.id, page: 1 }),
               (() => {
-                if (q) return "No crons match.";
-                return c.index ? "No crons yet." : "No crons in this scope.";
+                if (q) return t("No crons match.");
+                return c.index ? t("No crons yet.") : t("No crons in this scope.");
               })(),
             )}
           </div>`,
@@ -634,10 +673,10 @@ export function crons(root: HTMLElement, d: Data, c: Context) {
       c,
       "crons",
       {
-        ...listShell(c, "Crons", c.plural(items.length, "cron")),
+        ...listShell(c, t("Crons"), count(items.length, "{count} cron", "{count} crons")),
         stats: [...(disabled ? [[disabled, "disabled"]] : []), ...(archived ? [[archived, "archived"]] : [])],
       },
-      c.index ? "Search all crons…" : "Search crons…",
+      c.index ? t("Search all crons…") : t("Search crons…"),
       draw,
     ),
   );
@@ -646,14 +685,14 @@ function cronDetail(root: HTMLElement, cron: Data | undefined, id: string, c: Co
   const render = renderer(root);
   c.pageShell({
     back: {
-      label: "← Crons",
+      label: t("← Crons"),
       onClick: () => c.go({ view: "crons", scope: c.scope, session: null, cron: null, page: 1 }),
     },
-    title: cron ? c.firstLine(c.cronName(cron, true), 90) : "Cron",
+    title: cron ? c.firstLine(c.cronName(cron, true), 90) : t("Cron"),
     context: cron ? c.shortName(cron.ownerScopeId) : "",
   });
   if (!cron) {
-    render(empty("Cron " + c.shortId(id) + " isn't in this scope."));
+    render(() => empty(t("Cron {id} isn't in this scope.", { id: c.shortId(id) })));
     return;
   }
   let editing = false,
@@ -677,7 +716,7 @@ function cronDetail(root: HTMLElement, cron: Data | undefined, id: string, c: Co
     if (saving) return;
     if (!clear && !draft.target.trim()) {
       root.querySelector<HTMLInputElement>('input[name="cron-target"]')?.focus();
-      alert("Target is required.");
+      alert(t("Target is required."));
       return;
     }
     const destination = clear
@@ -698,7 +737,7 @@ function cronDetail(root: HTMLElement, cron: Data | undefined, id: string, c: Co
         { destination },
       );
       if (!response.ok) {
-        alert(response.data?.message || "Could not update destination.");
+        alert(response.data?.message || t("Could not update destination."));
         return;
       }
       cron.destination = destination;
@@ -709,7 +748,7 @@ function cronDetail(root: HTMLElement, cron: Data | undefined, id: string, c: Co
         await c.reload();
       }
     } catch {
-      alert("Could not update destination.");
+      alert(t("Could not update destination."));
     } finally {
       saving = false;
       if (root.isConnected) draw();
@@ -717,48 +756,48 @@ function cronDetail(root: HTMLElement, cron: Data | undefined, id: string, c: Co
   };
   const prompt = cron.action || cron.message || "";
   const facts = () => [
-    ["Schedule", c.fmtSchedule(cron.schedule)],
+    [t("Schedule"), c.fmtSchedule(cron.schedule)],
     [
-      "Destination",
+      t("Destination"),
       html`<span
         >${c.destinationSummary(cron.destination) + (c.destinationDetails(cron.destination) && cron.destination ? " · " + c.destinationDetails(cron.destination) : "")}</span
       >`,
     ],
-    ["Owner", cron.owner || cron.createdBy || "None"],
-    ["Status", cronStatus(cron)],
-    ["Created", c.fmtTime(cron.createdAt)],
-    ["Last fired", cron.lastFiredAt ? c.relTime(cron.lastFiredAt) : "never fired"],
-    ["Id", cron.id],
+    [t("Owner"), cron.owner || cron.createdBy || t("None")],
+    [t("Status"), t(cronStatus(cron))],
+    [t("Creation time"), c.fmtTime(cron.createdAt)],
+    [t("Last fired"), cron.lastFiredAt ? c.relTime(cron.lastFiredAt) : t("never fired")],
+    [t("Id"), cron.id],
   ];
   const draw = () =>
-    render(
+    render(() =>
       html`${
           editing
             ? card(
-                "Edit cron destination",
+                t("Edit cron destination"),
                 cron.title || cron.action || cron.message || cron.id,
                 html`<div>
                   <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));gap:10px">
                     <label
-                      >Type<select .value=${draft.type} @change=${change("type")}>
+                      >${t("Type")}<select .value=${draft.type} @change=${change("type")}>
                         <option value="slack" .selected=${draft.type === "slack"}>slack</option>
                         <option value="principal" .selected=${draft.type === "principal"}>principal</option>
                       </select></label
                     ><label
-                      >Target<input
+                      >${t("Target")}<input
                         name="cron-target"
                         type="text"
                         .value=${draft.target}
-                        placeholder=${draft.type === "principal" ? "principal id" : "Slack channel/thread id"}
+                        placeholder=${draft.type === "principal" ? "principal id" : t("Slack channel/thread id")}
                         @input=${change("target")} /></label
                     ><label
-                      >Audience scope<input
+                      >${t("Audience scope")}<input
                         type="text"
                         .value=${draft.audienceScopeId}
                         placeholder=${draft.type === "principal" ? "personal:U123" : "channel:C123"}
                         @input=${change("audienceScopeId")} /></label
                     ><label
-                      >On behalf of<input
+                      >${t("On behalf of")}<input
                         type="text"
                         .value=${draft.onBehalfOf}
                         ?disabled=${draft.type !== "principal"}
@@ -767,7 +806,7 @@ function cronDetail(root: HTMLElement, cron: Data | undefined, id: string, c: Co
                   </div>
                   <div class="foot">
                     <button type="button" class="primary" ?disabled=${saving} @click=${() => save()}>
-                      Save destination</button
+                      ${t("Save destination")}</button
                     ><button
                       type="button"
                       ?disabled=${saving}
@@ -777,7 +816,7 @@ function cronDetail(root: HTMLElement, cron: Data | undefined, id: string, c: Co
                         draw();
                       }}
                     >
-                      Cancel
+                      ${t("Cancel")}
                     </button>
                   </div>
                 </div>`,
@@ -810,21 +849,21 @@ function cronDetail(root: HTMLElement, cron: Data | undefined, id: string, c: Co
               draw();
             }}
           >
-            Edit destination</button
+            ${t("Edit destination")}</button
           ><button
             type="button"
             class="rowbtn danger"
             ?disabled=${saving || !cron.destination}
             @click=${() => save(true)}
           >
-            Clear destination
+            ${t("Clear destination")}
           </button>
         </div>
         ${
           prompt
             ? card(
-                cron.action ? "Prompt" : "Message",
-                cron.action ? "Re-run as a fresh prompt at every fire." : "Delivered as-is at every fire.",
+                cron.action ? t("Prompt") : t("Message"),
+                cron.action ? t("Re-run as a fresh prompt at every fire.") : t("Delivered as-is at every fire."),
                 html`<div>
                   <p class=${"prompt-body" + (expanded ? "" : " clamped")}>${prompt}</p>
                   ${
@@ -837,7 +876,7 @@ function cronDetail(root: HTMLElement, cron: Data | undefined, id: string, c: Co
                             draw();
                           }}
                         >
-                          ${expanded ? "Show less" : "Show more"}
+                          ${expanded ? t("Show less") : t("Show more")}
                         </button>`
                       : nothing
                   }
@@ -845,13 +884,13 @@ function cronDetail(root: HTMLElement, cron: Data | undefined, id: string, c: Co
               )
             : nothing
         }${card(
-          "Recent fires",
-          "Each fire is a session. Click one to read its transcript. Dimmed fires delivered nothing.",
+          t("Recent fires"),
+          t("Each fire is a session. Click one to read its transcript. Dimmed fires delivered nothing."),
           html`<div>
             ${(() => {
               if (error) return empty(error);
               return fires === null
-                ? html`<div class="loadingline">Loading fires...</div>`
+                ? html`<div class="loadingline">${t("Loading fires...")}</div>`
                 : dense(
                     fires,
                     (s) => ({
@@ -859,22 +898,24 @@ function cronDetail(root: HTMLElement, cron: Data | undefined, id: string, c: Co
                       preview: [
                         (() => {
                           if (typeof s.delivered === "number")
-                            return s.delivered ? "delivered" + (s.delivered > 1 ? " ×" + s.delivered : "") : "silent";
+                            return s.delivered
+                              ? t("delivered") + (s.delivered > 1 ? " ×" + formatNumber(s.delivered) : "")
+                              : t("silent");
                           return "";
                         })(),
-                        c.plural(s.turns || 0, "turn"),
-                        s.result || "(no messages)",
+                        count(s.turns || 0, "{count} turn", "{count} turns"),
+                        s.result || t("(no messages)"),
                       ]
                         .filter(Boolean)
                         .join(" · "),
-                      time: c.plural(s.messages || 0, "entry", "entries"),
+                      time: count(s.messages || 0, "{count} entry", "{count} entries"),
                       cls: typeof s.delivered === "number" && !s.delivered ? "dim" : "",
                       href: c.stateToUrl({ view: "history", scope: s.scopeId || c.scope, session: s.id }),
                     }),
                     (s) => c.go({ view: "history", scope: s.scopeId || c.scope, session: s.id }),
-                    "This cron has never fired.",
+                    t("This cron has never fired."),
                   );
-            })()}${total > 25 ? html`<button type="button" class="prompt-toggle" @click=${() => c.go({ view: "history", scope: c.scope, session: null, page: 1, historyKind: "cron", cron: id })}>${"All " + c.plural(total, "fire") + " →"}</button>` : nothing}
+            })()}${total > 25 ? html`<button type="button" class="prompt-toggle" @click=${() => c.go({ view: "history", scope: c.scope, session: null, page: 1, historyKind: "cron", cron: id })}>${t("All {count} fires →", { count: formatNumber(total) })}</button>` : nothing}
           </div>`,
         )}`,
     );
@@ -896,12 +937,12 @@ function cronDetail(root: HTMLElement, cron: Data | undefined, id: string, c: Co
       if (response.ok) {
         fires = response.data.sessions || [];
         total = response.data.total || fires!.length;
-      } else error = response.data?.message || `Failed to load fires (${response.status}).`;
+      } else error = response.data?.message || t("Failed to load fires ({status}).", { status: response.status });
       draw();
     })
     .catch(() => {
       if (root.isConnected) {
-        error = "Failed to load fires.";
+        error = t("Failed to load fires.");
         draw();
       }
     });
@@ -931,16 +972,16 @@ export function retention(root: HTMLElement, d: Data) {
     ),
     cls: "num",
   });
-  render(
+  render(() =>
     html`${kpis([
-        [a.dau ?? 0, "DAU"],
-        [a.wau ?? 0, "WAU"],
-        [a.mau ?? 0, "MAU"],
-        [(a.stickiness ?? 0) + "%", "Stickiness (DAU/MAU)"],
+        [formatNumber(a.dau ?? 0), "DAU"],
+        [formatNumber(a.wau ?? 0), "WAU"],
+        [formatNumber(a.mau ?? 0), "MAU"],
+        [formatNumber(a.stickiness ?? 0) + "%", t("Stickiness (DAU/MAU)")],
       ])}
       <div class="metric-note">
-        Stickiness${badge(
-          String(a.stickiness ?? 0) + "%",
+        ${t("Stickiness")}${badge(
+          formatNumber(a.stickiness ?? 0) + "%",
           (() => {
             if ((a.stickiness ?? 0) >= 30) return "ok";
             return (a.stickiness ?? 0) >= 10 ? "warn" : "muted";
@@ -948,48 +989,51 @@ export function retention(root: HTMLElement, d: Data) {
         )}
       </div>
       ${card(
-        "New vs returning",
-        `Distinct active users in the trailing ${nvr.window || "30d"}.`,
+        t("New vs returning"),
+        t("Distinct active users in the trailing {window}.", { window: nvr.window || "30d" }),
         table(
-          ["New", "Returning"],
+          [t("New users"), t("Returning")],
           [
             [
-              { text: String(nvr.newUsers ?? 0), cls: "num" },
-              { text: String(nvr.returning ?? 0), cls: "num" },
+              { text: formatNumber(nvr.newUsers ?? 0), cls: "num" },
+              { text: formatNumber(nvr.returning ?? 0), cls: "num" },
             ],
           ],
-          "No activity yet.",
+          t("No activity yet."),
         ),
       )}${card(
-        "Weekly retention cohorts",
-        "Of users first active in a week, the share active in following weeks. Channel attribution is approximate.",
+        t("Weekly retention cohorts"),
+        t("Of users first active in a week, the share active in following weeks. Channel attribution is approximate."),
         table(
-          ["Cohort (week of)", "Users", "W0", "W1", "W2", "W3", "W4"],
+          [t("Cohort (week of)"), t("Users"), "W0", "W1", "W2", "W3", "W4"],
           (d.cohorts || []).map((r: Data) => [
             r.week,
-            { text: String(r.size), cls: "num" },
+            { text: formatNumber(r.size), cls: "num" },
             ...(r.retained || []).map(retentionCell),
           ]),
-          "No cohorts yet.",
+          t("No cohorts yet."),
         ),
       )}${card(
-        "Per-user distribution",
-        `${d.totals?.users ?? 0} users · ${d.totals?.sessions ?? 0} sessions. ${d.attribution || ""}`,
+        t("Per-user distribution"),
+        `${t("{users} users · {sessions} sessions.", {
+          users: formatNumber(d.totals?.users ?? 0),
+          sessions: formatNumber(d.totals?.sessions ?? 0),
+        })} ${d.attribution || ""}`,
         table(
-          ["Metric", "p50", "p95"],
+          [t("Metric"), "p50", "p95"],
           [
             [
-              "Sessions / user",
-              { text: String(pu.sessions?.p50 ?? 0), cls: "num" },
-              { text: String(pu.sessions?.p95 ?? 0), cls: "num" },
+              t("Sessions / user"),
+              { text: formatNumber(pu.sessions?.p50 ?? 0), cls: "num" },
+              { text: formatNumber(pu.sessions?.p95 ?? 0), cls: "num" },
             ],
             [
-              "Turns / user",
-              { text: String(pu.turns?.p50 ?? 0), cls: "num" },
-              { text: String(pu.turns?.p95 ?? 0), cls: "num" },
+              t("Turns / user"),
+              { text: formatNumber(pu.turns?.p50 ?? 0), cls: "num" },
+              { text: formatNumber(pu.turns?.p95 ?? 0), cls: "num" },
             ],
           ],
-          "No users yet.",
+          t("No users yet."),
         ),
       )}`,
   );
@@ -997,22 +1041,35 @@ export function retention(root: HTMLElement, d: Data) {
 export function live(root: HTMLElement, d: Data, c: Context) {
   const render = renderer(root);
   const runs = d.runs || [];
-  render(
+  render(() =>
     html`${kpis([
-      [d.active ?? 0, "Active now"],
-      [runs.length, "Recent runs"],
-      [runs.filter((r: Data) => r.status === "failed").length, "Failed"],
-      [runs.filter((r: Data) => r.status === "done").length, "Done"],
+      [formatNumber(d.active ?? 0), t("Active now")],
+      [formatNumber(runs.length), t("Recent runs")],
+      [formatNumber(runs.filter((r: Data) => r.status === "failed").length), t("Failed")],
+      [formatNumber(runs.filter((r: Data) => r.status === "done").length), t("Done")],
     ])}${bareCard(
       table(
-        ["Run", "Status", "Scope", "Type", "Attempts", "Worker", "Duration", "Lease", "Started"],
+        [
+          t("Run"),
+          t("Status"),
+          t("Scope"),
+          t("Type"),
+          t("Attempts"),
+          t("Worker"),
+          t("Duration"),
+          t("Lease"),
+          t("Start time"),
+        ],
         runs.map((r: Data) => [
-          { node: c.stacked("Run " + c.shortId(r.id), r.threadRef || "no thread"), cls: "mono" },
+          { node: c.stacked(t("Run {id}", { id: c.shortId(r.id) }), r.threadRef || t("no thread")), cls: "mono" },
           { node: c.statusBadge(r.status) },
           r.sessionScope ? c.scopeCell(r.sessionScope) : { text: "-", cls: "mono" },
           { node: c.typeBadge(r.sessionType) },
           {
-            node: badge(`${r.attempts}/${r.maxAttempts}`, r.status === "failed" || r.attempts > 1 ? "warn" : "muted"),
+            node: badge(
+              `${formatNumber(r.attempts)}/${formatNumber(r.maxAttempts)}`,
+              r.status === "failed" || r.attempts > 1 ? "warn" : "muted",
+            ),
             cls: "num",
           },
           { text: r.workerId || "-", cls: "mono" },
@@ -1026,7 +1083,7 @@ export function live(root: HTMLElement, d: Data, c: Context) {
           },
           { text: r.startedAt ? c.fmtTime(r.startedAt) : "-", cls: "num" },
         ]),
-        "No runs.",
+        t("No runs."),
       ),
     )}`,
   );

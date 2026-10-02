@@ -10,6 +10,8 @@ import { destinations } from "./browse";
 import { UI_BASE } from "./deep-link";
 import { resourceResults, matchResources, type ResourceHit, type ResourceSearchResponse } from "./search-resources";
 import { icon } from "./ui";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { formatDate } from "../../chassis/src/i18n.ts";
 
 interface ChatSearchHit {
   sessionId: string;
@@ -100,7 +102,7 @@ function draw(): void {
 }
 
 function resourceHits(): ResourceHit[] {
-  const shortcuts = destinations().map((d) => ({ title: d.label, description: d.blurb, group: "Go to", href: d.href }));
+  const shortcuts = destinations().map((d) => ({ title: d.label, description: d.blurb, group: t("Go to"), href: d.href }));
   return [...matchResources(shortcuts, searchState.query), ...searchState.resources];
 }
 
@@ -295,7 +297,7 @@ function hitSnippet(hit: ChatSearchHit): string {
 function hitTitle(hit: ChatSearchHit): string {
   if (hit.title?.trim()) return hit.title;
   const session = sessionsState.list.find((s) => s.id === hit.sessionId);
-  return session ? sessionTitle(session) : (hit.channelName ?? "Untitled chat");
+  return session ? sessionTitle(session) : (hit.channelName ?? t("Untitled chat"));
 }
 
 function resultRows(): TemplateResult[] {
@@ -321,13 +323,13 @@ function resultRows(): TemplateResult[] {
         }}
       >
         <span class="chat-search-who ${hit.entryType === "user" ? "user" : "agent"}" dir="auto"
-          >${(hit.entryType === "user" ? (hit.author ?? "You") : "QM").slice(0, 1).toUpperCase()}</span
+          >${(hit.entryType === "user" ? (hit.author ?? t("You")) : "QM").slice(0, 1).toUpperCase()}</span
         >
         <span class="chat-search-text">
           <span class="chat-search-snippet" dir="auto">${highlight(hitSnippet(hit))}</span>
           <span class="chat-search-meta"
-            ><bdi>${hit.entryType === "user" ? (hit.author ?? "you") : "agent"}</bdi> ·
-            ${new Date(hit.createdAt).toLocaleDateString()}</span
+            ><bdi>${hit.entryType === "user" ? (hit.author ?? t("you")) : t("agent")}</bdi> ·
+            ${formatDate(hit.createdAt)}</span
           >
         </span>
       </button>
@@ -382,8 +384,8 @@ function askRow(): TemplateResult {
     >
       <span class="chat-search-who ask">+</span>
       <span class="chat-search-text">
-        <span class="chat-search-snippet">Ask QM to find it: <b dir="auto">“${searchState.query.trim()}”</b></span>
-        <span class="chat-search-meta">starts a new chat where QM finds the matching resource and links it</span>
+        <span class="chat-search-snippet">${t("Ask QM to find it:")} <b dir="auto">“${searchState.query.trim()}”</b></span>
+        <span class="chat-search-meta">${t("starts a new chat where QM finds the matching resource and links it")}</span>
       </span>
       <span class="chat-search-kbd">${isMac ? "⌘" : "Ctrl"}${icon(CornerDownLeft, 11)}</span>
     </button>
@@ -396,13 +398,13 @@ function paletteTpl(): TemplateResult {
   if (q.length < MIN_QUERY_LEN) {
     body = nothing;
   } else if (searchState.loading && !searchState.hits.length) {
-    body = html`<div class="chat-search-empty">Searching…</div>`;
+    body = html`<div class="chat-search-empty">${t("Searching…")}</div>`;
   } else if (searchState.failed) {
-    body = html`<div class="chat-search-empty chat-search-failed">Search failed. Try again.</div>`;
+    body = html`<div class="chat-search-empty chat-search-failed">${t("Search failed. Try again.")}</div>`;
   } else if (resourceHits().length || searchState.resourcesLoading) {
     body = html`${resultRows()}`;
   } else if (!searchState.hits.length) {
-    body = html`<div class="chat-search-empty">No results match “${q}”.</div>`;
+    body = html`<div class="chat-search-empty">${t("No results match “{query}”.", { query: q })}</div>`;
   } else {
     body = html`${resultRows()}`;
   }
@@ -413,33 +415,33 @@ function paletteTpl(): TemplateResult {
         if (e.target === e.currentTarget) closeChatSearch();
       }}
     >
-      <div class="chat-search-palette" role="dialog" aria-label="Search QM" @keydown=${onPaletteKeydown}>
+      <div class="chat-search-palette" role="dialog" aria-label=${t("Search QM")} @keydown=${onPaletteKeydown}>
         <div class="chat-search-inputrow">
           ${icon(Search, 16)}
           <input
             class="chat-search-input"
             type="text"
-            placeholder="Search chats, skills, crons, apps…"
+            placeholder=${t("Search chats, skills, crons, apps…")}
             autocomplete="off"
             spellcheck="false"
             .value=${searchState.query}
             @input=${onQueryInput}
           />
           <span class="chat-search-kbd">esc</span>
-          <button class="chat-search-cancel" type="button" @click=${closeChatSearch}>Cancel</button>
+          <button class="chat-search-cancel" type="button" @click=${closeChatSearch}>${t("Cancel")}</button>
         </div>
         <div class="chat-search-results">
           ${resourceRows()}
-          ${searchState.resourcesLoading ? html`<div class="chat-search-empty">Loading resources…</div>` : nothing}
-          ${searchState.resourceFailures.length ? html`<div class="chat-search-empty chat-search-failed">Could not search: ${searchState.resourceFailures.join(", ")}. Try searching again.</div>` : nothing}
-          ${searchState.resourcesLimited ? html`<div class="chat-search-empty">Refine your search to see more resource matches.</div>` : nothing}
+          ${searchState.resourcesLoading ? html`<div class="chat-search-empty">${t("Loading resources…")}</div>` : nothing}
+          ${searchState.resourceFailures.length ? html`<div class="chat-search-empty chat-search-failed">${t("Could not search: {failures}. Try searching again.", { failures: searchState.resourceFailures.join(", ") })}</div>` : nothing}
+          ${searchState.resourcesLimited ? html`<div class="chat-search-empty">${t("Refine your search to see more resource matches.")}</div>` : nothing}
           ${body}
         </div>
         ${askRowShown() ? html`<div class="chat-search-askbar">${askRow()}</div>` : nothing}
         <div class="chat-search-foot">
-          <span><span class="chat-search-kbd">↑↓</span> navigate</span>
-          <span><span class="chat-search-kbd">↵</span> open</span>
-          <span><span class="chat-search-kbd">${isMac ? "⌘↵" : "Ctrl+↵"}</span> ask QM in a new chat</span>
+          <span><span class="chat-search-kbd">↑↓</span> ${t("navigate")}</span>
+          <span><span class="chat-search-kbd">↵</span> ${t("open")}</span>
+          <span><span class="chat-search-kbd">${isMac ? "⌘↵" : "Ctrl+↵"}</span> ${t("ask QM in a new chat")}</span>
         </div>
       </div>
     </div>

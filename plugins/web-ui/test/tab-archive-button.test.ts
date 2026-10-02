@@ -14,7 +14,10 @@ const fn = (src: string, name: string): string => {
 
 test("a tab archives its own session through the shared action list", () => {
   const tab = split.slice(split.indexOf("class PaneTab"), split.indexOf("class StripDrop"));
-  assert.match(tab, /split-tab-actions[\s\S]*?tip\("Close pane"\)/);
+  const close = tab.match(/class="icon-btn subtle split-tab-close"[\s\S]*?<\/button>/)?.[0];
+  assert.ok(close, "the tab close control is missing from the pane tab markup");
+  assert.match(close, /\$\{tip\(t\("Close pane"\)\)\}/, "the close control lost its localized tooltip");
+  assert.match(close, /aria-label=\$\{t\("Close pane"\)\}/, "the close control lost its localized accessible name");
   assert.match(tab, /split-tab-session/);
   assert.doesNotMatch(tab, /archiveSessionById/);
   const items = fn(split, "sessionActionItems");

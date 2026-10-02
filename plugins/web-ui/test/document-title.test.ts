@@ -4,6 +4,9 @@ import test from "node:test";
 import { JSDOM } from "jsdom";
 import { createServer } from "vite";
 import { activeSessionForDocumentTitle, documentTitle, PRODUCT_TITLE } from "../src/document-title.ts";
+import { setLocale } from "../../chassis/src/i18n.ts";
+
+setLocale("en");
 
 const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
 

@@ -2,7 +2,15 @@ import { html, nothing } from "lit";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
 import { node, renderer, badge } from "./shared.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { formatNumber } from "../../chassis/src/i18n.ts";
 type Row = Record<string, any>;
+const STEP_LABEL: Record<string, string> = {
+  delivery: "Delivery",
+  shadow: "Shadow",
+  dropped: "Dropped",
+  delivered: "Delivered",
+};
 let generation = 0;
 export function cancel() {
   generation++;
@@ -117,7 +125,7 @@ export function requestsPanel(requests: Row[], s: Row, opts: Row = {}) {
       ${s.metaChip((latest.model || "?") + " · " + s.fmtContextSize(latest, latestSections))}${s.cacheMetaItems(cache)}${s.rawJsonLink(requests)}
     </div>`;
   function paint() {
-    draw(
+    draw(() =>
       html`<div
         class=${classMap({ entry: !opts.embedded, collapsed: !open, llm: true, "context-turn": true, "context-page": !!opts.page, "cache-miss": !!cache && s.isStablePrefixMiss(cache) })}
       >
@@ -132,15 +140,15 @@ export function requestsPanel(requests: Row[], s: Row, opts: Row = {}) {
                           type="button"
                           class="disclosure"
                           aria-expanded=${String(open)}
-                          aria-label=${open ? "Collapse model context" : "Expand model context"}
-                          title=${open ? "Collapse model context" : "Expand model context"}
+                          aria-label=${open ? t("Collapse model context") : t("Expand model context")}
+                          title=${open ? t("Collapse model context") : t("Expand model context")}
                           @click=${() => {
                             open = !open;
                             paint();
                           }}
                         >
                           ${open ? "▾" : "▸"}</button
-                        ><span class="role">sent to model</span>`
+                        ><span class="role">${t("sent to model")}</span>`
                 }${stats()}
               </div>`
         }
@@ -150,9 +158,9 @@ export function requestsPanel(requests: Row[], s: Row, opts: Row = {}) {
               total = list.reduce((n, section) => n + section.tokens, 0),
               chosen = list.find((section) => section.key === selected[index]);
             return html`<div class="context-request">
-              ${requests.length > 1 ? html`<div class="context-request-head"><strong>${"Request " + (index + 1)}</strong><span>${(q.model || "?") + " · " + s.fmtContextSize(q, list)}</span></div>` : nothing}${q.truncated ? html`<p class="context-note">Stored payload was truncated.</p>` : nothing}
+              ${requests.length > 1 ? html`<div class="context-request-head"><strong>${t("Request {n}", { n: index + 1 })}</strong><span>${(q.model || "?") + " · " + s.fmtContextSize(q, list)}</span></div>` : nothing}${q.truncated ? html`<p class="context-note">${t("Stored payload was truncated.")}</p>` : nothing}
               <div class="context-overview">
-                <div class="context-stack" role="group" aria-label="request context">
+                <div class="context-stack" role="group" aria-label=${t("request context")}>
                   ${list.map((section) => {
                     const title =
                       section.label + " · " + s.fmtTokens(section.tokens) + (section.note ? " · " + section.note : "");
@@ -182,7 +190,7 @@ export function requestsPanel(requests: Row[], s: Row, opts: Row = {}) {
                           <strong>${chosen.label}</strong
                           ><span>${s.fmtTokens(chosen.tokens) + (chosen.note ? " · " + chosen.note : "")}</span>
                         </div>
-                        <pre>${chosen.text || "(empty)"}</pre>
+                        <pre>${chosen.text || t("(empty)")}</pre>
                       </div>`
                     : nothing
                 }
@@ -201,8 +209,8 @@ export async function contextPage(sessionId: string, turnSeq: string, s: Row) {
     root = document.getElementById("view-data")!;
   root.replaceChildren();
   const draw = renderer(root);
-  s.pageShell({ back: { label: "← Back to transcript", onClick: () => history.back() }, title: "Sent to model" });
-  draw(html`<div class="detail">Loading…</div>`);
+  s.pageShell({ back: { label: t("← Back to transcript"), onClick: () => history.back() }, title: t("Sent to model") });
+  draw(() => html`<div class="detail">${t("Loading…")}</div>`);
   const result = await s.api(
     "GET",
     "/api/sessions/" +
@@ -214,20 +222,20 @@ export async function contextPage(sessionId: string, turnSeq: string, s: Row) {
   );
   if (request !== generation || !s.current(sessionId, turnSeq)) return;
   if (!result.ok)
-    return draw(
-      html`<div class="detail">${result.data?.message || `Failed to load context (${result.status}).`}</div>`,
+    return draw(() =>
+      html`<div class="detail">${result.data?.message || t("Failed to load context ({status}).", { status: result.status })}</div>`,
     );
   const requests = (result.data.requests || []).slice().sort((a: Row, b: Row) => (a.step || 0) - (b.step || 0)),
-    label = turnSeq === "orphan" ? "unattributed context" : `turn #${turnSeq}`,
+    label = turnSeq === "orphan" ? t("unattributed context") : t("turn #{seq}", { seq: turnSeq }),
     latest = requests.at(-1),
     sections = latest ? s.contextSections(s.requestBody(latest), latest.transport) : [];
-  draw(
+  draw(() =>
     html`<div class="detail">
       <div class="context-page-head">
-        <h2>${"Sent to model · " + label + (requests.length > 1 ? " · " + requests.length + " steps" : "")}</h2>
+        <h2>${t("Sent to model") + " · " + label + (requests.length > 1 ? " · " + t("{count} steps", { count: formatNumber(requests.length) }) : "")}</h2>
         ${requests.length ? html`<div class="context-stats">${s.metaChip((latest.model || "?") + " · " + s.fmtContextSize(latest, sections))}${s.cacheMetaItems(s.sumCacheUsage(requests))}${s.rawJsonLink(requests)}</div>` : nothing}
       </div>
-      ${requests.length ? requestsPanel(requests, s, { embedded: true, page: true, selectLargest: true, latestSections: sections }) : html`<p class="context-empty">No context was captured for this turn.</p>`}
+      ${requests.length ? requestsPanel(requests, s, { embedded: true, page: true, selectLargest: true, latestSections: sections }) : html`<p class="context-empty">${t("No context was captured for this turn.")}</p>`}
     </div>`,
   );
 }
@@ -244,8 +252,8 @@ export async function show(sessionId: string, limit: number | undefined, expand:
     else history.back();
   };
   s.pageShell({
-    back: { label: "← Conversations", onClick: back() },
-    title: "Conversation",
+    back: { label: "← " + t("Conversations"), onClick: back() },
+    title: t("Conversation"),
     context: s.shortName(s.scope),
   });
   let applyVisibility = () => {};
@@ -253,28 +261,30 @@ export async function show(sessionId: string, limit: number | undefined, expand:
   header.replaceChildren();
   const paintHeader = renderer(header);
   function controls() {
-    paintHeader(
+    paintHeader(() =>
       html`${[
         ["thinking", "thinking"],
         ["tool results", "toolResults"],
       ].map(
-        ([label, key]) =>
-          html`<label class="header-check"
+        ([label, key]) => {
+          const text = t("Show {label}", { label: t(label) });
+          return html`<label class="header-check"
             ><input
               type="checkbox"
               .checked=${!!s.visibility[key]}
-              aria-label=${"Show " + label}
+              aria-label=${text}
               @change=${(e: Event) => {
                 s.visibility[key] = (e.target as HTMLInputElement).checked;
                 applyVisibility();
               }}
-            /><span class="header-check-prefix">Show </span>${label}</label
-          >`,
+            /><span class="header-check-prefix">${text}</span></label
+          >`;
+        },
       )}`,
     );
   }
   controls();
-  draw(html`<div class="detail">Loading…</div>`);
+  draw(() => html`<div class="detail">${t("Loading…")}</div>`);
   const llmPromise = s.api(
     "GET",
     "/api/sessions/" + encodeURIComponent(sessionId) + "/llm?scope=" + encodeURIComponent(s.scope),
@@ -285,18 +295,19 @@ export async function show(sessionId: string, limit: number | undefined, expand:
   );
   if (!current()) return;
   if (!result.ok)
-    return draw(
-      html`<div class="detail">${result.data?.message || `Failed to load transcript (${result.status}).`}</div>`,
+    return draw(() =>
+      html`<div class="detail">${result.data?.message || t("Failed to load transcript ({status}).", { status: result.status })}</div>`,
     );
   const data = result.data,
     session = data.session || {},
     origin = data.origin,
     owner = session.scopeId?.startsWith("personal:") ? session.scopeId.slice(9) : null;
   s.pageShell({
-    back: { label: "← Conversations", onClick: back(session.scopeId) },
-    title: origin?.label || "Conversation",
+    back: { label: "← " + t("Conversations"), onClick: back(session.scopeId) },
+    title: origin?.label || t("Conversation"),
     context:
-      s.shortName(session.scopeId || s.scope) + (session.createdAt ? " · created " + s.relTime(session.createdAt) : ""),
+      s.shortName(session.scopeId || s.scope) +
+      (session.createdAt ? " · " + t("created {when}", { when: s.relTime(session.createdAt) }) : ""),
     actions: owner ? [s.webUiAsButton(owner)] : [],
   });
   let requests: Row[] = [];
@@ -333,8 +344,8 @@ export async function show(sessionId: string, limit: number | undefined, expand:
     html`<button
       type="button"
       class="context-icon"
-      aria-label="View context sent to the model"
-      title=${"View context sent to the model · " + count + " request" + (count === 1 ? "" : "s")}
+      aria-label=${t("View context sent to the model")}
+      title=${t("View context sent to the model · {count} requests", { count: formatNumber(count) })}
       @click=${(e: Event) => {
         e.stopPropagation();
         s.go({ view: "history", scope: s.scope, session: sessionId, turn });
@@ -378,7 +389,7 @@ export async function show(sessionId: string, limit: number | undefined, expand:
           class="link"
           @click=${() => s.go({ view: "crons", scope: cronOrigin.cron?.ownerScopeId || ownerScope || s.scope, session: null, cron: cronOrigin.cronId })}
         >
-          View cron
+          ${t("View cron")}
         </button>`
       : nothing;
   function body(entry: Row) {
@@ -396,7 +407,7 @@ export async function show(sessionId: string, limit: number | undefined, expand:
   function unitTemplate(unit: Row) {
     if (unit.kind === "llm")
       return html`<div class="entry llm">
-        <div class="who">${contextButton("orphan", unit.reqs.length)}<span class="role">captured context</span></div>
+        <div class="who">${contextButton("orphan", unit.reqs.length)}<span class="role">${t("captured context")}</span></div>
       </div>`;
     if (unit.kind === "tool") {
       const e = unit.primary,
@@ -426,7 +437,7 @@ export async function show(sessionId: string, limit: number | undefined, expand:
           class="who tool-line"
           tabindex="0"
           role="button"
-          title="Toggle full tool card"
+          title=${t("Toggle full tool card")}
           aria-expanded=${String(open.has(unit))}
           @click=${(e: MouseEvent) => {
             if (!(e.target as Element).closest(".copy")) toggle();
@@ -445,7 +456,7 @@ export async function show(sessionId: string, limit: number | undefined, expand:
             >${call && res ? `#${call.seq}→#${res.seq} · ${s.fmtTime(call.createdAt)}` : `#${e.seq} · ${s.fmtTime(e.createdAt)}`}</span
           >
           <div class="meta-row">${s.toolStatusMeta(name, rp, !!res)}</div>
-          ${s.copyButton("Copy", () => s.toolCopyText(call, res))}
+          ${s.copyButton(t("Copy"), () => s.toolCopyText(call, res))}
         </div>
         ${full}
       </div>`;
@@ -462,13 +473,14 @@ export async function show(sessionId: string, limit: number | undefined, expand:
       if (event.shadow) deliveryState = "shadow";
       else if (event.expiredAt) deliveryState = "dropped";
       else if (delivery) deliveryState = "delivered";
+      const deliveryLabel = t(STEP_LABEL[deliveryState] || deliveryState);
       const bodyText = [
-        event.destination?.onBehalfOf ? "from " + event.destination.onBehalfOf : null,
-        outbound && event.destination?.target ? "to " + event.destination.target : null,
+        event.destination?.onBehalfOf ? t("from {who}", { who: event.destination.onBehalfOf }) : null,
+        outbound && event.destination?.target ? t("to {who}", { who: event.destination.target }) : null,
         event.provenance?.fireKey || event.origin?.fireKey
-          ? "origin " + (event.provenance?.fireKey || event.origin.fireKey)
+          ? t("origin {key}", { key: event.provenance?.fireKey || event.origin.fireKey })
           : null,
-        outbound && event.recipientThreadRef ? "recipient thread " + event.recipientThreadRef : null,
+        outbound && event.recipientThreadRef ? t("recipient thread {ref}", { ref: event.recipientThreadRef }) : null,
         text,
       ]
         .filter((x) => x != null)
@@ -482,7 +494,10 @@ export async function show(sessionId: string, limit: number | undefined, expand:
         originLink = html`<button
           type="button"
           class="origin-link"
-          title=${`Open origin session ${s.shortId(event.sourceSession.id)} · ${provenance?.fireKey || event.idempotencyKey || ""}`}
+          title=${t("Open origin session {id} · {key}", {
+            id: s.shortId(event.sourceSession.id),
+            key: provenance?.fireKey || event.idempotencyKey || "",
+          })}
           @click=${() => s.go({ view: "history", scope: s.scope, session: event.sourceSession.id })}
         >
           ${label}
@@ -496,25 +511,27 @@ export async function show(sessionId: string, limit: number | undefined, expand:
         class=${classMap({ entry: true, "delivery-event-entry": true, filtered: s.entryHidden([outbound ? "outbound_delivery" : "principal_delivery"], false) })}
       >
         <div class="who">
-          ${event.llmRequests?.length ? html`<button type="button" class=${"context-icon" + (open.has(unit) ? " active" : "")} aria-expanded=${String(open.has(unit))} aria-label=${(open.has(unit) ? "Hide" : "Show") + " context"} title=${(open.has(unit) ? "Hide" : "Show") + " context · " + event.llmRequests.length + " request" + (event.llmRequests.length === 1 ? "" : "s")} @click=${toggle}>${brain}</button>` : nothing}<span
+          ${event.llmRequests?.length ? html`<button type="button" class=${"context-icon" + (open.has(unit) ? " active" : "")} aria-expanded=${String(open.has(unit))} aria-label=${t("{action} context", { action: open.has(unit) ? t("Hide") : t("Show") })} title=${t("{action} context · {count} requests", { action: open.has(unit) ? t("Hide") : t("Show"), count: formatNumber(event.llmRequests.length) })} @click=${toggle}>${brain}</button>` : nothing}<span
             class="entry-label important"
-            >${event.shadow || delivery ? s.deliveryLabel(event) : "Delivery event"}</span
-          >${event.shadow ? html`<span class="entry-label" title="Recorded for observability, never sent to the human (shadow-mode rollout)">not sent</span>` : nothing}${!event.shadow && event.expiredAt ? html`<span class="entry-label" title="Dropped undelivered — the destination failed permanently or the message aged out">never sent</span>` : nothing}${delivery ? badge(s.deliverySurfaceLabel(event), "info") : nothing}${outbound ? nothing : originLink}${cronLink(event.origin)}${
+            >${event.shadow || delivery ? s.deliveryLabel(event) : t("Delivery event")}</span
+          >${event.shadow ? html`<span class="entry-label" title=${t("Recorded for observability, never sent to the human (shadow-mode rollout)")}>${t("not sent")}</span>` : nothing}${!event.shadow && event.expiredAt ? html`<span class="entry-label" title=${t("Dropped undelivered — the destination failed permanently or the message aged out")}>${t("never sent")}</span>` : nothing}${delivery ? badge(s.deliverySurfaceLabel(event), "info") : nothing}${outbound ? nothing : originLink}${cronLink(event.origin)}${
             mirror
               ? html`<a
                   class="link"
                   href=${s.stateToUrl({ view: "slack", container: mirror.container, ts: mirror.ts })}
-                  title=${"Jump to this message in the mirrored Slack channel " + mirror.container}
+                  title=${t("Jump to this message in the mirrored Slack channel {container}", {
+                    container: mirror.container,
+                  })}
                   @click=${(e: MouseEvent) => {
                     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
                     e.preventDefault();
                     s.go({ view: "slack", container: mirror.container, ts: mirror.ts });
                   }}
-                  >View in Slack mirror ↗</a
+                  >${t("View in Slack mirror ↗")}</a
                 >`
               : nothing
-          }<span class="when">${deliveryState + " · " + s.fmtTime(event.createdAt)}</span
-          >${s.copyButton("Copy", () => text)}
+          }<span class="when">${deliveryLabel + " · " + s.fmtTime(event.createdAt)}</span
+          >${s.copyButton(t("Copy"), () => text)}
         </div>
         ${panels.has(unit) ? panelVisibility(panels.get(unit)!, open.has(unit)) : nothing}
         <pre>${bodyText}</pre>
@@ -525,9 +542,9 @@ export async function show(sessionId: string, limit: number | undefined, expand:
       noise = s.entryIsNoise(e),
       isOrigin = origin && e.type === "user" && e.seq === originPromptSeq,
       text = s.payloadText(e.payload);
-    let label = s.titleCase(e.type || "entry");
+    let label = t(s.titleCase(e.type || "entry"));
     if (e.type === "assistant") label = s.brandSelfLabel();
-    else if (e.type === "user") label = s.payloadName(e.payload) || "User";
+    else if (e.type === "user") label = s.payloadName(e.payload) || t("User");
     if (isOrigin) label = origin.label || s.wakeOriginLabel(origin.trigger);
     const toggle = () => {
       if (open.has(unit)) open.delete(unit);
@@ -542,13 +559,13 @@ export async function show(sessionId: string, limit: number | undefined, expand:
       class=${classMap({ entry: true, noise, collapsed: noise && !open.has(unit), "thinking-entry": e.type === "thinking", "message-entry": e.type === "user" || e.type === "assistant", "user-entry": e.type === "user", "assistant-entry": e.type === "assistant", "cron-prompt-entry": !!isOrigin, "system-entry": e.type === "soul" || e.type === "system", filtered: s.entryHidden([e.type], false) })}
     >
       <div class="who">
-        ${unit.llmReqs?.length ? contextButton(unit.llmReqs[0].turnSeq, unit.llmReqs.length) : nothing}${noise ? html`<button type="button" class="disclosure" aria-expanded=${String(open.has(unit))} aria-label=${open.has(unit) ? "Collapse entry" : "Expand entry"} title=${open.has(unit) ? "Collapse entry" : "Expand entry"} @click=${toggle}>${open.has(unit) ? "▾" : "▸"}</button>` : nothing}<span
+        ${unit.llmReqs?.length ? contextButton(unit.llmReqs[0].turnSeq, unit.llmReqs.length) : nothing}${noise ? html`<button type="button" class="disclosure" aria-expanded=${String(open.has(unit))} aria-label=${open.has(unit) ? t("Collapse entry") : t("Expand entry")} title=${open.has(unit) ? t("Collapse entry") : t("Expand entry")} @click=${toggle}>${open.has(unit) ? "▾" : "▸"}</button>` : nothing}<span
           class=${"entry-label" + (isOrigin ? " important" : "")}
           >${label}</span
         >${isOrigin ? cronLink(origin, session.scopeId) : nothing}${e.type !== "user" ? s.stepDurEl([[dur.get(e.seq)]]) : nothing}<span
           class="when"
           >${"#" + e.seq + " · " + s.fmtTime(e.createdAt)}</span
-        >${s.copyButton("Copy", () => text)}
+        >${s.copyButton(t("Copy"), () => text)}
       </div>
       ${body(e)}${files}
     </div>`;
@@ -566,10 +583,10 @@ export async function show(sessionId: string, limit: number | undefined, expand:
     if (!current()) return;
     controls();
     const more = first === 0 || paused;
-    draw(
+    draw(() =>
       html`<div class="detail">
         <div>
-          ${errors.length ? s.errorStripBox(errors, s.plural(errors.length, "error") + " logged in this session", 5) : nothing}
+          ${errors.length ? s.errorStripBox(errors, t("{count} logged in this session", { count: s.plural(errors.length, "error") }), 5) : nothing}
         </div>
         ${
           units.length
@@ -589,12 +606,12 @@ export async function show(sessionId: string, limit: number | undefined, expand:
                           }
                         }}
                       >
-                        ${more ? "Load earlier messages" : "Loading earlier messages…"}
+                        ${more ? t("Load earlier messages") : t("Loading earlier messages…")}
                       </div>`
                     : nothing
                 }${repeat(units.slice(first), (unit) => unit, unitTemplate)}
               </div>`
-            : html`<p class="empty">No entries.</p>`
+            : html`<p class="empty">${t("No entries.")}</p>`
         }
       </div>`,
     );

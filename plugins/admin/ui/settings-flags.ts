@@ -1,4 +1,5 @@
 import { mountTemplate } from "./shared.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { html } from "lit";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -44,18 +45,18 @@ export async function loadFlags(data: any, scope: string) {
 async function update(scopeId: string, on: boolean, featureName: string) {
   const scope = state.scope;
   state.saving = true;
-  state.message = on ? "Enabling…" : "Disabling…";
+  state.message = on ? t("Enabling…") : t("Disabling…");
   redraw();
   let result;
   try {
     result = await config.save(scope, { featureName, scopeId, on });
   } catch {
-    if (scope === state.scope) state.message = "Could not save. Your selection is preserved; try again.";
+    if (scope === state.scope) state.message = t("Could not save. Your selection is preserved; try again.");
     return false;
   }
   if (scope !== state.scope) return false;
   if (!result.ok) {
-    state.message = result.error || result.data?.message || "Save failed.";
+    state.message = result.error || result.data?.message || t("Save failed.");
     return false;
   }
   let row = state.rows.find((row) => row.featureName === featureName);
@@ -66,7 +67,7 @@ async function update(scopeId: string, on: boolean, featureName: string) {
   row.enabledScopes = on
     ? [...new Set([...row.enabledScopes, scopeId])]
     : row.enabledScopes.filter((id: string) => id !== scopeId);
-  state.message = on ? "Enabled." : "Disabled.";
+  state.message = on ? t("Enabled.") : t("Disabled.");
   return true;
 }
 async function remove(scopeId: string, featureName: string) {
@@ -101,8 +102,8 @@ function template() {
     id="card-feature-flags"
   >
     <div class="head">
-      <h2>Feature flags</h2>
-      <p>Enable a feature for selected scopes. Changes apply on the next turn without a restart.</p>
+      <h2>${t("Feature flags")}</h2>
+      <p>${t("Enable a feature for selected scopes. Changes apply on the next turn without a restart.")}</p>
     </div>
     <div class="body">
       <div id="feature-flag-list" class=${enabled.length ? "" : "hint"}>
@@ -115,16 +116,16 @@ function template() {
                   html`<div class="feature-flag-row">
                     <code>${r.featureName + ": " + r.scopeId}</code
                     ><button class="danger" ?disabled=${state.saving} @click=${() => remove(r.scopeId, r.featureName)}>
-                      Disable
+                      ${t("Disable")}
                     </button>
                   </div>`,
               )
-            : "No enabled scopes."
+            : t("No enabled scopes.")
         }
       </div>
       <div class="feature-flag-editor">
         <label
-          >Feature<select
+          >${t("Feature")}<select
             id="feature-flag-name"
             .value=${state.feature}
             ?disabled=${state.saving}
@@ -133,22 +134,22 @@ function template() {
               selector();
             }}
           >
-            <option value="persistent_subagents">Persistent subagents</option>
-            <option value="inbox_loops">Inbox Loops</option>
-            <option value="slack_loading_indicator">Slack loading indicator (experimental)</option>
-            <option value="external_app_sharing">External app sharing (public links, outside emails)</option>
+            <option value="persistent_subagents">${t("Persistent subagents")}</option>
+            <option value="inbox_loops">${t("Inbox Loops")}</option>
+            <option value="slack_loading_indicator">${t("Slack loading indicator (experimental)")}</option>
+            <option value="external_app_sharing">${t("External app sharing (public links, outside emails)")}</option>
           </select></label
         >
         <div>
-          <div id="feature-flag-scope-label">People and scopes</div>
+          <div id="feature-flag-scope-label">${t("People and scopes")}</div>
           <div id="feature-flag-scopes" aria-labelledby="feature-flag-scope-label" ?inert=${state.saving}>
-            ${state.selector || "Loading people and scopes…"}
+            ${state.selector || t("Loading people and scopes…")}
           </div>
           <span class="hint"
             >${
               state.feature === "slack_loading_indicator"
-                ? "Shows an activity card in Slack threads, including background work and monitors. After five minutes, the card links to the web conversation. Everyone in a shared thread can see it. Top-level DMs stay unchanged. Turning this off leaves existing cards."
-                : "Persistent subagents are available for personal scopes only."
+                ? t("Shows an activity card in Slack threads, including background work and monitors. After five minutes, the card links to the web conversation. Everyone in a shared thread can see it. Top-level DMs stay unchanged. Turning this off leaves existing cards.")
+                : t("Persistent subagents are available for personal scopes only.")
             }</span
           >
         </div>
@@ -156,7 +157,7 @@ function template() {
     </div>
     <div class="foot">
       <button class="primary" id="feature-flag-enable" ?disabled=${state.saving || !state.selected.size} @click=${add}>
-        + Add flag</button
+        + ${t("+ Add flag")}</button
       ><span class="status" id="st-feature-flags">${state.message}</span>
     </div>
   </section>`;

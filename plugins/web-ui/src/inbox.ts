@@ -51,6 +51,8 @@ import { tip } from "./tooltip";
 import { brandName, fieldSelect, icon, initials, relTime, sheenLabel, workingWave } from "./ui";
 import { assistantSidebar, assistantMessage } from "./assistant-sidebar";
 import { inboxChat } from "./inbox-chat";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { formatDate } from "../../chassis/src/i18n.ts";
 
 export type InboxSource = "gmail" | "slack" | "generic";
 
@@ -258,7 +260,7 @@ function showArchiveToast(item: InboxItem): void {
         @focusout=${() => queueMicrotask(schedule)}
       >
         ${icon(Archive, 16)}
-        <span>Dismissed from inbox</span>
+        <span>${t("Dismissed from inbox")}</span>
         <button
           type="button"
           ?disabled=${busy}
@@ -276,9 +278,9 @@ function showArchiveToast(item: InboxItem): void {
             }
           }}
         >
-          ${busy ? "Undoing…" : "Undo"}
+          ${busy ? t("Undoing…") : t("Undo")}
         </button>
-        <button class="icon-btn" type="button" aria-label="Dismiss notification" @click=${closeArchiveToast}>
+        <button class="icon-btn" type="button" aria-label=${t("Dismiss notification")} @click=${closeArchiveToast}>
           ${icon(X, 14)}
         </button>
       </div>`,
@@ -336,13 +338,13 @@ export function resetInboxState(): void {
 
 export function inboxViews(): InboxView[] {
   return [
-    { id: "all", name: "All", sources: ["gmail", "slack", "generic"] },
+    { id: "all", name: t("All"), sources: ["gmail", "slack", "generic"] },
     ...inboxState.selected.map((loop) => ({ id: loop.id, name: loop.name, sources: [] as InboxSource[] })),
   ];
 }
 
 export function inboxViewName(viewId: string): string {
-  return inboxViews().find((v) => v.id === viewId)?.name ?? DEFAULT_VIEWS.find((v) => v.id === viewId)?.name ?? "All";
+  return inboxViews().find((v) => v.id === viewId)?.name ?? DEFAULT_VIEWS.find((v) => v.id === viewId)?.name ?? t("All");
 }
 
 export function itemsFor(viewId: string, status: "open" | "handled"): InboxItem[] {
@@ -401,10 +403,10 @@ export function toInboxItem(entry: LedgerItem): InboxItem {
     status: resolved,
     sentChat: payload.sentChat === true,
     ...(payload.sentChat === true ? { detailLoaded: true } : {}),
-    title: str(payload.title) ?? entry.summary ?? "Review item",
+    title: str(payload.title) ?? entry.summary ?? t("Review item"),
     reviewState: entry.parkedReason
-      ? "Needs input"
-      : (({ held: "Needs review" } as Record<string, string>)[entry.state] ?? "Work in progress"),
+      ? t("Needs input")
+      : (({ held: t("Needs review") } as Record<string, string>)[entry.state] ?? t("Work in progress")),
     attention: entry.state === "held" || (entry.state === "failed" && Boolean(entry.parkedReason)),
     proposalData: entry.proposal?.data,
     from: str(payload.from) ?? "",
@@ -491,7 +493,7 @@ export async function refreshInbox(
       if (refreshFilter) qs.set("filter", refreshFilter);
       const feed = await api<Feed>(`/api/inbox?${qs}`);
       const filter = feed.filter ?? "triaged";
-      if (refreshFilter && filter !== refreshFilter) throw new Error("Inbox filter changed during refresh. Try again.");
+      if (refreshFilter && filter !== refreshFilter) throw new Error(t("Inbox filter changed during refresh. Try again."));
       refreshFilter = filter;
       return feed;
     };
@@ -575,7 +577,7 @@ async function loadDetail(itemId: string, loopId: string): Promise<void> {
     drawAll();
   } catch (error) {
     inboxState.items = inboxState.items.filter((item) => item.id !== itemId);
-    notify(error instanceof Error ? error.message : "Could not load item");
+    notify(error instanceof Error ? error.message : t("Could not load item"));
   }
 }
 
@@ -589,9 +591,9 @@ async function selectInboxFilter(filter: InboxFilter): Promise<void> {
     await refreshInbox();
     if (inboxState.error) notify(inboxState.error);
     else if (!saved.ok)
-      notify("A newer inbox filter was already saved. Your selection wasn't saved. Please try again.");
+      notify(t("A newer inbox filter was already saved. Your selection wasn't saved. Please try again."));
   } catch (error) {
-    notify(error instanceof Error ? error.message : "Could not save inbox filter");
+    notify(error instanceof Error ? error.message : t("Could not save inbox filter"));
   } finally {
     inboxState.filterBusy = false;
     drawAll();
@@ -611,7 +613,7 @@ async function toggleSelection(id: string): Promise<void> {
     if (fullViewId === id) fullViewId = "all";
     await refreshInbox();
   } catch (error) {
-    notify(error instanceof Error ? error.message : "Could not update Inbox");
+    notify(error instanceof Error ? error.message : t("Could not update Inbox"));
   } finally {
     inboxState.selectionBusy = false;
     drawAll();
@@ -626,7 +628,7 @@ async function decideReview(
 ): Promise<void> {
   if (acting.has(item.id)) return;
   if (decision === "return" && !note.trim()) {
-    notify("Add a note describing what should change.");
+    notify(t("Add a note describing what should change."));
     return;
   }
   acting.add(item.id);
@@ -636,12 +638,12 @@ async function decideReview(
       `/api/loops/${encodeURIComponent(item.loopId)}/outputs/${encodeURIComponent(output.id)}/decide`,
       { method: "POST", body: JSON.stringify({ decision, note }) },
     );
-    const messages: Record<string, string> = { shipped: "Action completed", returned: "Changes requested" };
-    notify(messages[result.output.state] ?? "Awaiting confirmation. Check the Loop before retrying.");
+    const messages: Record<string, string> = { shipped: t("Action completed"), returned: t("Changes requested") };
+    notify(messages[result.output.state] ?? t("Awaiting confirmation. Check the Loop before retrying."));
     await loadDetail(item.id, item.loopId);
     await refreshInbox({ silent: true });
   } catch (error) {
-    notify(error instanceof Error ? error.message : "Could not confirm action");
+    notify(error instanceof Error ? error.message : t("Could not confirm action"));
   } finally {
     acting.delete(item.id);
     drawAll();
@@ -649,16 +651,16 @@ async function decideReview(
 }
 
 function reviewActionLabel(action: string): string {
-  const labels: Record<string, string> = { open_draft_pr: "Open draft PR", open_pr: "Open PR", send: "Send reply" };
-  return labels[action] ?? `Approve ${action.replaceAll("_", " ")}`;
+  const labels: Record<string, string> = { open_draft_pr: t("Open draft PR"), open_pr: t("Open PR"), send: t("Send reply") };
+  return labels[action] ?? t("Approve {action}", { action: action.replaceAll("_", " ") });
 }
 
 function reviewStateLabel(state: string): string {
   const labels: Record<string, string> = {
-    unconfirmed: "Awaiting confirmation",
-    shipping: "Action in progress",
-    returned: "Changes requested",
-    superseded: "Superseded",
+    unconfirmed: t("Awaiting confirmation"),
+    shipping: t("Action in progress"),
+    returned: t("Changes requested"),
+    superseded: t("Superseded"),
   };
   return labels[state] ?? state;
 }
@@ -671,7 +673,7 @@ function usesOutputReview(item: InboxItem): boolean {
 }
 
 function reviewTpl(item: InboxItem): TemplateResult {
-  if (!item.detailLoaded) return html`<div class="empty compact">Loading review…</div>`;
+  if (!item.detailLoaded) return html`<div class="empty compact">${t("Loading review…")}</div>`;
   const outputs = item.outputs ?? [];
   return html`<div class="inbox-generic-review">
     <div class="inbox-draft-head"><span>${inboxViewName(item.loopId)}</span><span>${item.reviewState}</span></div>
@@ -682,15 +684,15 @@ function reviewTpl(item: InboxItem): TemplateResult {
         html`<section class="loop-output">
           <h2>${output.title}</h2>
           <p>${output.summary ?? ""}</p>
-          ${output.decisionNote ? html`<p class="inbox-review-note">Requested changes: ${output.decisionNote}</p>` : nothing}
-          <span class="loop-output-action">Effect: ${output.shipAction.replaceAll("_", " ")}</span>
-          ${output.externalRef && /^https?:\/\//i.test(output.externalRef) ? html`<a href=${output.externalRef} target="_blank" rel="noopener noreferrer">Open artifact</a>` : nothing}
+          ${output.decisionNote ? html`<p class="inbox-review-note">${t("Requested changes: {note}", { note: output.decisionNote })}</p>` : nothing}
+          <span class="loop-output-action">${t("Effect: {effect}", { effect: output.shipAction.replaceAll("_", " ") })}</span>
+          ${output.externalRef && /^https?:\/\//i.test(output.externalRef) ? html`<a href=${output.externalRef} target="_blank" rel="noopener noreferrer">${t("Open artifact")}</a>` : nothing}
           ${
             output.state === "ready"
               ? html`<div class="loop-output-decide">
                   <input
-                    aria-label="Requested changes"
-                    placeholder="What should change?"
+                    aria-label=${t("Requested changes")}
+                    placeholder=${t("What should change?")}
                     .value=${chatDrafts.get(output.id) ?? ""}
                     @input=${(event: Event) => chatDrafts.set(output.id, (event.target as HTMLInputElement).value)}
                   />
@@ -699,7 +701,7 @@ function reviewTpl(item: InboxItem): TemplateResult {
                     ?disabled=${acting.has(item.id)}
                     @click=${() => void decideReview(item, output, "return", chatDrafts.get(output.id) ?? "")}
                   >
-                    Request changes
+                    ${t("Request changes")}
                   </button>
                   <button
                     class="btn primary"
@@ -786,7 +788,7 @@ async function continueSentReply(item: InboxItem): Promise<void> {
     replaceItem(await postAction(item, "reply"));
     drawAll();
   } catch (error) {
-    notify(`Couldn't start a reply: ${error instanceof Error ? error.message : error}`);
+    notify(t("Couldn't start a reply: {error}", { error: String(error instanceof Error ? error.message : error) }));
   }
 }
 
@@ -815,7 +817,7 @@ function draftSubject(item: InboxItem, draft: InboxDraft): string {
 function headerPeek(item: InboxItem, draft: InboxDraft): string {
   const to = (draft.to ?? []).join(", ");
   const subject = draftSubject(item, draft);
-  return [to, subject].filter(Boolean).join(" · ") || "Recipients and subject";
+  return [to, subject].filter(Boolean).join(" · ") || t("Recipients and subject");
 }
 
 function effectiveDraft(item: InboxItem): InboxDraft {
@@ -861,8 +863,10 @@ async function explainDraftConflict(item: InboxItem, edited: boolean): Promise<v
   const preview = (fresh?.draft?.body ?? "").trim().slice(0, 140);
   notify(
     edited
-      ? `The agent redrafted this reply while you were editing. Your text is kept in the box. New draft: "${preview}". Send again to use yours.`
-      : "The draft changed while you were looking. Review the new draft, then send again.",
+      ? t('The agent redrafted this reply while you were editing. Your text is kept in the box. New draft: "{preview}". Send again to use yours.', {
+          preview,
+        })
+      : t("The draft changed while you were looking. Review the new draft, then send again."),
   );
 }
 
@@ -949,7 +953,7 @@ async function persistDraftNow(itemId: string): Promise<void> {
     drawAll();
   } catch (e) {
     if (isDraftConflict(e)) return explainDraftConflict(item, true);
-    notify(`Couldn't save the draft: ${e instanceof Error ? e.message : e}`);
+    notify(t("Couldn't save the draft: {error}", { error: String(e instanceof Error ? e.message : e) }));
   }
 }
 
@@ -962,7 +966,7 @@ export async function setItemStatus(item: InboxItem, status: "open" | "dismissed
     if (status === "dismissed") showArchiveToast(item);
     return true;
   } catch (e) {
-    notify(`Couldn't update the item: ${e instanceof Error ? e.message : e}`);
+    notify(t("Couldn't update the item: {error}", { error: String(e instanceof Error ? e.message : e) }));
     return false;
   } finally {
     acting.delete(item.id);
@@ -984,12 +988,12 @@ export async function askAgent(
   try {
     await enqueueForItem(item.id, async () => {
       if ((draftConflicts.get(item.id) ?? 0) !== conflictRevision)
-        throw new Error("The draft changed. Review it before sending again.");
+        throw new Error(t("The draft changed. Review it before sending again."));
       await persistDraftNow(item.id);
-      if (draftEdits.has(item.id)) throw new Error("Save the draft before continuing. Your edits have been kept.");
+      if (draftEdits.has(item.id)) throw new Error(t("Save the draft before continuing. Your edits have been kept."));
       const current = inboxItemById(item.id) ?? item;
       if (!sameDraft(effectiveDraft(current), draft)) {
-        throw new Error("The draft changed. Review it before continuing.");
+        throw new Error(t("The draft changed. Review it before continuing."));
       }
       const { item: next } = await api<{ item: LedgerItem }>(actionPath(item, "followup"), {
         method: "POST",
@@ -1005,7 +1009,7 @@ export async function askAgent(
     return true;
   } catch (e) {
     if (isDraftConflict(e)) await refetchItem(item);
-    notify(`The agent couldn't answer: ${e instanceof Error ? e.message : e}`);
+    notify(t("The agent couldn't answer: {error}", { error: String(e instanceof Error ? e.message : e) }));
     return false;
   } finally {
     chatting.delete(item.id);
@@ -1024,10 +1028,10 @@ async function setUpSync(loopId?: string): Promise<void> {
     });
     inboxState.syncCron = out.syncCron;
     inboxState.loopId = out.loop?.id ?? inboxState.loopId;
-    notify("Sync is on. First pass runs within 15 minutes.");
+    notify(t("Sync is on. First pass runs within 15 minutes."));
     await refreshInbox({ silent: true });
   } catch (e) {
-    notify(`Couldn't set up sync: ${e instanceof Error ? e.message : e}`);
+    notify(t("Couldn't set up sync: {error}", { error: String(e instanceof Error ? e.message : e) }));
   } finally {
     inboxState.syncBusy = false;
     drawAll();
@@ -1042,9 +1046,9 @@ async function syncNow(viewId: string): Promise<void> {
   try {
     for (const cron of crons)
       await api(`/api/crons/${encodeURIComponent(cron.id)}/run`, { method: "POST", body: "{}" });
-    notify("Sync kicked off. New items appear as the agent finishes drafting.");
+    notify(t("Sync kicked off. New items appear as the agent finishes drafting."));
   } catch (e) {
-    notify(`Couldn't start a sync: ${e instanceof Error ? e.message : e}`);
+    notify(t("Couldn't start a sync: {error}", { error: String(e instanceof Error ? e.message : e) }));
   } finally {
     inboxState.syncBusy = false;
     drawAll();
@@ -1063,7 +1067,7 @@ function sourceGlyph(item: InboxItem): TemplateResult {
 }
 
 function fmtClock(ms: number): string {
-  return new Date(ms).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  return formatDate(ms, { dateStyle: "medium", timeStyle: "short" });
 }
 
 interface Participant {
@@ -1103,7 +1107,7 @@ export function participantsTpl(item: InboxItem): TemplateResult | typeof nothin
   if (!people.length) return nothing;
   const shown = people.length > AVATARS_SHOWN ? people.slice(0, AVATARS_SHOWN - 1) : people;
   const rest = people.slice(shown.length);
-  return html`<span class="inbox-avatars" aria-label=${`In this conversation: ${people.map((p) => p.name).join(", ")}`}>
+  return html`<span class="inbox-avatars" aria-label=${t("In this conversation: {people}", { people: people.map((p) => p.name).join(", ") })}>
     ${shown.map(
       (p) =>
         html`<span class="inbox-avatar" style=${`--avatar-hue:${avatarHue(p.key)}`} ${tip(p.name)} aria-hidden="true"
@@ -1151,7 +1155,7 @@ function itemImagesTpl(item: InboxItem, urls: string[] | undefined, ctxIndex: nu
     ${urls.map((_u, j) => {
       const src = `${base}?ctx=${ctxIndex}&i=${j}`;
       return html`<a href=${src} target="_blank" rel="noreferrer noopener"
-        ><img class="inbox-image" src=${src} loading="lazy" alt="attached image"
+        ><img class="inbox-image" src=${src} loading="lazy" alt=${t("attached image")}
       /></a>`;
     })}
   </div>`;
@@ -1212,12 +1216,12 @@ export function contextTpl(item: InboxItem): TemplateResult | typeof nothing {
             ${ref((el) => watchEarlier(item, el))}
             @click=${(event: MouseEvent) => revealEarlier(item, event.currentTarget as Element)}
           >
-            ${hidden === 1 ? "1 earlier message" : `${hidden} earlier messages`}
+            ${hidden === 1 ? t("1 earlier message") : t("{count} earlier messages", { count: hidden })}
           </button>`
         : nothing
     }
     ${item.sourceRefreshError ? html`<div class="inbox-source-notice" role="status">${item.sourceRefreshError}</div>` : nothing}
-    ${item.sourceContextPartial ? html`<div class="inbox-source-notice">Showing part of this conversation. Open in Slack for the full history.</div>` : nothing}
+    ${item.sourceContextPartial ? html`<div class="inbox-source-notice">${t("Showing part of this conversation. Open in Slack for the full history.")}</div>` : nothing}
     ${rows.slice(hidden).map((m) => {
       const name = participantName(m.author) || m.author;
       return html`
@@ -1228,7 +1232,7 @@ export function contextTpl(item: InboxItem): TemplateResult | typeof nothing {
           <div class="inbox-context-body">
             <div class="inbox-context-head">
               <span class="inbox-context-author">${name}</span>
-              ${m.nearby ? html`<span class="inbox-context-at">Nearby in channel</span>` : nothing}
+              ${m.nearby ? html`<span class="inbox-context-at">${t("Nearby in channel")}</span>` : nothing}
               ${m.at ? html`<span class="inbox-context-at">${relTime(m.at)}</span>` : nothing}
             </div>
             <div class="inbox-context-text">${slackTextTpl(item, m.text)}</div>
@@ -1256,7 +1260,7 @@ export function chatTpl(item: InboxItem, compact = false): TemplateResult {
     },
     messages: html`${item.thread.map((message) => assistantMessage({ role: message.role, text: message.text }))}`,
     busy,
-    status: busy ? html`<div class="inbox-chat-working">${workingWave()}<span>Thinking…</span></div>` : nothing,
+    status: busy ? html`<div class="inbox-chat-working">${workingWave()}<span>${t("Thinking…")}</span></div>` : nothing,
     showPrompts: item.status === "open" && item.thread.length === 0,
     send:
       item.status === "open" && !usesOutputReview(item) && (!item.sentChat || item.draft)
@@ -1266,7 +1270,7 @@ export function chatTpl(item: InboxItem, compact = false): TemplateResult {
     composer: embeddedComposer(
       `inbox:${appState.me?.user ?? "anon"}:${item.loopId}:${item.id}`,
       {
-        placeholder: `Ask ${brandName()} for something`,
+        placeholder: t("Ask {brand} for something", { brand: brandName() }),
         prepareSubmit: () => {
           const snapshot = {
             draft: effectiveDraft(inboxItemById(item.id) ?? item),
@@ -1274,7 +1278,7 @@ export function chatTpl(item: InboxItem, compact = false): TemplateResult {
           };
           return async (text, options) => {
             if (!(await askAgent(item, text, options, snapshot)))
-              throw new Error("Could not complete the request. Your message has been kept.");
+              throw new Error(t("Could not complete the request. Your message has been kept."));
           };
         },
       },
@@ -1292,23 +1296,23 @@ export function draftMessageTpl(item: InboxItem): TemplateResult | typeof nothin
   return html`
     <div class="inbox-draft ${gmail ? "email" : "slack"}">
       <div class="inbox-draft-head">
-        <span class="inbox-draft-label">Draft reply</span>
+        <span class="inbox-draft-label">${t("Draft reply")}</span>
         ${
           item.draftSessionId
             ? html`<a
                 class="inbox-session-link"
                 href=${deepLinkPath(UI_BASE, "chats", item.draftSessionId)}
-                title="See how the agent arrived at this draft"
+                title=${t("See how the agent arrived at this draft")}
                 @click=${(e: MouseEvent) => openDraftSession(e, item.draftSessionId!)}
               >
-                ${icon(ArrowUpRight, 12)}<span>Open agent session</span>
+                ${icon(ArrowUpRight, 12)}<span>${t("Open agent session")}</span>
               </a>`
             : nothing
         }
         ${
           item.externalUrl
             ? html`<a class="inbox-external-link" href=${item.externalUrl} target="_blank" rel="noreferrer noopener">
-                ${icon(ArrowUpRight, 12)}<span>Open in ${gmail ? "Gmail" : "Slack"}</span>
+                ${icon(ArrowUpRight, 12)}<span>${t("Open in {where}", { where: gmail ? "Gmail" : "Slack" })}</span>
               </a>`
             : nothing
         }
@@ -1320,7 +1324,7 @@ export function draftMessageTpl(item: InboxItem): TemplateResult | typeof nothin
                 <summary><span class="inbox-draft-headers-peek">${headerPeek(item, draft)}</span></summary>
                 <div class="inbox-draft-headers-fields">
                   <label class="inbox-field">
-                    <span>To</span>
+                    <span>${t("To")}</span>
                     <input
                       type="text"
                       ?disabled=${busy}
@@ -1333,7 +1337,7 @@ export function draftMessageTpl(item: InboxItem): TemplateResult | typeof nothin
                   ${
                     showCc
                       ? html`<label class="inbox-field">
-                          <span>Cc</span>
+                          <span>${t("Cc")}</span>
                           <input
                             type="text"
                             ?disabled=${busy}
@@ -1345,7 +1349,7 @@ export function draftMessageTpl(item: InboxItem): TemplateResult | typeof nothin
                       : nothing
                   }
                   <label class="inbox-field">
-                    <span>Subject</span>
+                    <span>${t("Subject")}</span>
                     <input
                       type="text"
                       ?disabled=${busy}
@@ -1362,10 +1366,10 @@ export function draftMessageTpl(item: InboxItem): TemplateResult | typeof nothin
       <div class="inbox-draft-body-wrap">
         <textarea
           class="inbox-draft-body"
-          aria-label="Draft reply"
+          aria-label=${t("Draft reply")}
           ?disabled=${busy}
           rows=${gmail ? 7 : 3}
-          placeholder=${item.draft ? "" : "No draft yet. The next sync writes one, or write your own."}
+          placeholder=${item.draft ? "" : t("No draft yet. The next sync writes one, or write your own.")}
           .value=${live(draft.body)}
           @input=${(e: Event) => editDraft(item, { body: (e.currentTarget as HTMLTextAreaElement).value })}
           @blur=${() => void persistDraft(item)}
@@ -1387,42 +1391,42 @@ function reactionChipTpl(name: string): TemplateResult {
 }
 
 function handledStateLabel(item: InboxItem): string {
-  if (item.status === "sent") return "Sent";
-  if (item.status === "replied") return "Replied";
-  return "Dismissed";
+  if (item.status === "sent") return t("Sent");
+  if (item.status === "replied") return t("Replied");
+  return t("Dismissed");
 }
 
 function itemSideMark(item: InboxItem, handled: boolean): TemplateResult | typeof nothing {
   if (handled) return html`<span class="inbox-item-state">${handledStateLabel(item)}</span>`;
   if (item.draft)
-    return html`<span class="inbox-item-drafted" title="A reply is drafted and ready">${icon(CheckCheck, 12)}</span>`;
+    return html`<span class="inbox-item-drafted" title=${t("A reply is drafted and ready")}>${icon(CheckCheck, 12)}</span>`;
   return nothing;
 }
 
 function reopenButtonTpl(item: InboxItem): TemplateResult {
   return html`<button class="btn inbox-reopen" type="button" @click=${() => void setItemStatus(item, "open")}>
-    ${icon(Undo2, 13)}<span>Reopen</span>
+    ${icon(Undo2, 13)}<span>${t("Reopen")}</span>
   </button>`;
 }
 
 export function handledNoteTpl(item: InboxItem): TemplateResult {
   if (item.status === "sent") {
     return html`<div class="inbox-handled-note">
-      ${icon(CheckCheck, 13)}<span>Reply sent ${item.sentAt ? relTime(item.sentAt) : ""}</span>
+      ${icon(CheckCheck, 13)}<span>${t("Reply sent {when}", { when: item.sentAt ? relTime(item.sentAt) : "" })}</span>
     </div>`;
   }
   if (item.status === "replied") {
     const where = item.source === "slack" ? "Slack" : "Gmail";
     return html`<div class="inbox-handled-note inbox-replied-note">
       <div class="inbox-handled-line">
-        ${icon(CheckCheck, 13)}<span>You replied in ${where} ${item.repliedAt ? relTime(item.repliedAt) : ""}</span>
+        ${icon(CheckCheck, 13)}<span>${t("You replied in {where} {when}", { where, when: item.repliedAt ? relTime(item.repliedAt) : "" })}</span>
         ${reopenButtonTpl(item)}
       </div>
       ${item.externalReplyText ? html`<div class="inbox-replied-text">${slackTextTpl(item, item.externalReplyText)}</div>` : nothing}
     </div>`;
   }
   return html`<div class="inbox-handled-note">
-    ${icon(X, 13)}<span>Dismissed ${item.dismissedAt ? relTime(item.dismissedAt) : ""}</span>
+    ${icon(X, 13)}<span>${t("Dismissed {when}", { when: item.dismissedAt ? relTime(item.dismissedAt) : "" })}</span>
     ${reopenButtonTpl(item)}
   </div>`;
 }
@@ -1435,7 +1439,7 @@ function dismissItemTpl(item: InboxItem): TemplateResult | typeof nothing {
     ?disabled=${chatting.has(item.id) || acting.has(item.id)}
     @click=${() => void setItemStatus(item, "dismissed")}
   >
-    Dismiss
+    ${t("Dismiss")}
   </button>`;
 }
 
@@ -1486,8 +1490,8 @@ function itemRowTpl(surface: InboxSurface, item: InboxItem): TemplateResult {
             ? html`<button
                 class="session-menu-btn inbox-item-dismiss"
                 type="button"
-                aria-label=${`Archive ${item.title || heading}`}
-                ${tip("Archive")}
+                aria-label=${t("Archive {title}", { title: item.title || heading })}
+                ${tip(t("Archive"))}
                 ?disabled=${acting.has(item.id)}
                 @click=${() => void setItemStatus(item, "dismissed")}
               >
@@ -1516,8 +1520,8 @@ const MIGRATION_STATUS = "Moving your Inbox…";
 const MIGRATION_HINT = "Available once your existing Inbox finishes moving";
 
 function syncStatusLabel(cron: InboxSyncCron): string {
-  if (!cron.enabled) return "Sync paused";
-  return cron.lastFiredAt ? `Synced ${relTime(cron.lastFiredAt)}` : "First sync pending";
+  if (!cron.enabled) return t("Sync paused");
+  return cron.lastFiredAt ? t("Synced {when}", { when: relTime(cron.lastFiredAt) }) : t("First sync pending");
 }
 
 function syncActionTpl(opts: {
@@ -1531,11 +1535,11 @@ function syncActionTpl(opts: {
   return html`<button
     class="btn inbox-sync-action"
     type="button"
-    ${tip(opts.tooltip)}
+    ${tip(t(opts.tooltip))}
     ?disabled=${opts.busy || opts.disabled}
     @click=${opts.action}
   >
-    ${icon(RefreshCw, 13)}<span>${opts.busy ? opts.busyLabel : opts.label}</span>
+    ${icon(RefreshCw, 13)}<span>${t(opts.busy ? opts.busyLabel : opts.label)}</span>
   </button>`;
 }
 
@@ -1561,7 +1565,9 @@ function syncLineTpl(surface: InboxSurface): TemplateResult | typeof nothing {
   const moving = inboxState.migrationPending;
   if (!crons.length && !moving) return nothing;
   const status =
-    crons.length === 1 ? syncStatusLabel(crons[0]!) : `${crons.filter((cron) => cron.enabled).length} syncs on`;
+    crons.length === 1
+      ? syncStatusLabel(crons[0]!)
+      : t("{count} syncs on", { count: crons.filter((cron) => cron.enabled).length });
   return html`<span class="inbox-sync-line">
     ${syncActionTpl({
       label: "Sync",
@@ -1571,7 +1577,7 @@ function syncLineTpl(surface: InboxSurface): TemplateResult | typeof nothing {
       tooltip: moving ? MIGRATION_HINT : "Sync now",
       action: () => void syncNow(surface.viewId),
     })}
-    <span class="inbox-sync-status" role=${moving ? "status" : nothing}>${moving ? MIGRATION_STATUS : status}</span>
+    <span class="inbox-sync-status" role=${moving ? "status" : nothing}>${moving ? t(MIGRATION_STATUS) : status}</span>
   </span>`;
 }
 
@@ -1587,10 +1593,10 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
     surface.viewId === "gmail" ||
     selectedLoop?.source === "gmail" ||
     selectedLoop?.sources?.includes("gmail");
-  let emptyMessage = "No messages in this view yet. Sync to check for new messages.";
+  let emptyMessage = t("No messages in this view yet. Sync to check for new messages.");
   if (showEmailFilter && inboxState.filter === "triaged")
-    emptyMessage = "Nothing is waiting on you. Choose From people or All emails to see more emails.";
-  if (surface.viewId === "sent") emptyMessage = "No sent messages yet. Sent Email and Slack replies will appear here.";
+    emptyMessage = t("Nothing is waiting on you. Choose From people or All emails to see more emails.");
+  if (surface.viewId === "sent") emptyMessage = t("No sent messages yet. Sent Email and Slack replies will appear here.");
   const handledItems = itemsFor(surface.viewId, "handled");
   const hasMore = !!feedWindows.get(surface.viewId)?.nextCursor;
   const setupLoops = inboxState.selected.filter(
@@ -1598,7 +1604,7 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
       loop.source && !loop.cronId && !loop.ingestionActive && (surface.viewId === loop.id || surface.viewId === "all"),
   );
   const chips = html`
-    <div class="inbox-chips" role="tablist" aria-label="Inbox views">
+    <div class="inbox-chips" role="tablist" aria-label=${t("Inbox views")}>
       ${inboxViews().map((v) => {
         const count = inboxOpenCount(v.id);
         return html`<button
@@ -1628,14 +1634,14 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
           drawAll();
         }}
       >
-        Sent
+        ${t("Sent")}
       </button>
     </div>
     <div class="inbox-view-actions">
       <button
         class="icon-btn subtle compact inbox-add-loop"
         type="button"
-        aria-label="Add Loop"
+        aria-label=${t("Add Loop")}
         aria-expanded=${inboxState.picker}
         @click=${() => {
           inboxState.picker = !inboxState.picker;
@@ -1648,7 +1654,7 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
         surface.viewId !== "all" && surface.viewId !== "sent"
           ? html`<button
               class="icon-btn subtle compact"
-              aria-label=${`Options for ${inboxViewName(surface.viewId)}`}
+              aria-label=${t("Options for {name}", { name: inboxViewName(surface.viewId) })}
               @click=${() => {
                 inboxState.menuId = inboxState.menuId === surface.viewId ? null : surface.viewId;
                 drawAll();
@@ -1663,16 +1669,16 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
   const list = html`
     ${
       !inboxState.loaded && inboxState.loading
-        ? html`<div class="empty compact" role="status" aria-label="Reading your inbox…">
+        ? html`<div class="empty compact" role="status" aria-label=${t("Reading your inbox…")}>
             <span aria-hidden="true">
-              <span class="working-mark">${workingWave()}</span>${sheenLabel("Reading your inbox…", true)}
+              <span class="working-mark">${workingWave()}</span>${sheenLabel(t("Reading your inbox…"), true)}
             </span>
           </div>`
         : nothing
     }
     ${
       inboxState.error && !inboxState.loaded
-        ? html`<div class="empty compact">Couldn't load the inbox: ${inboxState.error}</div>`
+        ? html`<div class="empty compact">${t("Couldn't load the inbox: {error}", { error: inboxState.error })}</div>`
         : nothing
     }
     ${
@@ -1684,7 +1690,7 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
     ${
       resolvedItems.length
         ? html`<div class="inbox-resolved-sect">
-            <div class="inbox-resolved-head">Probably resolved · no reply likely needed</div>
+            <div class="inbox-resolved-head">${t("Probably resolved · no reply likely needed")}</div>
             <div class="inbox-list inbox-resolved-list">${resolvedItems.map((i) => itemRowTpl(surface, i))}</div>
           </div>`
         : nothing
@@ -1702,9 +1708,9 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
               }}
             >
               ${icon(surface.showHandled ? ChevronDown : ChevronRight, 13)}
-              <span>Handled (${handledItems.length})</span>
+              <span>${t("Handled ({count})", { count: handledItems.length })}</span>
             </button>
-            ${surface.showHandled ? html`<div class="inbox-list handled">${handledItems.map((i) => itemRowTpl(surface, i))}</div>` : nothing}${surface.showHandled && feedWindows.get(`handled:${surface.viewId}`)?.nextCursor ? html`<button class="inbox-load-more" type="button" ?disabled=${inboxState.loading} @click=${() => void refreshInbox({ more: true, viewId: `handled:${surface.viewId}` })}>Load more handled</button>` : nothing}
+            ${surface.showHandled ? html`<div class="inbox-list handled">${handledItems.map((i) => itemRowTpl(surface, i))}</div>` : nothing}${surface.showHandled && feedWindows.get(`handled:${surface.viewId}`)?.nextCursor ? html`<button class="inbox-load-more" type="button" ?disabled=${inboxState.loading} @click=${() => void refreshInbox({ more: true, viewId: `handled:${surface.viewId}` })}>${t("Load more handled")}</button>` : nothing}
           `
         : nothing
     }
@@ -1721,18 +1727,18 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
                 ${
                   showEmailFilter
                     ? html`<label class="inbox-filter">
-                        <span>Emails</span>
+                        <span>${t("Emails")}</span>
                         ${fieldSelect({
                           className: "inbox-filter-control",
-                          ariaLabel: "Email filter",
-                          ariaDescription: INBOX_FILTERS.find((filter) => filter.id === inboxState.filter)?.description,
+                          ariaLabel: t("Email filter"),
+                          ariaDescription: t(INBOX_FILTERS.find((filter) => filter.id === inboxState.filter)?.description ?? ""),
                           value: inboxState.filter,
                           disabled: inboxState.filterBusy || inboxState.loading,
                           onChange: (value) => void selectInboxFilter(value as InboxFilter),
                           options: INBOX_FILTERS.map(
                             (filter) =>
                               html`<option value=${filter.id} ?selected=${filter.id === inboxState.filter}>
-                                ${filter.label}
+                                ${t(filter.label)}
                               </option>`,
                           ),
                         })}
@@ -1747,7 +1753,7 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
                         ?disabled=${inboxState.loading}
                         @click=${() => void refreshInbox({ more: true, viewId: surface.viewId })}
                       >
-                        Load more
+                        ${t("Load more")}
                       </button>`
                     : nothing
                 }
@@ -1757,7 +1763,7 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
       }
       ${
         setupLoops.length
-          ? html`<section class="inbox-setup" aria-label="Set up account sync">
+          ? html`<section class="inbox-setup" aria-label=${t("Set up account sync")}>
               ${setupLoops.map(
                 (loop) =>
                   html`<div class="inbox-setup-row">
@@ -1770,12 +1776,12 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
                     </div>
                     <button
                       class="inbox-setup-action"
-                      aria-label=${`Set up ${loop.name}`}
+                      aria-label=${t("Set up {name}", { name: loop.name })}
                       ${inboxState.migrationPending ? tip(MIGRATION_HINT) : nothing}
                       ?disabled=${inboxState.syncBusy || inboxState.migrationPending}
                       @click=${() => void setUpSync(loop.id)}
                     >
-                      <span>${inboxState.syncBusy ? "Setting up…" : "Set up"}</span>${icon(ChevronRight, 14)}
+                      <span>${t(inboxState.syncBusy ? "Setting up…" : "Set up")}</span>${icon(ChevronRight, 14)}
                     </button>
                   </div>`,
               )}
@@ -1796,7 +1802,7 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
                   openLoop(id);
                 }}
               >
-                Open Loop
+                ${t("Open Loop")}
               </button>
               <button
                 class="btn"
@@ -1807,19 +1813,19 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
                   void toggleSelection(id);
                 }}
               >
-                Remove from Inbox
+                ${t("Remove from Inbox")}
               </button>
             </div>`
           : nothing
       }
       ${
         inboxState.picker
-          ? html`<section class="inbox-loop-picker" aria-label="Add Loop">
+          ? html`<section class="inbox-loop-picker" aria-label=${t("Add Loop")}>
               <div class="inbox-draft-head">
-                <strong>Loops in your Inbox</strong
+                <strong>${t("Loops in your Inbox")}</strong
                 ><button
                   class="icon-btn"
-                  aria-label="Close picker"
+                  aria-label=${t("Close picker")}
                   @click=${() => {
                     inboxState.picker = false;
                     drawAll();
@@ -1828,8 +1834,8 @@ function surfaceTpl(surface: InboxSurface): TemplateResult {
                   ${icon(X, 16)}
                 </button>
               </div>
-              <p>Choose the Loops you want to review here.</p>
-              ${inboxState.available.map((loop) => html`<label><input type="checkbox" .checked=${loop.selected} ?disabled=${inboxState.selectionBusy} @change=${() => void toggleSelection(loop.id)} />${loopIcon(loop)}<span>${loop.name}</span><span>${loop.selected ? "Included" : "Add"}</span></label>`)}
+              <p>${t("Choose the Loops you want to review here.")}</p>
+              ${inboxState.available.map((loop) => html`<label><input type="checkbox" .checked=${loop.selected} ?disabled=${inboxState.selectionBusy} @change=${() => void toggleSelection(loop.id)} />${loopIcon(loop)}<span>${loop.name}</span><span>${loop.selected ? t("Included") : t("Add")}</span></label>`)}
             </section>`
           : nothing
       }
@@ -1861,7 +1867,7 @@ function itemPageTpl(item: InboxItem): TemplateResult {
   const heading = gmail ? item.from || item.title : (item.slack?.channelLabel ?? item.title);
   const sub = gmail ? item.title : "";
   let detail: TemplateResult;
-  if (!item.detailLoaded) detail = html`<div class="empty compact">Loading message…</div>`;
+  if (!item.detailLoaded) detail = html`<div class="empty compact">${t("Loading message…")}</div>`;
   else if (usesOutputReview(item)) detail = reviewTpl(item);
   else detail = html`${contextTpl(item)} ${draftMessageTpl(item)} ${handled ? handledNoteTpl(item) : nothing}`;
   return html`
@@ -1885,7 +1891,7 @@ function itemPageTpl(item: InboxItem): TemplateResult {
         ${detail}
       </div>
     </div>
-    ${item.detailLoaded && !usesOutputReview(item) ? html`<aside class="inbox-item-aside" aria-label="Conversation assistant">${chatTpl(item)}</aside>` : nothing}
+    ${item.detailLoaded && !usesOutputReview(item) ? html`<aside class="inbox-item-aside" aria-label=${t("Conversation assistant")}>${chatTpl(item)}</aside>` : nothing}
   `;
 }
 
@@ -1896,8 +1902,8 @@ function sentDraftTpl(): TemplateResult | undefined {
   if (item.status === "open" && item.draft) return html`${draftMessageTpl(item)}`;
   if (item.status !== "open")
     return html`<div class="inbox-draft">
-      <p>Reply sent.</p>
-      <button class="btn" @click=${() => void continueSentReply(item)}>Write another reply</button>
+      <p>${t("Reply sent.")}</p>
+      <button class="btn" @click=${() => void continueSentReply(item)}>${t("Write another reply")}</button>
     </div>`;
   return undefined;
 }
@@ -1986,7 +1992,7 @@ function drawFull(): void {
       <div class="inbox-index-layout">
         <div class="inbox-index-feed">
           <div class="pane-head">
-            <h1 class="pane-title">Inbox</h1>
+            <h1 class="pane-title">${t("Inbox")}</h1>
             <div class="pane-head-actions">${syncLineTpl(surface)}</div>
           </div>
           ${surfaceTpl(surface)}

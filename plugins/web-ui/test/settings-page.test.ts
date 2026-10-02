@@ -24,7 +24,7 @@ test("the sidebar footer keeps the identity pill, an admin shortcut, and the set
     shell.indexOf("export function renderSidebarTop"),
   );
   assert.match(footer, /class="user-pill"/);
-  assert.match(footer, /aria-label="Settings"/);
+  assert.match(footer, /aria-label=\$\{t\("Settings"\)\}/);
   assert.doesNotMatch(footer, /theme-toggle/, "the theme toggle became the settings button");
   assert.match(
     footer,
@@ -78,7 +78,7 @@ test("an imported palette is a fourth theme choice that only exists while a pale
     "a real button opens the picker so the keyboard can reach it",
   );
   assert.match(settings, /\.itermcolors/);
-  assert.match(settings, /aria-label="Remove imported theme"/);
+  assert.match(settings, /aria-label=\$\{t\("Remove imported theme"\)\}/);
 });
 
 test("the imported palette is painted as one style element that applyTheme owns end to end", () => {

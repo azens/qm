@@ -1,4 +1,5 @@
 import { mountTemplate } from "./shared.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { html, render } from "lit";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
@@ -91,7 +92,7 @@ async function saveProvider() {
   const body = providerBody();
   const id = provider.draft.id.trim();
   if (!id || !body.name || !body.baseUrl || !body.models.length) {
-    provider.message = "Provider id, name, base URL, and at least one model are required.";
+    provider.message = t("Provider id, name, base URL, and at least one model are required.");
     provider.error = true;
     redraw();
     return;
@@ -99,7 +100,7 @@ async function saveProvider() {
   const revision = provider.revision;
   const session = provider.session;
   provider.saving = true;
-  provider.message = "Saving…";
+  provider.message = t("Saving…");
   provider.error = false;
   redraw();
   try {
@@ -107,18 +108,18 @@ async function saveProvider() {
     if (session !== provider.session) return;
     if (!saved.ok) {
       provider.error = true;
-      provider.message = saved.data?.message || "Could not save this provider.";
+      provider.message = saved.data?.message || t("Could not save this provider.");
       return;
     }
     if (provider.draft.key.trim() === body.apiKey) provider.draft.key = "";
     await config.refresh();
     if (session !== provider.session) return;
     if (revision === provider.revision) closeProvider();
-    else provider.message = "Provider saved. Your newer edits are not saved.";
+    else provider.message = t("Provider saved. Your newer edits are not saved.");
   } catch {
     if (session === provider.session) {
       provider.error = true;
-      provider.message = "Could not save this provider. Your draft is preserved.";
+      provider.message = t("Could not save this provider. Your draft is preserved.");
     }
   } finally {
     if (session === provider.session) {
@@ -128,10 +129,10 @@ async function saveProvider() {
   }
 }
 async function removeProvider(item: any) {
-  if (!confirm("Remove " + item.name + "? Its models leave every model picker.")) return;
+  if (!confirm(t("Remove {name}? Its models leave every model picker.", { name: item.name }))) return;
   const removed = await config.api("DELETE", "/api/custom-providers/" + encodeURIComponent(item.id));
   if (!removed.ok) {
-    provider.message = removed.data?.message || "Could not remove this provider.";
+    provider.message = removed.data?.message || t("Could not remove this provider.");
     provider.error = true;
     redraw();
     return;
@@ -159,8 +160,8 @@ function renderRows() {
           html`<tr>
             ${[p.name + " (" + p.id + ")", labels[p.protocol] || p.protocol, p.baseUrl, compact ? String(p.models.length) : p.models.map((m: any) => m.id).join(", "), keyLabel(p, compact)].map((text) => html`<td>${text}</td>`)}
             <td>
-              <button type="button" @click=${() => openProvider(p)}>Edit</button
-              ><button class="danger" @click=${() => removeProvider(p)}>Remove</button>
+              <button type="button" @click=${() => openProvider(p)}>${t("Edit")}</button
+              ><button class="danger" @click=${() => removeProvider(p)}>${t("Remove")}</button>
             </td>
           </tr>`,
       )}`,
@@ -176,7 +177,7 @@ function renderRows() {
       mountedSummaries.add(summary);
     }
     summary.hidden = !!provider.rows.length;
-    render(html`No custom providers.`, summary);
+    render(html`${t("No custom providers.")}`, summary);
   }
   const empty = document.getElementById("custom-provider-empty");
   if (empty) empty.hidden = !!provider.rows.length;
@@ -196,23 +197,23 @@ function template() {
       <div class="project-dialog-head">
         <div>
           <h2 id="custom-provider-title">
-            ${provider.editing ? "Edit " + provider.originalName : "Add custom provider"}
+            ${provider.editing ? t("Edit {name}", { name: provider.originalName }) : t("Add custom provider")}
           </h2>
-          <p>Connect an OpenAI Chat Completions, OpenAI Responses, or Anthropic Messages endpoint.</p>
+          <p>${t("Connect an OpenAI Chat Completions, OpenAI Responses, or Anthropic Messages endpoint.")}</p>
         </div>
         <button
           class="project-icon-button"
           type="button"
           id="custom-provider-close"
           @click=${closeProvider}
-          aria-label="Close"
+          aria-label=${t("Close")}
         >
           ×
         </button>
       </div>
       <div class="custom-provider-form">
         <label
-          >Provider id (slug)<input
+          >${t("Provider id (slug)")}<input
             id="custom-provider-id"
             .value=${provider.draft.id || ""}
             @input=${(e: Event) => changeProvider("id", (e.target as HTMLInputElement).value)}
@@ -221,7 +222,7 @@ function template() {
             placeholder="litellm"
         /></label>
         <label
-          >Display name<input
+          >${t("Display name")}<input
             id="custom-provider-name"
             .value=${provider.draft.name || ""}
             @input=${(e: Event) => changeProvider("name", (e.target as HTMLInputElement).value)}
@@ -229,10 +230,10 @@ function template() {
             placeholder="LiteLLM"
         /></label>
         <label
-          >Protocol<select
+          >${t("Protocol")}<select
             id="custom-provider-protocol"
             .value=${provider.draft.protocol || ""}
-            @input=${(e: Event) => changeProvider("protocol", (e.target as HTMLInputElement).value)}
+            @input=${(e: Event) => changeProvider("protocol", (e.target as HTMLSelectElement).value)}
           >
             <option value="openai">OpenAI Chat Completions</option>
             <option value="openai-responses">OpenAI Responses</option>
@@ -240,7 +241,7 @@ function template() {
           </select></label
         >
         <label
-          >Base URL<input
+          >${t("Base URL")}<input
             id="custom-provider-url"
             .value=${provider.draft.url || ""}
             @input=${(e: Event) => changeProvider("url", (e.target as HTMLInputElement).value)}
@@ -248,20 +249,20 @@ function template() {
             placeholder="https://gateway.internal/v1"
         /></label>
         <label class="custom-provider-key"
-          >API key<input
+          >${t("API key")}<input
             type="password"
             id="custom-provider-key"
             .value=${provider.draft.key || ""}
             @input=${(e: Event) => changeProvider("key", (e.target as HTMLInputElement).value)}
             autocomplete="off"
-            placeholder="Write-only; blank on edit keeps the stored key"
+            placeholder=${t("Write-only; blank on edit keeps the stored key")}
         /></label>
         <label class="custom-provider-models"
-          >Models <span class="label-detail">one per line: id | name | context | max tokens</span
+          >${t("Models")} <span class="label-detail">${t("one per line: id | name | context | max tokens")}</span
           ><textarea
             id="custom-provider-models"
             .value=${provider.draft.models || ""}
-            @input=${(e: Event) => changeProvider("models", (e.target as HTMLInputElement).value)}
+            @input=${(e: Event) => changeProvider("models", (e.target as HTMLTextAreaElement).value)}
             rows="4"
             placeholder="deepseek-chat | DeepSeek V3.2 | 128000 | 8192"
           ></textarea>
@@ -273,7 +274,7 @@ function template() {
             .checked=${provider.draft.validate}
             @change=${(e: Event) => changeProvider("validate", (e.target as HTMLInputElement).checked)}
           />
-          Validate the key against the endpoint</label
+          ${t("Validate the key against the endpoint")}</label
         >
         <span
           class=${classMap({ status: true, err: provider.error, saving: provider.saving })}
@@ -283,9 +284,9 @@ function template() {
         >
       </div>
       <div class="project-dialog-actions">
-        <button type="button" id="custom-provider-cancel" @click=${closeProvider}>Cancel</button
+        <button type="button" id="custom-provider-cancel" @click=${closeProvider}>${t("Cancel")}</button
         ><button class="primary" id="custom-provider-save" ?disabled=${provider.saving} @click=${saveProvider}>
-          Save provider
+          ${t("Save provider")}
         </button>
       </div>
     </dialog>
@@ -296,6 +297,5 @@ export function mountProviders() {
 }
 
 function keyLabel(p: any, compact: boolean) {
-  const text = p.hasKey ? "set (write-only)" : "none";
-  return compact ? text.charAt(0).toUpperCase() + text.slice(1) : text;
+  return compact ? (p.hasKey ? t("Set (write-only)") : t("None")) : p.hasKey ? t("set (write-only)") : t("none");
 }

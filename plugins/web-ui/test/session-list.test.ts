@@ -24,6 +24,9 @@ import {
   withoutUnsentPending,
 } from "../src/session-list.ts";
 import type { CoreSession } from "../src/core-bridge.ts";
+import { setLocale } from "../../chassis/src/i18n.ts";
+
+setLocale("en");
 
 function pending(threadRef: string): CoreSession {
   return {

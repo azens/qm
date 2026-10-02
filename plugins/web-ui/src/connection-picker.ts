@@ -2,6 +2,7 @@ import { html, nothing, render } from "lit";
 import { Search, ArrowUpRight, Check } from "lucide";
 import { connectorLogo } from "./connector-logo";
 import { icon } from "./ui";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 export interface ConnectionService {
   id: string;
@@ -29,18 +30,18 @@ export function mountConnectionPicker(
     });
     const shown = expanded || words.length ? matches : matches.slice(0, 6);
     render(
-      html`<section class="connection-picker" aria-label="Connect your apps">
+      html`<section class="connection-picker" aria-label=${t("Connect your apps")}>
         <header class="connection-picker-header">
           <div>
-            <h3>Connect your apps</h3>
+            <h3>${t("Connect your apps")}</h3>
           </div>
         </header>
         <label class="connection-picker-search">
           ${icon(Search, 16)}
           <input
             type="search"
-            aria-label="Search apps"
-            placeholder="Search apps…"
+            aria-label=${t("Search apps")}
+            placeholder=${t("Search apps…")}
             .value=${query}
             @input=${(event: Event) => {
               query = (event.target as HTMLInputElement).value;
@@ -50,7 +51,7 @@ export function mountConnectionPicker(
           />
         </label>
         <div class="connection-picker-caption" role="status" aria-live="polite">
-          ${words.length ? `${matches.length} ${matches.length === 1 ? "app" : "apps"} found` : "Popular apps"}
+          ${words.length ? t(matches.length === 1 ? "{count} app found" : "{count} apps found", { count: matches.length }) : t("Popular apps")}
         </div>
         <div class="connection-picker-grid">
           ${shown.map(
@@ -68,7 +69,7 @@ export function mountConnectionPicker(
               </button>`,
           )}
         </div>
-        ${matches.length === 0 ? html`<p class="connection-picker-empty">No apps match “${query}”. Try another name.</p>` : nothing}
+        ${matches.length === 0 ? html`<p class="connection-picker-empty">${t("No apps match “{query}”. Try another name.", { query })}</p>` : nothing}
         ${
           !words.length && matches.length > 6
             ? html`<button
@@ -80,7 +81,7 @@ export function mountConnectionPicker(
                   draw();
                 }}
               >
-                ${expanded ? "Show fewer apps" : `Browse all ${services.length} apps`}
+                ${expanded ? t("Show fewer apps") : t("Browse all {count} apps", { count: services.length })}
               </button>`
             : nothing
         }

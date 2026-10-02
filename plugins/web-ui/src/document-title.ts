@@ -1,4 +1,5 @@
 import type { View } from "./shell-state";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 interface TitledSession {
   id: string;
@@ -13,25 +14,28 @@ interface ActiveConversation {
 
 export const PRODUCT_TITLE = "QM · Web";
 
-const VIEW_TITLES: Record<View, string> = {
-  chats: "Chats",
-  inbox: "Inbox",
-  calendar: "Calendar",
-  contexts: "Projects",
-  crons: "Crons",
-  loops: "Loops",
-  webhooks: "Webhooks",
-  files: "Files",
-  keychain: "Keychain",
-  deploys: "Apps",
-  memory: "Memory",
-  skills: "Skills",
-  settings: "Settings",
-};
+function viewTitle(view: View): string {
+  const titles: Record<View, string> = {
+    chats: t("Chats"),
+    inbox: t("Inbox"),
+    calendar: t("Calendar"),
+    contexts: t("Projects"),
+    crons: t("Crons"),
+    loops: t("Loops"),
+    webhooks: t("Webhooks"),
+    files: t("Files"),
+    keychain: t("Keychain"),
+    deploys: t("Apps"),
+    memory: t("Memory"),
+    skills: t("Skills"),
+    settings: t("Settings"),
+  };
+  return titles[view];
+}
 
 export function documentTitle(view?: View, conversationTitle?: string | null, conversationOpen = false): string {
   const title =
-    view === "chats" && conversationOpen ? conversationTitle?.trim() || "New chat" : view && VIEW_TITLES[view];
+    view === "chats" && conversationOpen ? conversationTitle?.trim() || t("New chat") : view && viewTitle(view);
   return title ? `${title} · ${PRODUCT_TITLE}` : PRODUCT_TITLE;
 }
 

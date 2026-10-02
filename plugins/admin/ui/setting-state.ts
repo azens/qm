@@ -1,3 +1,4 @@
+import { t } from "../../chassis/src/i18n-lit.ts";
 export class SettingState {
   key: string;
   draft: Record<string, any> = {};
@@ -18,7 +19,7 @@ export class SettingState {
   }
   changed() {
     if (!this.saving) {
-      this.message = this.dirty ? "Unsaved changes" : "";
+      this.message = this.dirty ? t("Unsaved changes") : "";
       this.tone = this.dirty ? "dirty" : "";
     }
     this.render();
@@ -26,7 +27,7 @@ export class SettingState {
   commit(body: unknown) {
     this.baseline = JSON.stringify(body);
     this.saving = false;
-    this.message = this.dirty ? "Unsaved changes" : "Saved";
+    this.message = this.dirty ? t("Unsaved changes") : t("Saved");
     this.tone = this.dirty ? "dirty" : "ok";
     this.render();
   }

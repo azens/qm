@@ -51,8 +51,8 @@ test("an inbox drag paints drop zones on every existing pane", () => {
 });
 
 test("email items edit like an email; slack items like slack", () => {
-  assert.match(inbox, /<span>To<\/span>/);
-  assert.match(inbox, /<span>Subject<\/span>/);
+  assert.match(inbox, /<span>\$\{t\("To"\)\}<\/span>/);
+  assert.match(inbox, /<span>\$\{t\("Subject"\)\}<\/span>/);
   assert.match(inbox, /Send it/, "send is a suggested action");
   assert.match(
     readFileSync(new URL("../src/assistant-sidebar.ts", import.meta.url), "utf8"),
@@ -129,7 +129,7 @@ test("load more is a text button at the end of the filter row, not a full-width 
     /class="inbox-load-more"[\s\S]*?refreshInbox\(\{ more: true, viewId: surface\.viewId \}\)[\s\S]*?Load more/,
   );
   assert.doesNotMatch(inbox, /<button class="btn"[^\n]*>Load more/);
-  assert.match(inbox, /<button class="inbox-load-more" type="button"[^\n]*handled:[^\n]*>Load more handled<\/button>/);
+  assert.match(inbox, /<button class="inbox-load-more" type="button"[^\n]*handled:[^\n]*>\$\{t\("Load more handled"\)\}<\/button>/);
   assert.match(css, /\.inbox-filter-bar \{\s*display: flex;/);
   assert.match(css, /\.inbox-load-more \{\s*margin-left: auto;/);
   assert.match(css, /\.inbox-filter-bar:not\(:has\(\.inbox-filter\)\) \{\s*padding-bottom: 0;/);
@@ -160,9 +160,9 @@ test("each item carries a follow-up chat with the agent", () => {
 
 test("handled items keep their history but stay out of the way", () => {
   assert.match(inbox, /Handled \(/);
-  assert.match(inbox, /if \(item\.status === "sent"\) return "Sent";/);
-  assert.match(inbox, /if \(item\.status === "replied"\) return "Replied";/);
-  assert.match(inbox, /return "Dismissed";/);
+  assert.match(inbox, /if \(item\.status === "sent"\) return t\("Sent"\);/);
+  assert.match(inbox, /if \(item\.status === "replied"\) return t\("Replied"\);/);
+  assert.match(inbox, /return t\("Dismissed"\);/);
   assert.match(inbox, /Reopen/);
 });
 
@@ -173,7 +173,7 @@ test("an external reply in Slack or Gmail closes the loop in the UI", () => {
     "the item type learns the replied status",
   );
   assert.match(inbox, /externalReplyText\?: string;/);
-  assert.match(inbox, /You replied in \$\{where\}/);
+  assert.match(inbox, /t\("You replied in \{where\} \{when\}", \{ where,/);
   assert.match(inbox, /item\.source === "slack" \? "Slack" : "Gmail"/);
   assert.match(inbox, /item\.externalReplyText \? html`<div class="inbox-replied-text">/);
   assert.match(
@@ -252,7 +252,7 @@ test("a send refused because the agent redrafted keeps the person's edit and sho
   assert.match(inbox, /await refetchItem\(item\);/);
   assert.match(
     inbox,
-    /redrafted this reply while you were editing\. Your text is kept in the box\. New draft: "\$\{preview\}"/,
+    /The agent redrafted this reply while you were editing\. Your text is kept in the box\. New draft: "\{preview\}"/,
   );
 });
 

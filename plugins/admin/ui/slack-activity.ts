@@ -2,6 +2,8 @@ import { html, nothing } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 import { classMap } from "lit/directives/class-map.js";
 import { badge, renderer, node } from "./shared.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { formatDate, formatNumber } from "../../chassis/src/i18n.ts";
 import type { Api } from "./integrations-state.ts";
 type Row = Record<string, any>;
 type Context = {
@@ -31,8 +33,8 @@ const empty = (text: string) => html`<p class="empty">${text}</p>`;
 const loading = (text: string) => html`<div class="loadingline">${text}</div>`;
 export const groupKey = (m: Row) =>
   (m.authorId || m.authorName || m.ts) + "|" + (m.sub && m.sub !== m.ts ? m.sub : "root");
-const author = (m: Row) => (m.self ? context.brandSelfLabel() : m.authorName || m.authorId || "unknown");
-const time = (m: Row) => new Date(m.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+const author = (m: Row) => (m.self ? context.brandSelfLabel() : m.authorName || m.authorId || t("unknown"));
+const time = (m: Row) => formatDate(m.createdAt, { hour: "numeric", minute: "2-digit" });
 export function message(m: Row, opts: Row = {}) {
   return html`<div
     class=${classMap({ "sm-msg": true, "sm-cont": !!opts.cont, "sm-self": !!m.self, "sm-reply": !!(m.sub && m.sub !== m.ts), "sm-deleted": !!m.deleted, "sm-target": !!opts.target, "sm-openable": !!opts.onOpen })}
@@ -43,9 +45,9 @@ export function message(m: Row, opts: Row = {}) {
       ${opts.cont ? html`<span class="sm-guttertime">${time(m)}</span>` : html`<span class="sm-avatar">${(author(m).trim()[0] || "?").toUpperCase()}</span>`}
     </div>
     <div class="sm-body">
-      ${opts.cont ? nothing : html`<div class="sm-head"><span class="sm-author">${author(m)}</span>${messageTag(m)}${m.sub && m.sub !== m.ts ? html`<span class="sm-tag" title=${"Reply in the thread rooted at " + m.sub}>Thread reply</span>` : nothing}${opts.containerLabel ? html`<span class="sm-tag">${opts.containerLabel}</span>` : nothing}<span class="sm-when" title=${context.fmtTime(m.createdAt) + " · ts " + m.ts}>${context.view() === "slack" && !opts.onOpen ? time(m) : context.relTime(m.createdAt)}</span></div>`}
+      ${opts.cont ? nothing : html`<div class="sm-head"><span class="sm-author">${author(m)}</span>${messageTag(m)}${m.sub && m.sub !== m.ts ? html`<span class="sm-tag" title=${t("Reply in the thread rooted at {ts}", { ts: m.sub })}>${t("Thread reply")}</span>` : nothing}${opts.containerLabel ? html`<span class="sm-tag">${opts.containerLabel}</span>` : nothing}<span class="sm-when" title=${context.fmtTime(m.createdAt) + " · ts " + m.ts}>${context.view() === "slack" && !opts.onOpen ? time(m) : context.relTime(m.createdAt)}</span></div>`}
       <div class="sm-text">
-        ${context.slackParseText(m.text || "", m.mentions)}${m.editedAt ? html`<span class="sm-flag" title=${context.fmtTime(m.editedAt)}>(edited)</span>` : nothing}${m.deleted ? html`<span class="sm-flag">(deleted in Slack)</span>` : nothing}
+        ${context.slackParseText(m.text || "", m.mentions)}${m.editedAt ? html`<span class="sm-flag" title=${context.fmtTime(m.editedAt)}>${t("(edited)")}</span>` : nothing}${m.deleted ? html`<span class="sm-flag">${t("(deleted in Slack)")}</span>` : nothing}
       </div>
     </div>
   </div>`;
@@ -58,7 +60,7 @@ export function groupedMessages(messages: Row[], target?: string) {
       const previous = messages[index - 1],
         day = new Date(m.createdAt).toDateString(),
         sameDay = previous && new Date(previous.createdAt).toDateString() === day;
-      return html`${sameDay ? nothing : html`<div class="sm-day">${day === new Date().toDateString() ? "Today" : new Date(m.createdAt).toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}</div>`}${message(m, { target: target === m.ts, cont: !!sameDay && groupKey(previous) === groupKey(m) && target !== m.ts })}`;
+      return html`${sameDay ? nothing : html`<div class="sm-day">${day === new Date().toDateString() ? t("Today") : formatDate(m.createdAt, { month: "short", day: "numeric", year: "numeric" })}</div>`}${message(m, { target: target === m.ts, cont: !!sameDay && groupKey(previous) === groupKey(m) && target !== m.ts })}`;
     },
   );
 }
@@ -86,20 +88,20 @@ function dense(items: Row[], rowOf: (item: Row) => Row, onOpen: (item: Row) => v
   </div>`;
 }
 function messageTag(m: Row) {
-  if (m.self) return html`<span class="sm-tag sm-tag-agent">agent</span>`;
-  return m.bot ? html`<span class="sm-tag">bot</span>` : nothing;
+  if (m.self) return html`<span class="sm-tag sm-tag-agent">${t("agent")}</span>`;
+  return m.bot ? html`<span class="sm-tag">${t("bot")}</span>` : nothing;
 }
 function judgmentBadge(decision: string) {
-  if (decision === "act") return badge("woke", "ok");
-  return decision === "ignore" ? badge("silent", "muted") : badge("fastlane", "accent");
+  if (decision === "act") return badge(t("woke"), "ok");
+  return decision === "ignore" ? badge(t("silent"), "muted") : badge(t("fastlane"), "accent");
 }
 function ackBadge(row: Row) {
-  return row.outcome === "picked" ? ackTag(row.picked, row.icon) : badge("declined", "muted");
+  return row.outcome === "picked" ? ackTag(row.picked, row.icon) : badge(t("declined"), "muted");
 }
 function judgmentReason(item: Row) {
   if (item.reason) return item.reason;
-  if (item.decision === "ignore") return "Stayed silent.";
-  return item.decision === "fastlane" ? "@mention, routed past the judge." : "None";
+  if (item.decision === "ignore") return t("Stayed silent.");
+  return item.decision === "fastlane" ? t("@mention, routed past the judge.") : t("None");
 }
 
 function ackTag(name: string, icon?: string, accent = false) {
@@ -112,7 +114,7 @@ function ackTag(name: string, icon?: string, accent = false) {
     />`;
   return icon
     ? html`<span class=${"ack-emoji-glyph" + (accent ? " accent" : "")} title=${":" + name + ":"}>${icon}</span>`
-    : html`<span class=${"pill" + (accent ? " accent" : "")}>${name ? ":" + name + ":" : "None"}</span>`;
+    : html`<span class=${"pill" + (accent ? " accent" : "")}>${name ? ":" + name + ":" : t("None")}</span>`;
 }
 export function slackHref(workspace: string, container: string, ts: string) {
   return workspace && container?.startsWith("C") && ts
@@ -148,7 +150,7 @@ export class SlackActivity {
   searchBox(container: string | null) {
     let timer: ReturnType<typeof setTimeout>;
     return {
-      placeholder: container ? "Search this channel…" : "Search all mirrored messages…",
+      placeholder: container ? t("Search this channel…") : t("Search all mirrored messages…"),
       onInput: (value: string) => {
         clearTimeout(timer);
         timer = setTimeout(() => {
@@ -169,9 +171,12 @@ export class SlackActivity {
         (container ? "&container=" + encodeURIComponent(container) : ""),
     );
     if (!this.current("slack", generation)) return;
-    if (!result.ok) return this.draw(empty(result.data?.message || `Search failed (${result.status}).`));
+    if (!result.ok)
+      return this.draw(() =>
+        empty(result.data?.message || t("Search failed ({status}).", { status: result.status ?? "" })),
+      );
     this.messages = result.data.messages || [];
-    this.draw(
+    this.draw(() =>
       this.messages.length
         ? html`<div class="sm-stream">
               ${repeat(
@@ -184,44 +189,50 @@ export class SlackActivity {
                   }),
               )}
             </div>
-            ${result.data.hasMore ? empty(`First ${this.messages.length.toLocaleString()} matches shown. Refine the search to see the rest.`) : nothing}`
-        : empty("No matches in the mirror."),
+            ${result.data.hasMore ? empty(t("First {count} matches shown. Refine the search to see the rest.", { count: formatNumber(this.messages.length) })) : nothing}`
+        : empty(t("No matches in the mirror.")),
     );
   }
   async mirror(st: Row) {
     const generation = this.begin(st);
     if (!st.container) {
       context.pageShell({ title: "Slack", search: this.searchBox(null) });
-      this.draw(loading("Loading Slack mirror..."));
+      this.draw(() => loading(t("Loading Slack mirror...")));
       const result = await context.loadSlackContainers();
       if (!this.current("slack", generation)) return;
       if (!result.ok)
-        return this.draw(
+        return this.draw(() =>
           empty(
             result.status === 403
-              ? "Only an org admin can read the Slack mirror."
-              : result.data?.message || `Failed to load (${result.status}).`,
+              ? t("Only an org admin can read the Slack mirror.")
+              : result.data?.message || t("Failed to load ({status}).", { status: result.status ?? "" }),
           ),
         );
       context.loaded();
       const containers = context.containers() || [];
       context.pageShell({
         title: "Slack",
-        count: (context.truncated() ? containers.length.toLocaleString() + "+" : containers.length) + " conversations",
+        count:
+          (context.truncated() ? formatNumber(containers.length) + "+" : containers.length) +
+          " " +
+          t("conversations"),
         search: this.searchBox(null),
       });
-      this.draw(
+      this.draw(() =>
         html`${dense(
           containers,
           (c) => ({
             name: context.slackContainerLabel(c.container),
-            preview: `${Number(c.messageCount).toLocaleString()} mirrored · ${(c.members || []).length} ${(c.members || []).length === 1 ? "member" : "members"}`,
+            preview: t("{count} mirrored · {members} members", {
+              count: formatNumber(Number(c.messageCount)),
+              members: formatNumber((c.members || []).length),
+            }),
             time: context.relTime(c.updatedAt),
             href: context.stateToUrl({ view: "slack", container: c.container }),
           }),
           (c) => context.go({ view: "slack", container: c.container }),
-          "Nothing mirrored yet. The surface pushes messages here as it sees them.",
-        )}${context.truncated() ? empty(`Showing the ${containers.length.toLocaleString()} most recently active conversations.`) : nothing}`,
+          t("Nothing mirrored yet. The surface pushes messages here as it sees them."),
+        )}${context.truncated() ? empty(t("Showing the {count} most recently active conversations.", { count: formatNumber(containers.length) })) : nothing}`,
       );
       return;
     }
@@ -230,13 +241,13 @@ export class SlackActivity {
     const container = st.container,
       scope = context.slackContainerScope(container);
     context.pageShell({
-      back: { label: "← Slack", onClick: () => context.go({ view: "slack", container: null, ts: null }) },
+      back: { label: "← " + t("Slack"), onClick: () => context.go({ view: "slack", container: null, ts: null }) },
       title: context.slackContainerLabel(container),
       context: container,
       search: this.searchBox(container),
       actions: [
-        context.navLink("Judgments →", { view: "judgments", container }),
-        ...(scope ? [context.navLink("Governance →", { view: "governance", scope, session: null })] : []),
+        context.navLink(t("Judgments →"), { view: "judgments", container }),
+        ...(scope ? [context.navLink(t("Governance →"), { view: "governance", scope, session: null })] : []),
       ],
     });
     const bar = document.getElementById("shellbar")!;
@@ -250,10 +261,11 @@ export class SlackActivity {
     );
     bar.querySelector(".shell-spacer")?.remove();
     bar.prepend(toolbar, heading);
-    this.draw(loading("Loading messages..."));
+    this.draw(() => loading(t("Loading messages...")));
     const result = await this.fetchMessages(container);
     if (!this.current("slack", generation)) return;
-    if (!result.ok) return this.draw(empty(result.data?.message || `Failed to load (${result.status}).`));
+    if (!result.ok)
+      return this.draw(() => empty(result.data?.message || t("Failed to load ({status}).", { status: result.status ?? "" })));
     this.messages = result.data.messages || [];
     this.hasMore = !!result.data.hasMore;
     for (
@@ -273,8 +285,8 @@ export class SlackActivity {
           href=${"/api/slack-mirror/messages?container=" + encodeURIComponent(container)}
           target="_blank"
           rel="noopener"
-          title="Open the raw mirrored JSON rows for this container in a new tab"
-          >Raw feed ↗</a
+          title=${t("Open the raw mirrored JSON rows for this container in a new tab")}
+          >${t("Raw feed ↗")}</a
         >`,
       ),
     );
@@ -295,10 +307,10 @@ export class SlackActivity {
     );
   }
   paintMessages() {
-    this.draw(
-      html`${this.state.ts && !this.messages.some((m) => m.ts === this.state.ts) ? html`<div class="sm-day">${"Message " + this.state.ts + " isn't in the loaded window. It may be older than what's shown (use “Load earlier messages”) or was never mirrored."}</div>` : nothing}${this.hasMore ? html`<button type="button" class="load-earlier more" ?disabled=${this.busy} @click=${() => this.earlierMessages()}>Load earlier messages</button>` : nothing}${this.error ? empty(this.error) : nothing}
+    this.draw(() =>
+      html`${this.state.ts && !this.messages.some((m) => m.ts === this.state.ts) ? html`<div class="sm-day">${t("Message {ts} isn't in the loaded window. It may be older than what's shown (use “Load earlier messages”) or was never mirrored.", { ts: this.state.ts })}</div>` : nothing}${this.hasMore ? html`<button type="button" class="load-earlier more" ?disabled=${this.busy} @click=${() => this.earlierMessages()}>${t("Load earlier messages")}</button>` : nothing}${this.error ? empty(this.error) : nothing}
         <div class="sm-stream">
-          ${this.messages.length ? groupedMessages(this.messages, this.state.ts) : empty("Nothing mirrored for this channel yet.")}
+          ${this.messages.length ? groupedMessages(this.messages, this.state.ts) : empty(t("Nothing mirrored for this channel yet."))}
         </div>`,
     );
   }
@@ -313,7 +325,7 @@ export class SlackActivity {
     if (result.ok) {
       this.messages = [...(result.data.messages || []), ...this.messages];
       this.hasMore = !!result.data.hasMore;
-    } else this.error = result.data?.message || "Failed to load earlier messages.";
+    } else this.error = result.data?.message || t("Failed to load earlier messages.");
     this.paintMessages();
   }
   async log(st: Row, kind: "judgments" | "ackemoji") {
@@ -322,7 +334,7 @@ export class SlackActivity {
     if (!this.current(kind, generation)) return;
     if (st.jid) return this.detail(st, kind, generation);
     const ack = kind === "ackemoji",
-      title = ack ? "Ack emoji" : "Judgments",
+      title = ack ? t("Ack emoji") : t("Judgments"),
       decision = st.decision || (ack ? null : "act,ignore");
     let navigation: Row = {};
     if (st.container)
@@ -337,7 +349,7 @@ export class SlackActivity {
     else if (ack)
       navigation = {
         back: {
-          label: "← Judgments",
+          label: "← " + t("Judgments"),
           onClick: () => context.go({ view: "judgments", container: null, decision: null, jid: null }),
         },
       };
@@ -345,11 +357,11 @@ export class SlackActivity {
       context.pageShell({
         title,
         ...navigation,
-        ...(ack ? {} : { actions: [context.navLink("Ack emoji →", { view: "ackemoji" })] }),
+        ...(ack ? {} : { actions: [context.navLink(t("Ack emoji →"), { view: "ackemoji" })] }),
         ...extra,
       });
     shell({});
-    this.draw(loading(ack ? "Loading ack-emoji picks…" : "Loading judgments…"));
+    this.draw(() => loading(ack ? t("Loading ack-emoji picks…") : t("Loading judgments…")));
     const path = ack
       ? "/api/ack-emoji-picks?" +
         (decision ? "outcome=" + encodeURIComponent(decision) : "") +
@@ -360,32 +372,36 @@ export class SlackActivity {
     const result = await context.api("GET", path);
     if (!this.current(kind, generation)) return;
     if (!result.ok)
-      return this.draw(
-        empty(result.status === 403 ? deniedLog(ack) : result.data?.message || `Failed to load (${result.status}).`),
+      return this.draw(() =>
+        empty(
+          result.status === 403
+            ? deniedLog(ack)
+            : result.data?.message || t("Failed to load ({status}).", { status: result.status ?? "" }),
+        ),
       );
     const counts = result.data.counts || {},
       tabs = ack
         ? [
-            { key: null, label: "All", counts: ["picked", "declined"] },
-            { key: "picked", label: "Picked", counts: ["picked"] },
-            { key: "declined", label: "Declined", counts: ["declined"] },
+            { key: null, label: t("All"), counts: ["picked", "declined"] },
+            { key: "picked", label: t("Picked"), counts: ["picked"] },
+            { key: "declined", label: t("Declined"), counts: ["declined"] },
           ]
         : [
-            { key: "act,ignore", label: "Judged", counts: ["act", "ignore"] },
-            { key: "act", label: "Woke", counts: ["act"] },
-            { key: "ignore", label: "Silent", counts: ["ignore"] },
-            { key: "fastlane", label: "Fastlane", counts: ["fastlane"] },
+            { key: "act,ignore", label: t("Judged"), counts: ["act", "ignore"] },
+            { key: "act", label: t("Woke"), counts: ["act"] },
+            { key: "ignore", label: t("Silent"), counts: ["ignore"] },
+            { key: "fastlane", label: t("Fastlane"), counts: ["fastlane"] },
           ];
     shell({
-      tabs: tabs.map((t) => ({
-        label: t.label,
-        count: t.counts.reduce((n, key) => n + (counts[key] || 0), 0),
-        active: t.key === decision,
+      tabs: tabs.map((tab) => ({
+        label: tab.label,
+        count: tab.counts.reduce((n, key) => n + (counts[key] || 0), 0),
+        active: tab.key === decision,
         onClick: () =>
           context.go({
             view: kind,
             container: st.container,
-            decision: t.key === "act,ignore" ? null : t.key,
+            decision: tab.key === "act,ignore" ? null : tab.key,
             jid: null,
           }),
       })),
@@ -398,11 +414,15 @@ export class SlackActivity {
     const ack = kind === "ackemoji",
       st = this.state;
     if (!this.rows.length)
-      return this.draw(
-        empty(ack ? "No ack-emoji picks recorded for this filter yet." : "No judgments recorded for this filter yet."),
+      return this.draw(() =>
+        empty(
+          ack
+            ? t("No ack-emoji picks recorded for this filter yet.")
+            : t("No judgments recorded for this filter yet."),
+        ),
       );
     const target = (r: Row) => ({ view: kind, container: st.container, decision: st.decision, jid: String(r.id) });
-    this.draw(
+    this.draw(() =>
       html`<div>
           ${dense(
             this.rows,
@@ -410,8 +430,11 @@ export class SlackActivity {
               name: context.slackContainerLabel(ack ? r.channel : r.container),
               preview: html`<span class="badges"
                 >${ack ? ackBadge(r) : judgmentBadge(r.decision)}<span class=${ack ? "pill" : "pill judgment-reason"}
-                  >${ack ? r.message || "None" : r.reason || (r.decision === "fastlane" ? "@mention, routed past the judge" : "None")}</span
-                >${r.latencyMs != null ? html`<span class="dense-time">${r.latencyMs + "ms"}</span>` : nothing}</span
+                  >${ack
+                    ? r.message || t("None")
+                    : r.reason ||
+                      (r.decision === "fastlane" ? t("@mention, routed past the judge") : t("None"))}</span
+                >${r.latencyMs != null ? html`<span class="dense-time">${formatNumber(r.latencyMs)}ms</span>` : nothing}</span
               >`,
               time: context.relTime(r.createdAt),
               href: context.stateToUrl(target(r)),
@@ -420,7 +443,7 @@ export class SlackActivity {
             "",
           )}
         </div>
-        ${this.hasMore ? html`<button type="button" class="load-earlier more" ?disabled=${this.busy} @click=${() => this.earlierLog(kind, path)}>${ack ? "Load earlier picks" : "Load earlier judgments"}</button>` : nothing}${this.error ? empty(this.error) : nothing}`,
+        ${this.hasMore ? html`<button type="button" class="load-earlier more" ?disabled=${this.busy} @click=${() => this.earlierLog(kind, path)}>${ack ? t("Load earlier picks") : t("Load earlier judgments")}</button>` : nothing}${this.error ? empty(this.error) : nothing}`,
     );
   }
   async earlierLog(kind: "judgments" | "ackemoji", path: string) {
@@ -438,27 +461,27 @@ export class SlackActivity {
     if (result.ok) {
       this.rows = [...this.rows, ...(result.data[kind === "ackemoji" ? "picks" : "judgments"] || [])];
       this.hasMore = !!result.data.hasMore;
-    } else this.error = result.data?.message || "Failed to load earlier entries.";
+    } else this.error = result.data?.message || t("Failed to load earlier entries.");
     this.paintLog(kind, path);
   }
   async detail(st: Row, kind: "judgments" | "ackemoji", generation: number) {
     const ack = kind === "ackemoji",
-      title = ack ? "Ack emoji" : "Judgment",
+      title = ack ? t("Ack emoji") : t("Judgment"),
       back = {
-        label: ack ? "← Ack emoji" : "← Judgments",
+        label: ack ? "← " + t("Ack emoji") : "← " + t("Judgments"),
         onClick: () => context.go({ view: kind, container: st.container, decision: st.decision, jid: null }),
       };
     context.pageShell({ back, title });
-    this.draw(html`<div class="detail judg-detail">Loading…</div>`);
+    this.draw(() => html`<div class="detail judg-detail">${t("Loading…")}</div>`);
     const result = await context.api(
       "GET",
       (ack ? "/api/ack-emoji-picks?id=" : "/api/ambient-judgments?id=") + encodeURIComponent(st.jid),
     );
     if (!this.current(kind, generation)) return;
     if (!result.ok)
-      return this.draw(
+      return this.draw(() =>
         html`<div class="detail judg-detail">
-          ${empty(result.data?.message || `Failed to load (${result.status}).`)}
+          ${empty(result.data?.message || t("Failed to load ({status}).", { status: result.status ?? "" }))}
         </div>`,
       );
     const item = result.data[ack ? "pick" : "judgment"],
@@ -471,16 +494,16 @@ export class SlackActivity {
       context: context.slackContainerLabel(container),
       contextGo: { view: "slack", container, ts },
       ...(!ack
-        ? { actions: scope ? [context.navLink("Governance →", { view: "governance", scope, session: null })] : [] }
+        ? { actions: scope ? [context.navLink(t("Governance →"), { view: "governance", scope, session: null })] : [] }
         : {}),
     });
-    if (ack) return this.draw(ackDetail(item, result.data.workspaceUrl));
-    this.draw(judgmentDetail(item, result.data.workspaceUrl, nothing));
+    if (ack) return this.draw(() => ackDetail(item, result.data.workspaceUrl));
+    this.draw(() => judgmentDetail(item, result.data.workspaceUrl, nothing));
     const before = item.tsTo ? (Number(item.tsTo) + 1).toString() : undefined;
     const mirror = await this.fetchMessages(container, before);
     if (!this.current(kind, generation)) return;
     const messages = (mirror.data?.messages || []).filter((m: Row) => !item.tsTo || m.ts <= item.tsTo);
-    let mirrorContent: unknown = empty("Nothing mirrored for this window.");
+    let mirrorContent: unknown = empty(t("Nothing mirrored for this window."));
     if (messages.length)
       mirrorContent = html`<div class="sm-stream">
         ${repeat(
@@ -489,15 +512,20 @@ export class SlackActivity {
           (m: Row) => message(m, { target: item.tsFrom && item.tsTo && m.ts >= item.tsFrom && m.ts <= item.tsTo }),
         )}
       </div>`;
-    if (!mirror.ok) mirrorContent = empty(mirror.data?.message || `Failed to load mirror (${mirror.status}).`);
-    this.draw(judgmentDetail(item, result.data.workspaceUrl, mirrorContent));
+    if (!mirror.ok)
+      mirrorContent = empty(mirror.data?.message || t("Failed to load mirror ({status}).", { status: mirror.status ?? "" }));
+    this.draw(() => judgmentDetail(item, result.data.workspaceUrl, mirrorContent));
     requestAnimationFrame(() => {
       if (this.current(kind, generation)) this.root.querySelector(".sm-target")?.scrollIntoView({ block: "center" });
     });
   }
 }
 function meta(item: Row) {
-  return [item.model, item.latencyMs != null ? item.latencyMs + "ms" : null, context.fmtTime(item.createdAt)]
+  return [
+    item.model,
+    item.latencyMs != null ? formatNumber(item.latencyMs) + "ms" : null,
+    context.fmtTime(item.createdAt),
+  ]
     .filter(Boolean)
     .join(" · ");
 }
@@ -507,16 +535,15 @@ function judgmentDetail(item: Row, workspace: string, mirror: unknown) {
     <div class="judg-split">
       <div>
         <div class="judg-pane-title">
-          Slack
-          mirror${
+          ${t("Slack mirror")}${
             href
               ? html`<a
                   href=${href}
                   target="_blank"
                   rel="noopener"
                   class="judg-extlink"
-                  aria-label="Open in Slack"
-                  title="Jump to this moment in Slack to scroll up for more context"
+                  aria-label=${t("Open in Slack")}
+                  title=${t("Jump to this moment in Slack to scroll up for more context")}
                   ><svg
                     width="13"
                     height="13"
@@ -538,16 +565,16 @@ function judgmentDetail(item: Row, workspace: string, mirror: unknown) {
         <div class="judg-mirror">${mirror}</div>
       </div>
       <div>
-        <div class="judg-pane-title">Judge context</div>
+        <div class="judg-pane-title">${t("Judge context")}</div>
         <div class="judg-prompt">
           <pre>
-${item.prompt || (item.decision === "fastlane" ? "Routed past the judge (formal @mention). No prompt was rendered." : "(prompt not recorded)")}</pre>
+${item.prompt || (item.decision === "fastlane" ? t("Routed past the judge (formal @mention). No prompt was rendered.") : t("(prompt not recorded)"))}</pre>
         </div>
       </div>
     </div>
     <div class="judg-decision">
       <div class="badges">
-        ${judgmentBadge(item.decision)}${item.askedBy ? badge("asked by " + item.askedBy, "accent") : nothing}<span
+        ${judgmentBadge(item.decision)}${item.askedBy ? badge(t("asked by {who}", { who: item.askedBy }), "accent") : nothing}<span
           class="shell-context"
           >${meta(item)}</span
         >
@@ -561,15 +588,15 @@ function ackDetail(item: Row, workspace: string) {
   return html`<div class="detail judg-detail">
     <div class="judg-decision">
       <div class="badges">
-        ${item.outcome === "picked" ? ackTag(item.picked, item.icon) : badge("declined", "muted")}<span
+        ${item.outcome === "picked" ? ackTag(item.picked, item.icon) : badge(t("declined"), "muted")}<span
           class="shell-context"
           >${meta(item)}</span
-        >${href ? html`<a href=${href} target="_blank" rel="noopener" class="judg-extlink">Open in Slack ↗</a>` : nothing}
+        >${href ? html`<a href=${href} target="_blank" rel="noopener" class="judg-extlink">${t("Open in Slack ↗")}</a>` : nothing}
       </div>
     </div>
-    <div class="judg-pane-title">Message</div>
-    <div class="judg-prompt"><pre>${item.message || "(not recorded)"}</pre></div>
-    <div class="judg-pane-title">Candidate slate</div>
+    <div class="judg-pane-title">${t("Message")}</div>
+    <div class="judg-prompt"><pre>${item.message || t("(not recorded)")}</pre></div>
+    <div class="judg-pane-title">${t("Candidate slate")}</div>
     <div class="badges">
       ${
         (item.candidates || "").trim()
@@ -577,7 +604,7 @@ function ackDetail(item: Row, workspace: string) {
               .split(" ")
               .filter(Boolean)
               .map((name: string) => ackTag(name, undefined, name === item.picked))
-          : empty("(candidate slate not recorded)")
+          : empty(t("(candidate slate not recorded)"))
       }
     </div>
   </div>`;
@@ -588,5 +615,7 @@ export const renderAmbientJudgments = (state: Row) => activity.log(state, "judgm
 export const renderAckEmojiPicks = (state: Row) => activity.log(state, "ackemoji");
 
 function deniedLog(ack: boolean) {
-  return ack ? "Only an org admin can read ack-emoji picks." : "Only an org admin can read ambient judgments.";
+  return ack
+    ? t("Only an org admin can read ack-emoji picks.")
+    : t("Only an org admin can read ambient judgments.");
 }

@@ -1,3 +1,4 @@
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { currentTextPhase } from "./timeline.ts";
 import { goalElapsedLabel, type GoalStripState } from "./goal-strip.ts";
 import { workPausedForApproval, type WorkBlock } from "./core-bridge.ts";
@@ -19,7 +20,7 @@ export function workSeconds(work: WorkBlock): number {
 }
 
 export function workedLabel(prefix: string, secs: number): string {
-  return secs > 0 ? `${prefix} for ${goalElapsedLabel(0, secs * 1000)}` : prefix;
+  return secs > 0 ? t("{prefix} for {duration}", { prefix, duration: goalElapsedLabel(0, secs * 1000) }) : prefix;
 }
 
 interface GoalTurn {

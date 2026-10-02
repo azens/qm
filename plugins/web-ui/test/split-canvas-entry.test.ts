@@ -35,7 +35,7 @@ test("every new-chat affordance follows the shared placement rule", () => {
     assert.doesNotMatch(source, /\.newChat\(/);
     assert.match(source, /startNewChat\(/);
   }
-  assert.match(sessions, /action: \{ label: "New chat", onClick: \(\) => startNewChat\(\) \}/);
+  assert.match(sessions, /action: \{ label: t\("New chat"\), onClick: \(\) => startNewChat\(\) \}/);
 });
 
 test("a pane opened from a project's + starts its chat in that project", () => {

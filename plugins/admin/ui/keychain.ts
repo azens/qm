@@ -1,14 +1,27 @@
 import { html, nothing } from "lit";
 import { card, table, renderer } from "./shared.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { formatNumber } from "../../chassis/src/i18n.ts";
+
+const STATUS_LABEL: Record<string, string> = {
+  active: "Active",
+  used: "Used",
+  expired: "expired",
+  revoked: "Revoked",
+  pending: "Pending",
+  approved: "Approved",
+  denied: "Denied",
+  unknown: "unknown",
+};
 
 export function keychain(root: HTMLElement, d: any, s: Record<string, any>) {
   const paint = renderer(root);
   if (d.enabled === false) {
-    paint(
+    paint(() =>
       card(
-        "Keychain unavailable",
-        "Stable key material is required before the core can store keychain records.",
-        html`<p class="empty">Keychain is not configured for this deployment.</p>`,
+        t("Keychain unavailable"),
+        t("Stable key material is required before the core can store keychain records."),
+        html`<p class="empty">${t("Keychain is not configured for this deployment.")}</p>`,
       ),
     );
     return;
@@ -39,35 +52,36 @@ export function keychain(root: HTMLElement, d: any, s: Record<string, any>) {
       >${text}</span
     >`,
   });
-  const expiry = (ts: number) => (!ts ? "No expiry" : (ts <= Date.now() ? "Expired " : "Expires ") + s.fmtTime(ts));
+  const expiry = (ts: number) =>
+    !ts ? t("No expiry") : t(ts <= Date.now() ? "Expired {when}" : "Expires {when}", { when: s.fmtTime(ts) });
   function draw() {
-    paint(
+    paint(() =>
       html`<div class="list-root">
         ${card(
-          "People",
-          "Everyone known through sessions, admin grants, keychain records, grants, or asks.",
+          t("People"),
+          t("Everyone known through sessions, admin grants, keychain records, grants, or asks."),
           table(
-            ["Person", "Keychain", "Active grants", "Pending asks"],
+            [t("Person"), t("Keychain"), t("Active grants"), t("Pending asks")],
             people
               .filter((p: any) => matches([p.principalId, p.displayName || ""]))
               .map((p: any) => [
                 stacked(p.displayName || p.principalId, p.displayName ? p.principalId : "", "mono"),
                 ...[p.credentialCount, p.activeGrantCount].map((n) => ({
                   action: {
-                    label: String(n || 0),
-                    title: "Open this person's credentials and grants",
+                    label: formatNumber(n || 0),
+                    title: t("Open this person's credentials and grants"),
                     run: () => s.openUser(p.principalId),
                   },
                 })),
-                { text: String(p.pendingAskCount || 0), cls: "num" },
+                { text: formatNumber(p.pendingAskCount || 0), cls: "num" },
               ]),
-            "No people match.",
+            t("No people match."),
           ),
         )}${card(
-          "Credentials",
-          "Metadata only. Secret material and encrypted values are never returned to admin.",
+          t("Credential list"),
+          t("Metadata only. Secret material and encrypted values are never returned to admin."),
           table(
-            ["Owner", "Credential", "Delivery", "Account", "Expiry"],
+            [t("Owner"), t("Credential"), t("Delivery"), t("Account"), t("Expiry")],
             credentials
               .filter((c: any) =>
                 matches([
@@ -84,17 +98,17 @@ export function keychain(root: HTMLElement, d: any, s: Record<string, any>) {
               .map((c: any) => [
                 stacked(personName(c.ownerId), c.ownerId, "mono"),
                 stacked(c.service, c.id, "mono"),
-                muted([c.kind || "unknown", c.envKey, ...(c.targets || []).slice(0, 2)].filter(Boolean).join(" · ")),
+                muted([c.kind || t("unknown"), c.envKey, ...(c.targets || []).slice(0, 2)].filter(Boolean).join(" · ")),
                 c.accountLabel || c.host || "-",
                 { text: expiry(c.expiresAt), cls: "num" },
               ]),
-            "No keychain credentials match.",
+            t("No keychain credentials match."),
           ),
         )}${card(
-          "Grants",
-          "Purpose-bound keychain grants from an owner to an audience scope.",
+          t("Grants"),
+          t("Purpose-bound keychain grants from an owner to an audience scope."),
           table(
-            ["Owner", "Credential", "Audience", "Mode", "Status", "Purpose"],
+            [t("Owner"), t("Credential"), t("Audience"), t("Mode"), t("Status"), t("Purpose")],
             grants
               .filter((g: any) =>
                 matches([
@@ -111,24 +125,24 @@ export function keychain(root: HTMLElement, d: any, s: Record<string, any>) {
                 const expired = g.expiresAt && g.expiresAt <= Date.now() && g.status === "active";
                 let tone = g.status === "revoked" ? "err" : "";
                 if (expired) tone = "warn";
-                let purposeDetail = g.askId ? "ask " + g.askId : "";
-                if (g.usedBy) purposeDetail = "used by " + g.usedBy;
+                let purposeDetail = g.askId ? t("ask {id}", { id: g.askId }) : "";
+                if (g.usedBy) purposeDetail = t("used by {who}", { who: g.usedBy });
                 return [
                   stacked(personName(g.ownerId), g.ownerId, "mono"),
                   stacked(credName(g.credentialId), g.credentialId, "mono"),
                   stacked(g.audienceScopeId, s.scopeKind(g.audienceScopeId), "mono"),
-                  muted(g.mode || "unknown"),
-                  muted(expired ? "expired" : g.status || "unknown", tone),
+                  muted(g.mode || t("unknown")),
+                  muted(t(STATUS_LABEL[expired ? "expired" : g.status] || "unknown"), tone),
                   stacked(g.purpose || "-", purposeDetail),
                 ];
               }),
-            "No keychain grants match.",
+            t("No keychain grants match."),
           ),
         )}${card(
-          "Asks",
-          "Outstanding and resolved cross-conversation consent requests.",
+          t("Asks"),
+          t("Outstanding and resolved cross-conversation consent requests."),
           table(
-            ["Owner", "Requester", "Credential", "Scope", "Status", "Purpose"],
+            [t("Owner"), t("Requester"), t("Credential"), t("Scope"), t("Status"), t("Purpose")],
             asks
               .filter((a: any) =>
                 matches([
@@ -147,10 +161,10 @@ export function keychain(root: HTMLElement, d: any, s: Record<string, any>) {
                 stacked(personName(a.requesterId), a.requesterId, "mono"),
                 stacked(credName(a.credentialId), a.credentialId, "mono"),
                 stacked(a.requesterScopeId, s.scopeKind(a.requesterScopeId), "mono"),
-                muted(a.status || "unknown", a.status === "pending" ? "warn" : ""),
+                muted(t(STATUS_LABEL[a.status] || "unknown"), a.status === "pending" ? "warn" : ""),
                 stacked(a.purpose || "-", a.expiresAt ? expiry(a.expiresAt) : ""),
               ]),
-            "No keychain asks match.",
+            t("No keychain asks match."),
           ),
         )}
       </div>`,
@@ -158,16 +172,18 @@ export function keychain(root: HTMLElement, d: any, s: Record<string, any>) {
   }
   s.defaultShell({
     stats: [
-      [people.length, "People"],
-      [credentials.length, "Credentials"],
+      [formatNumber(people.length), t("People")],
+      [formatNumber(credentials.length), t("Credentials")],
       [
-        grants.filter((g: any) => g.status === "active" && (!g.expiresAt || g.expiresAt > Date.now())).length,
-        "Active grants",
+        formatNumber(
+          grants.filter((g: any) => g.status === "active" && (!g.expiresAt || g.expiresAt > Date.now())).length,
+        ),
+        t("Active grants"),
       ],
-      [asks.filter((a: any) => a.status === "pending").length, "Pending asks"],
+      [formatNumber(asks.filter((a: any) => a.status === "pending").length), t("Pending asks")],
     ],
     search: {
-      placeholder: "person, service, audience, purpose",
+      placeholder: t("person, service, audience, purpose"),
       onInput: (value: string) => {
         filter = value;
         draw();

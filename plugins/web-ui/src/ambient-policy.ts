@@ -2,6 +2,7 @@ import { html, nothing, type TemplateResult } from "lit";
 import { api } from "./core-bridge";
 import { errMessage } from "../../chassis/src/errors";
 import { fieldSelect } from "./ui";
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { tip } from "./tooltip";
 
 export const BOT_MODES = ["ignore", "rollup", "action", "user"] as const;
@@ -167,7 +168,7 @@ function botRow(b: BotPolicyView, i: number): TemplateResult {
       ${fieldSelect({
         className: "ambient-bot-mode",
         compact: true,
-        ariaLabel: `Handling for ${b.name}`,
+        ariaLabel: t("Handling for {name}", { name: b.name }),
         disabled: ambientPolicyState.saving,
         value: b.mode,
         onChange: (value) => {
@@ -175,7 +176,7 @@ function botRow(b: BotPolicyView, i: number): TemplateResult {
           ambientPolicyState.bots = ambientPolicyState.bots.map((x, j) => (j === i ? { ...x, mode } : x));
           markDirty();
         },
-        options: BOT_MODES.map((m) => html`<option value=${m}>${BOT_MODE_LABELS[m]}</option>`),
+        options: BOT_MODES.map((m) => html`<option value=${m}>${t(BOT_MODE_LABELS[m])}</option>`),
       })}
       ${
         b.mode === "rollup"
@@ -204,8 +205,8 @@ function botRow(b: BotPolicyView, i: number): TemplateResult {
       <button
         class="project-icon-button danger"
         type="button"
-        aria-label=${`Remove ${b.name} from the ledger`}
-        ${tip("Remove")}
+        aria-label=${t("Remove {name} from the ledger", { name: b.name })}
+        ${tip(t("Remove"))}
         ?disabled=${ambientPolicyState.saving}
         @click=${() => {
           ambientPolicyState.bots = ambientPolicyState.bots.filter((_, j) => j !== i);
@@ -223,19 +224,19 @@ export function ambientPolicySection(scopeId: string): TemplateResult | typeof n
   if (ambientPolicyState.scope !== scopeId) return nothing;
   if (ambientPolicyState.loading)
     return html`<section class="context-panel ambient-policy" aria-labelledby="ambient-policy-title">
-      <h2 class="context-panel-title" id="ambient-policy-title">Agent behavior</h2>
-      <div class="context-panel-loading">Loading…</div>
+      <h2 class="context-panel-title" id="ambient-policy-title">${t("Agent behavior")}</h2>
+      <div class="context-panel-loading">${t("Loading…")}</div>
     </section>`;
   return html`
     <section class="context-panel ambient-policy" aria-labelledby="ambient-policy-title">
       <div class="context-panel-heading">
         <div>
-          <h2 class="context-panel-title" id="ambient-policy-title">Agent behavior</h2>
-          <p class="context-panel-copy">Choose what this project should notice and act on.</p>
+          <h2 class="context-panel-title" id="ambient-policy-title">${t("Agent behavior")}</h2>
+          <p class="context-panel-copy">${t("Choose what this project should notice and act on.")}</p>
         </div>
       </div>
       <div class="ambient-group">
-        <label class="ambient-field-label" for="ambient-enabled">Ambient behavior</label>
+        <label class="ambient-field-label" for="ambient-enabled">${t("Ambient behavior")}</label>
         ${fieldSelect({
           id: "ambient-enabled",
           className: "ambient-enabled-select",
@@ -248,9 +249,9 @@ export function ambientPolicySection(scopeId: string): TemplateResult | typeof n
             markDirty();
           },
           options: [
-            html`<option value="default">Default (on when standing orders are set)</option>`,
-            html`<option value="on">On</option>`,
-            html`<option value="off">Off</option>`,
+            html`<option value="default">${t("Default (on when standing orders are set)")}</option>`,
+            html`<option value="on">${t("On")}</option>`,
+            html`<option value="off">${t("Off")}</option>`,
           ],
         })}
         <p class="ambient-policy-hint" id="ambient-enabled-hint">
@@ -259,14 +260,14 @@ export function ambientPolicySection(scopeId: string): TemplateResult | typeof n
         </p>
       </div>
       <div class="ambient-group">
-        <label class="ambient-field-label" for="ambient-orders">Standing orders</label>
+        <label class="ambient-field-label" for="ambient-orders">${t("Standing orders")}</label>
         <textarea
           id="ambient-orders"
           data-focus-key="ambient-orders"
           class="ambient-orders"
           rows="4"
           aria-describedby="ambient-orders-hint"
-          placeholder="For example: Flag anything that could delay the launch."
+          placeholder=${t("For example: Flag anything that could delay the launch.")}
           .value=${ambientPolicyState.orders}
           ?disabled=${ambientPolicyState.saving}
           @input=${(e: InputEvent) => {
@@ -275,13 +276,13 @@ export function ambientPolicySection(scopeId: string): TemplateResult | typeof n
           }}
         ></textarea>
         <p class="ambient-policy-hint" id="ambient-orders-hint">
-          Plain-language guidance for proactive work. Leave empty to respond only when addressed.
+          ${t("Plain-language guidance for proactive work. Leave empty to respond only when addressed.")}
         </p>
       </div>
       <div class="ambient-group">
-        <h3 class="ambient-field-label">Automated posters</h3>
-        <p class="ambient-policy-hint">Control how messages from bots and integrations wake the agent.</p>
-        ${ambientPolicyState.bots.length ? html`<div class="ambient-bot-list">${ambientPolicyState.bots.map((b, i) => botRow(b, i))}</div>` : html`<div class="empty compact">No bots added. All bot posts are treated as activity.</div>`}
+        <h3 class="ambient-field-label">${t("Automated posters")}</h3>
+        <p class="ambient-policy-hint">${t("Control how messages from bots and integrations wake the agent.")}</p>
+        ${ambientPolicyState.bots.length ? html`<div class="ambient-bot-list">${ambientPolicyState.bots.map((b, i) => botRow(b, i))}</div>` : html`<div class="empty compact">${t("No bots added. All bot posts are treated as activity.")}</div>`}
         <form
           class="ambient-bot-add"
           @submit=${(e: SubmitEvent) => {
@@ -293,9 +294,9 @@ export function ambientPolicySection(scopeId: string): TemplateResult | typeof n
             data-focus-key="ambient-bot-name"
             type="text"
             maxlength="120"
-            aria-label="Bot name"
+            aria-label=${t("Bot name")}
             required
-            placeholder="Bot name"
+            placeholder=${t("Bot name")}
             .value=${ambientPolicyState.newBotName}
             ?disabled=${ambientPolicyState.saving}
             @input=${(e: InputEvent) => {
@@ -303,7 +304,7 @@ export function ambientPolicySection(scopeId: string): TemplateResult | typeof n
               redraw();
             }}
           />
-          <button class="btn" type="submit" ?disabled=${ambientPolicyState.saving}>Add bot</button>
+          <button class="btn" type="submit" ?disabled=${ambientPolicyState.saving}>${t("Add bot")}</button>
         </form>
       </div>
       <div class="ambient-policy-actions">
@@ -313,7 +314,7 @@ export function ambientPolicySection(scopeId: string): TemplateResult | typeof n
           ?disabled=${!ambientPolicyState.dirty || ambientPolicyState.saving}
           @click=${() => void save()}
         >
-          ${ambientPolicyState.saving ? "Saving…" : "Save"}
+          ${ambientPolicyState.saving ? t("Saving…") : t("Save")}
         </button>
         ${
           ambientPolicyState.notice

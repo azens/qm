@@ -4,6 +4,7 @@ import { ArrowUpRight, Check, Link2, UserRound } from "lucide";
 import { icon, slackMark } from "./ui";
 import "./slack-account.css";
 import { withBase } from "./core-bridge";
+import { LocaleController, t } from "../../chassis/src/i18n-lit.ts";
 
 interface SlackAttempt {
   user: string;
@@ -33,6 +34,7 @@ export class SlackAccount extends LitElement {
   private connected = false;
   private label = "";
   private attempt: SlackAttempt | null = null;
+  private readonly locale = new LocaleController(this);
 
   protected createRenderRoot(): HTMLElement {
     return this;
@@ -70,12 +72,12 @@ export class SlackAccount extends LitElement {
       history.replaceState(history.state, "", url);
       if (!this.attempt || this.attempt.state !== state) {
         this.error =
-          "This connection expired or was started in another QM account. Sign in to the account you want to connect and try again.";
+t("This connection expired or was started in another QM account. Sign in to the account you want to connect and try again.");
         return;
       }
       if (cancelled) {
         this.clearAttempt();
-        this.error = "Slack authorization was cancelled. Your QM account has not been linked.";
+this.error = t("Slack authorization was cancelled. Your QM account has not been linked.");
         return;
       }
       void this.complete();
@@ -116,7 +118,7 @@ export class SlackAccount extends LitElement {
         signal: AbortSignal.timeout(30_000),
       });
       const result = await response.json();
-      if (!response.ok) throw Error(result.message ?? "Could not start Slack authorization. Please try again.");
+if (!response.ok) throw Error(result.message ?? t("Could not start Slack authorization. Please try again."));
       const url = new URL(result.url);
       if (
         url.protocol !== "https:" ||
@@ -125,12 +127,12 @@ export class SlackAccount extends LitElement {
         url.password ||
         typeof result.ticket !== "string"
       )
-        throw Error("Could not verify the Slack authorization link.");
+throw Error(t("Could not verify the Slack authorization link."));
       this.attempt = { user: this.user, state, ticket: result.ticket, expiresAt: Date.now() + 20 * 60_000 };
       sessionStorage.setItem("qm-slack-account", JSON.stringify(this.attempt));
       location.assign(url.href);
     } catch (error) {
-      this.error = error instanceof Error ? error.message : "Could not connect Slack.";
+this.error = error instanceof Error ? error.message : t("Could not connect Slack.");
     } finally {
       this.busy = false;
     }
@@ -148,23 +150,23 @@ export class SlackAccount extends LitElement {
         signal: AbortSignal.timeout(45_000),
       });
       const result = await response.json();
-      if (!response.ok) throw Error(result.message ?? "Could not verify your Slack account. Try again.");
+      if (!response.ok) throw Error(result.message ?? t("Could not verify your Slack account. Try again."));
       this.connected = true;
       this.label = [result.user, result.workspace].filter(Boolean).join(" · ");
       this.clearAttempt();
     } catch (error) {
-      this.error = error instanceof Error ? error.message : "Could not verify your Slack account.";
+      this.error = error instanceof Error ? error.message : t("Could not verify your Slack account.");
     } finally {
       this.busy = false;
     }
   }
 
   protected render() {
-    return html`<section class="slack-account" aria-label="Your Slack account">
+    return html`<section class="slack-account" aria-label=${t("Your Slack account")}>
       ${
         this.connected
           ? html`<div class="slack-connected" role="status">
-              ${icon(Check, 14)}<span>Your Slack account is linked${this.label ? ` · ${this.label}` : ""}</span>
+              ${icon(Check, 14)}<span>${t("Your Slack account is linked")}${this.label ? ` · ${this.label}` : ""}</span>
             </div>`
           : html`<button class="welcome-slack" type="button" ?disabled=${this.busy} @click=${() => void this.connect()}>
               <div class="slack-link-icon" aria-hidden="true">
@@ -173,14 +175,18 @@ export class SlackAccount extends LitElement {
                 <span class="slack-link-chain">${icon(Link2, 13)}</span>
               </div>
               <span
-                ><strong>${this.busy ? "Linking Slack…" : "Link your Slack account"}</strong
-                ><small>Let QM search Slack and take action on your behalf.</small></span
+                ><strong>${this.busy ? t("Linking Slack…") : t("Link your Slack account")}</strong
+                ><small>${t("Let QM search Slack and take action on your behalf.")}</small></span
               >
               ${icon(ArrowUpRight, 16)}
             </button>`
       }
       ${this.error ? html`<p class="slack-account-error" role="alert">${this.error}</p>` : nothing}
-      ${this.attempt && !this.connected ? html`<button class="btn" type="button" ?disabled=${this.busy} @click=${() => void this.complete()}>Check connection</button>` : nothing}
+      ${this.attempt && !this.connected
+        ? html`<button class="btn" type="button" ?disabled=${this.busy} @click=${() => void this.complete()}>
+            ${t("Check connection")}
+          </button>`
+        : nothing}
     </section>`;
   }
 }

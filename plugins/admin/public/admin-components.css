@@ -150,6 +150,27 @@
   margin-bottom: 4px;
 }
 
+:where(html body[data-admin-kit="true"]) :is(#app-view #main, dialog) .qm-locale-slot {
+  display: flex;
+  align-items: center;
+  gap: var(--control-gap);
+  padding-bottom: 16px;
+  margin-bottom: var(--section-gap);
+  border-bottom: 1px solid var(--border);
+}
+
+:where(html body[data-admin-kit="true"]) :is(#app-view #main, dialog) .qm-locale-caption {
+  font-size: var(--control-font);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+:where(html body[data-admin-kit="true"]) :is(#app-view #main, dialog) .qm-locale-switcher {
+  min-width: 140px;
+  cursor: pointer;
+}
+
 :where(html body[data-admin-kit="true"]) :is(#app-view #main, dialog) .card > .head h2,
 :where(html body[data-admin-kit="true"]) :is(#app-view #main, dialog) .parity-subsection > .head h2,
 :where(html body[data-admin-kit="true"]) :is(#app-view #main, dialog) .spec-demo > .head h2 {

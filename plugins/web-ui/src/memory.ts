@@ -3,6 +3,7 @@ import { Clock3, Pencil, Search, Trash2 } from "lucide";
 import { api, ApiError } from "./core-bridge";
 import { errMessage } from "../../chassis/src/errors";
 import { icon } from "./ui";
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { appState, replacePanePreservingFocus } from "./shell";
 import { scopedSession, scopedViewTopbar } from "./session-scope";
 import { tip } from "./tooltip";
@@ -72,7 +73,7 @@ function drawMemory(loading = false): void {
       ${scopedViewTopbar("memory", () => drawMemory())}
       <div class="list-page-head">
         <div>
-          <h1 class="pane-title">Memory</h1>
+          <h1 class="pane-title">${t("Memory")}</h1>
         </div>
         <div class="list-page-actions">
           <button
@@ -83,18 +84,18 @@ function drawMemory(loading = false): void {
               drawMemory();
             }}
           >
-            ${icon(Pencil, 15)} ${rawEditing ? "Facts view" : "Edit notebook"}
+            ${icon(Pencil, 15)} ${rawEditing ? t("Facts view") : t("Edit notebook")}
           </button>
-          <button class="btn" type="button" @click=${() => void toggleHistory()}>${icon(Clock3, 15)} History</button>
+          <button class="btn" type="button" @click=${() => void toggleHistory()}>${icon(Clock3, 15)} ${t("History")}</button>
         </div>
         ${
           !rawEditing
             ? html`<label class="list-search"
                 >${icon(Search, 16)}<input
                   data-focus-key="memory-search"
-                  aria-label="Search memory"
+                  aria-label=${t("Search memory")}
                   type="search"
-                  placeholder="Search remembered facts"
+                  placeholder=${t("Search remembered facts")}
                   .value=${search}
                   @input=${(e: Event) => {
                     search = (e.target as HTMLInputElement).value;
@@ -104,7 +105,7 @@ function drawMemory(loading = false): void {
             : nothing
         }
       </div>
-      ${memoryNotice || loading ? html`<div class="status">${memoryNotice || "Loading…"}</div>` : nothing}
+      ${memoryNotice || loading ? html`<div class="status">${memoryNotice || t("Loading…")}</div>` : nothing}
       <div class="memory-editor">
         ${
           rawEditing
@@ -127,13 +128,13 @@ function drawMemory(loading = false): void {
                           html`<div class="memory-fact">
                             <div>
                               <div>${fact.text}</div>
-                              ${fact.date ? html`<div class="card-meta">Captured ${fact.date}</div>` : nothing}
+                              ${fact.date ? html`<div class="card-meta">${t("Captured {date}", { date: fact.date })}</div>` : nothing}
                             </div>
                             <button
                               class="icon-btn"
                               type="button"
-                              aria-label="Forget this fact"
-                              ${tip("Forget this fact")}
+                              aria-label=${t("Forget this fact")}
+                              ${tip(t("Forget this fact"))}
                               @click=${() => removeFact(fact.line)}
                             >
                               ${icon(Trash2, 15)}
@@ -141,7 +142,7 @@ function drawMemory(loading = false): void {
                           </div>`,
                       )
                     : html`<div class="empty-state">
-                        ${search ? "No remembered facts match this search." : "The agent hasn’t noted any facts yet."}
+                        ${search ? t("No remembered facts match this search.") : t("The agent hasn’t noted any facts yet.")}
                       </div>`
                 }
               </div>`
@@ -153,29 +154,29 @@ function drawMemory(loading = false): void {
             ?disabled=${loading || memorySaving || !dirty}
             @click=${() => void saveMemory()}
           >
-            ${memorySaving ? "Saving…" : "Save changes"}
+            ${memorySaving ? t("Saving…") : t("Save changes")}
           </button>
-          <span class="memory-hint">${dirty && !memorySaving ? "Unsaved changes" : ""}</span>
+          <span class="memory-hint">${dirty && !memorySaving ? t("Unsaved changes") : ""}</span>
         </div>
         ${
           historyOpen
             ? html` <section class="memory-history">
-                <h2>Revision history</h2>
+                <h2>${t("Revision history")}</h2>
                 ${
                   history.length
                     ? history.map(
                         (row, i) =>
                           html` <div class="memory-revision">
                             <div>
-                              <strong>${i === 0 ? "Current" : `Revision ${row.revision}`}</strong>
+                              <strong>${i === 0 ? t("Current") : t("Revision {n}", { n: row.revision })}</strong>
                               <div class="card-meta">
-                                ${fmtDate(row.at)} · ${row.author || "automatic capture"} · ${row.operation}
+                                ${fmtDate(row.at)} · ${row.author || t("automatic capture")} · ${row.operation}
                               </div>
                             </div>
-                            ${i ? html`<button class="btn" type="button" @click=${() => requestRestoreRevision(row)}>Restore</button>` : nothing}
+                            ${i ? html`<button class="btn" type="button" @click=${() => requestRestoreRevision(row)}>${t("Restore")}</button>` : nothing}
                           </div>`,
                       )
-                    : html`<div class="empty-state">Revision history is unavailable for this memory store.</div>`
+                    : html`<div class="empty-state">${t("Revision history is unavailable for this memory store.")}</div>`
                 }
               </section>`
             : nothing
@@ -185,7 +186,7 @@ function drawMemory(loading = false): void {
             ? html` <section class="card memory-confirm" role="alertdialog" aria-labelledby="memory-confirm-title">
                 <div class="card-head">
                   <h2 class="card-title" id="memory-confirm-title">${memoryConfirmation.title}</h2>
-                  <span class="badge warn">Check impact</span>
+                  <span class="badge warn">${t("Check impact")}</span>
                 </div>
                 <p class="memory-help">${memoryConfirmation.body}</p>
                 <div class="actions">
@@ -198,7 +199,7 @@ function drawMemory(loading = false): void {
                       memoryConfirmation = null;
                       drawMemory();
                     }}
-                  >
+                    ${t("Cancel")}
                     Cancel
                   </button>
                 </div>
@@ -218,9 +219,9 @@ export async function renderMemory(force = false): Promise<void> {
   if (dirty && !force) return void drawMemory();
   if (dirty && force) {
     memoryConfirmation = {
-      title: "Discard unsaved memory changes?",
-      body: "Refreshing will replace this draft with the latest memory. Copy anything you want to keep before continuing.",
-      action: "Discard and refresh",
+      title: t("Discard unsaved memory changes?"),
+      body: t("Refreshing will replace this draft with the latest memory. Copy anything you want to keep before continuing."),
+      action: t("Discard and refresh"),
       run: async () => {
         memoryConfirmation = null;
         memoryDraft = memorySaved;
@@ -241,7 +242,7 @@ export async function renderMemory(force = false): Promise<void> {
     memoryLoaded = true;
   } catch (e) {
     if (seq !== appState.viewRenderSeq || appState.currentView !== "memory") return;
-    memoryNotice = errMessage(e, "Failed to load memory.");
+    memoryNotice = errMessage(e, t("Failed to load memory."));
   }
   drawMemory();
 }
@@ -259,19 +260,19 @@ async function saveMemory(): Promise<void> {
     memorySaved = r.content ?? memoryDraft;
     memoryDraft = memorySaved;
     memoryRevision = r.revision ?? memoryRevision;
-    memoryNotice = "Saved ✓";
+    memoryNotice = t("Saved ✓");
     if (historyOpen) {
       try {
         await loadHistory();
       } catch {
-        memoryNotice = "Saved ✓ History could not refresh.";
+        memoryNotice = t("Saved ✓ History could not refresh.");
       }
     }
   } catch (e) {
     memoryNotice =
       e instanceof ApiError && e.status === 409
         ? "Memory changed in another conversation. Your draft is still here; copy it if needed, then refresh to merge with the latest version."
-        : errMessage(e, "Failed to save memory.");
+        : errMessage(e, t("Failed to save memory."));
   } finally {
     memorySaving = false;
     drawMemory();
@@ -289,7 +290,7 @@ async function toggleHistory(): Promise<void> {
     try {
       await loadHistory();
     } catch (e) {
-      memoryNotice = errMessage(e, "Failed to load memory history.");
+      memoryNotice = errMessage(e, t("Failed to load memory history."));
     }
   }
   drawMemory();
@@ -298,8 +299,8 @@ async function toggleHistory(): Promise<void> {
 function requestRestoreRevision(row: RevisionRow): void {
   memoryConfirmation = {
     title: `Restore memory from ${fmtDate(row.at)}?`,
-    body: "The selected notebook will become current. The version you have now remains available in history.",
-    action: "Restore revision",
+    body: t("The selected notebook will become current. The version you have now remains available in history."),
+    action: t("Restore revision"),
     run: async () => {
       memoryConfirmation = null;
       await restoreRevision(row);
@@ -317,14 +318,14 @@ async function restoreRevision(row: RevisionRow): Promise<void> {
     memorySaved = r.content ?? "";
     memoryDraft = memorySaved;
     memoryRevision = r.revision ?? memoryRevision;
-    memoryNotice = "Revision restored ✓";
+    memoryNotice = t("Revision restored ✓");
     try {
       await loadHistory();
     } catch {
-      memoryNotice = "Revision restored ✓ History could not refresh.";
+      memoryNotice = t("Revision restored ✓ History could not refresh.");
     }
   } catch (e) {
-    memoryNotice = errMessage(e, "Could not restore that revision.");
+    memoryNotice = errMessage(e, t("Could not restore that revision."));
   }
   drawMemory();
 }

@@ -2,6 +2,8 @@ import { html } from "lit";
 import { keyed } from "lit/directives/keyed.js";
 import { spendChart } from "./spend-chart.ts";
 import { table, card, renderer } from "./shared.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { formatDate } from "../../chassis/src/i18n.ts";
 
 type Services = Record<string, any>;
 
@@ -17,7 +19,7 @@ const COLUMNS: Array<[string, string]> = [
 ];
 
 const rowName = (row: any) =>
-  "model" in row ? row.model || "Unknown model" : row.displayName || row.principalId || row.scopeId || "";
+  "model" in row ? row.model || t("Unknown model") : row.displayName || row.principalId || row.scopeId || "";
 
 const fmtUsd = (n: any) => "$" + (Number(n) || 0).toFixed(2);
 
@@ -58,14 +60,14 @@ export class SpendView {
     const focused = !!active && !!previous?.contains(active);
     const exportCsv = document.createElement("button");
     exportCsv.type = "button";
-    exportCsv.textContent = "Export CSV";
+    exportCsv.textContent = t("Export CSV");
     exportCsv.onclick = () => s.downloadCsv();
     s.defaultShell({
       stats: [
-        [fmtUsd(org.costUsd), "Total spend"],
-        [fmtUsd(org.live?.costUsd), "Live"],
-        [fmtUsd(org.cron?.costUsd), "Crons"],
-        [org.cacheHitRatio == null ? "n/a" : s.fmtPct(org.cacheHitRatio), "Cache hit rate"],
+        [fmtUsd(org.costUsd), t("Total spend")],
+        [fmtUsd(org.live?.costUsd), t("Live")],
+        [fmtUsd(org.cron?.costUsd), t("Crons")],
+        [org.cacheHitRatio == null ? "n/a" : s.fmtPct(org.cacheHitRatio), t("Cache hit rate")],
       ],
       tabs: RANGES.map((range) => ({
         label: range,
@@ -74,7 +76,7 @@ export class SpendView {
       })),
       search: {
         value: this.filter,
-        placeholder: "person, scope or model",
+        placeholder: t("person, scope or model"),
         onInput: (value: string) => {
           this.filter = value;
           this.draw();
@@ -104,7 +106,7 @@ export class SpendView {
     return COLUMNS.map(
       ([key, label]) =>
         html`<button type="button" class="rowbtn" @click=${() => this.sortBy(key)}>
-          ${models && key === "person" ? "Model" : label}${this.arrow(key)}
+          ${t(models && key === "person" ? "Model" : label)}${this.arrow(key)}
         </button>`,
     );
   }
@@ -139,23 +141,30 @@ export class SpendView {
     const models = sorted((this.data.models || []).filter((row: any) => rowName(row).toLowerCase().includes(needle)));
     const series = this.data.series || [];
     const org = this.data.org || {};
-    this.paint(
+    this.paint(() =>
       html`${
         this.data.asOf == null
           ? null
           : html`<p class="subline">
-              Totals as of ${new Date(this.data.asOf).toLocaleString()}. Updated every minute.
+              ${t("Totals as of {when}. Updated every minute.", {
+                when: formatDate(this.data.asOf, { dateStyle: "medium", timeStyle: "short" }),
+              })}
             </p>`
       }${card(
-        "Spend over time",
+        t("Spend over time"),
         series.length
-          ? `${this.data.window?.from ?? ""} to ${this.data.window?.to ?? ""} (UTC, ${this.data.window?.bucket ?? "day"} buckets) · ${s.plural(org.calls || 0, "model call")}`
-          : "No model calls recorded in this window.",
+          ? t("{from} to {to} (UTC, {bucket} buckets) · {calls}", {
+              from: this.data.window?.from ?? "",
+              to: this.data.window?.to ?? "",
+              bucket: this.data.window?.bucket === "week" ? t("weekly") : t("daily"),
+              calls: s.plural(org.calls || 0, "model call"),
+            })
+          : t("No model calls recorded in this window."),
         series.length
           ? keyed(this.chartBreakdown, spendChart(this.data, this.chartBreakdown))
-          : html`<p class="empty">Nothing to chart yet.</p>`,
+          : html`<p class="empty">${t("Nothing to chart yet.")}</p>`,
         series.length
-          ? html`<div class="spend-chart-switch" role="group" aria-label="Chart breakdown">
+          ? html`<div class="spend-chart-switch" role="group" aria-label=${t("Chart breakdown")}>
               ${(["category", "model", "person"] as const).map(
                 (mode) =>
                   html`<button
@@ -167,42 +176,42 @@ export class SpendView {
                       this.draw();
                     }}
                   >
-                    ${{ category: "Category", model: "Model", person: "Person" }[mode]}
+                    ${t(({ category: "Category", model: "Model", person: "Person" } as const)[mode])}
                   </button>`,
               )}
             </div>`
           : null,
       )}${card(
-        "Spend per person",
-        "Live is interactive conversation; Crons are scheduled runs; Background covers webhook and monitor runs.",
+        t("Spend per person"),
+        t("Live is interactive conversation; Crons are scheduled runs; Background covers webhook and monitor runs."),
         table(
           this.header(),
           people.map((row: any) => this.rowCells(row)),
-          this.data.people?.length ? "No people match." : "No spend recorded in this window.",
+          this.data.people?.length ? t("No people match.") : t("No spend recorded in this window."),
           (i) => {
             const principalId = people[i]?.principalId;
             if (principalId) s.openUser(principalId);
           },
         ),
       )}${card(
-        "Shared scopes",
-        "Channels, groups and teams are billed to the scope, not to a speaker. These rows plus the people above make up the org total.",
+        t("Shared scopes"),
+        t("Channels, groups and teams are billed to the scope, not to a speaker. These rows plus the people above make up the org total."),
         table(
           this.header(),
           scopes.map((row: any) => this.rowCells(row)),
-          this.data.scopes?.length ? "No scopes match." : "No shared-scope spend in this window.",
+          this.data.scopes?.length ? t("No scopes match.") : t("No shared-scope spend in this window."),
         ),
       )}${card(
-        "Spend by model",
-        "Same org spend, split by the model recorded on each call. Unknown model covers calls without a model ID.",
+        t("Spend by model"),
+        t("Same org spend, split by the model recorded on each call. Unknown model covers calls without a model ID."),
         html`<div class="spend-models">
           ${table(
             this.header(true),
             models.map((row: any) => this.rowCells(row)),
-            this.data.models?.length ? "No models match." : "No model breakdown available in this window.",
+            this.data.models?.length ? t("No models match.") : t("No model breakdown available in this window."),
           )}
         </div>`,
-        html`<button type="button" @click=${() => s.downloadCsv("model")}>Export model CSV</button>`,
+        html`<button type="button" @click=${() => s.downloadCsv("model")}>${t("Export model CSV")}</button>`,
       )}`,
     );
   }

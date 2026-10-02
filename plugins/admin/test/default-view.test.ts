@@ -37,14 +37,14 @@ test("admin shell uses the QM identity with org-injectable branding", () => {
   assert.match(html, /<title>QM Admin<\/title>/);
   assert.match(html, /<meta name="brand-self-label" content="QM" \/>/);
   assert.match(html, /<header class="top">/);
-  assert.match(html, /id="home-link">[\s\S]*?<span>Back to home<\/span>\s*<\/a>/);
+  assert.match(html, /id="home-link">[\s\S]*?<span data-i18n="Back to home">/);
   assert.match(html, /<span class="brand-mark" aria-hidden="true"><\/span>/);
   assert.match(
     html,
     /<span class="brand-name"\s*>\s*<span id="brand-product" data-brand-product>QM<\/span> <span class="brand-suffix">\(admin\)<\/span>/,
   );
   assert.match(html, /<aside class="admin-sidebar"[^>]*>\s*<div class="brand">/, "the lockup sits in the sidebar");
-  assert.match(html, /<main class="admin-main" id="main" aria-label="Admin content">/);
+  assert.match(html, /<main class="admin-main" id="main" aria-label="Admin content" data-i18n-aria-label="Admin content">/);
   assert.doesNotMatch(html, new RegExp(["Work", "Claw"].join(" "), "i"));
   assert.doesNotMatch(html, new RegExp(["Quarter", "master"].join(""), "i"));
 });
@@ -219,7 +219,7 @@ test("control-plane pages use the shared web UI canvas without redundant page in
   assert.match(html, /data-checkbox-for="external-slack-participants"/);
   assert.match(html, /governanceUI\.createCard\("card-governance-org-ambient"\)/);
   assert.match(html, /id="sc-editor"/);
-  assert.match(html, /id="sc-add"[^>]*>\s*\+ Add credential/);
+  assert.match(html.replace(/<!--\?lit\$\d+\$-->/g, ""), /id="sc-add"[^>]*>\s*\+ Add credential/);
   assert.match(html, /id="conn-editor"/);
   assert.match(html, /id="slack-token-editor"/);
   assert.match(html, /id="soul-preview"/);
@@ -282,7 +282,7 @@ test("governance reviews high-impact changes in product and preserves drafts", (
   assert.match(html, /Review the immutable change below/);
   assert.match(html, /function hasGovernanceDraft\(\)/);
   assert.match(html, /function governanceScopeName\(scopeId = scope\)/);
-  assert.match(html, /"Organization · " \+ scopeId/);
+  assert.match(html, /_t\("Organization · \{scope\}", \{ scope: scopeId/);
   assert.match(html, /window\.addEventListener\("beforeunload"/);
   assert.match(html, /function governanceSaveInFlight\(\)/);
   assert.match(html, /The change may already be committing and cannot be safely discarded/);
@@ -389,7 +389,7 @@ test("governance credential editor previews effective capability and uses an in-
   assert.match(html, /Save failed because the admin service could not be reached/);
   assert.match(
     html,
-    /catch \{\s*updateScFormDirty\(\);\s*setStatus\(\s*"st-service-credentials",\s*"Save failed because the admin service could not be reached/,
+    /catch \{\s*updateScFormDirty\(\);\s*setStatus\(\s*"st-service-credentials",\s*_t\("Save failed because the admin service could not be reached/,
   );
 
   assert.match(html, /Recent users in the retained window/);

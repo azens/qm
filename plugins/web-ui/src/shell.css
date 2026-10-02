@@ -1212,6 +1212,19 @@ a.chat-row-open {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+.settings-locale-switch {
+  display: inline-flex;
+}
+.qm-locale-switcher {
+  padding: 6px 11px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--foreground);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-13);
+}
 .settings-theme-link:hover {
   color: var(--foreground);
 }

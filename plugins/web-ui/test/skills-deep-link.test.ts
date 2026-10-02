@@ -29,9 +29,9 @@ test("skill rows link to dedicated detail routes instead of expanding inline", (
 
 test("skill details have a back link and resource fields", () => {
   const detail = bodyOf("openSkill");
-  assert.match(detail, /listBackLink\("Skills", \(\) => drawSkills\(\)\)/);
+  assert.match(detail, /listBackLink\(t\("Skills"\), \(\) => drawSkills\(\)\)/);
   for (const label of ["Description", "Scope", "Version", "Source", "Capabilities", "Assets"]) {
-    assert.match(detail, new RegExp(`<label>${label}</label>`));
+    assert.match(detail, new RegExp(String.raw`<label>\$\{t\("${label}"\)\}</label>`));
   }
   assert.match(
     bodyOf("skillScopeTitle"),

@@ -31,6 +31,7 @@ import {
 } from "../../chassis/src/http.ts";
 import { verifyPortalIdentity, PORTAL_IDENTITY_HEADER } from "../../chassis/src/portal-identity.ts";
 import { createBrandingCache, injectBranding } from "../../chassis/src/branding.ts";
+import { LOCALE_COOKIE, injectLocale, localeFromRequest } from "../../chassis/src/i18n.ts";
 import { parseSuggestedActivities } from "../../chassis/src/suggested-activities.ts";
 import { principalInAllowlist } from "../../chassis/src/principal-allowlist.ts";
 
@@ -120,9 +121,13 @@ async function serveWebManifest(res: ServerResponse): Promise<void> {
   res.end(JSON.stringify(manifest));
 }
 
-async function brandIndexHtml(html: string): Promise<string> {
+async function brandIndexHtml(html: string, req?: IncomingMessage): Promise<string> {
   const branding = await brandingCache.forRender();
-  return injectBranding(html, branding, { titleSuffix: "· Web" });
+  const locale = localeFromRequest(
+    req ? cookie(req, LOCALE_COOKIE) : null,
+    typeof req?.headers["accept-language"] === "string" ? req.headers["accept-language"] : null,
+  );
+  return injectLocale(injectBranding(html, branding, { titleSuffix: "· Web" }), locale);
 }
 
 const portalTokenStore = new AsyncLocalStorage<string | undefined>();
@@ -948,7 +953,7 @@ async function serveStatic(res: ServerResponse, urlPath: string): Promise<void> 
     }
   }
   if (filePath.endsWith("index.html")) {
-    const branded = await brandIndexHtml(readFileSync(filePath, "utf8"));
+    const branded = await brandIndexHtml(readFileSync(filePath, "utf8"), res.req);
     const headers = withSecurityHeaders({ "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
     return sendBuffered(res, 200, headers, branded);
   }
@@ -987,7 +992,7 @@ async function serveAppEditHtml(req: IncomingMessage, res: ServerResponse, url: 
   }
   const headers = withSecurityHeaders({ "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" });
   const csp = SPA_CSP.replace("frame-ancestors 'self'", `frame-ancestors 'self' ${slug}.${APPS_FRAME_DOMAIN}`);
-  sendBuffered(res, 200, framedByOwnSurfaces(res, headers, csp), await brandIndexHtml(html));
+  sendBuffered(res, 200, framedByOwnSurfaces(res, headers, csp), await brandIndexHtml(html, req));
   return true;
 }
 
@@ -1039,7 +1044,7 @@ async function serveVite(req: IncomingMessage, res: ServerResponse, path: string
   let html = readFileSync(join(ROOT, "index.html"), "utf8");
   html = html.replace("%BASE_URL%favicon.svg", "favicon.svg");
   html = await vite.transformIndexHtml(req.url ?? "/", html);
-  sendHtml(res, 200, await brandIndexHtml(html));
+  sendHtml(res, 200, await brandIndexHtml(html, req));
   return true;
 }
 
@@ -3287,7 +3292,7 @@ const routeRequest = async (req: IncomingMessage, res: ServerResponse) => {
       "Content-Security-Policy": `default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data:; connect-src ${dev ? "ws: wss:" : "'none'"}; frame-ancestors 'none'; base-uri 'none'; form-action 'none'`,
     });
     return res.end(
-      sharedSessionHtml(await brandIndexHtml(template), result.status === 200 ? JSON.parse(result.text) : null),
+      sharedSessionHtml(await brandIndexHtml(template, req), result.status === 200 ? JSON.parse(result.text) : null),
     );
   }
 

@@ -1,3 +1,4 @@
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { SettingState, settingRegistry } from "./setting-state.ts";
 export type Rule = { id: number; pattern: string; decision: string; reason: string };
 export type Bot = { id: number; name: string; mode: string; hours: string };
@@ -92,7 +93,7 @@ export class GovernanceState extends SettingState {
         .map((r) => {
           if (validate) {
             const error = patternError(r.pattern);
-            if (error) throw new Error("Fix the highlighted regular expression before saving: " + error);
+            if (error) throw new Error(t("Fix the highlighted regular expression before saving: {error}", { error }));
           }
           return {
             pattern: r.pattern.trim(),
@@ -107,15 +108,15 @@ export class GovernanceState extends SettingState {
       const seen = new Set();
       for (const bot of this.bots) {
         const name = bot.name.trim();
-        if (validate && !name) throw new Error("Every bot ledger row needs a bot name.");
+        if (validate && !name) throw new Error(t("Every bot ledger row needs a bot name."));
         if (validate && seen.has(name.toLowerCase()))
-          throw new Error(`Duplicate bot "${name}". The ledger matches names case-insensitively.`);
+          throw new Error(t('Duplicate bot "{name}". The ledger matches names case-insensitively.', { name }));
         seen.add(name.toLowerCase());
         const entry: Record<string, any> = { mode: bot.mode };
         if (bot.mode === "rollup" && bot.hours.trim()) {
           const hours = Number(bot.hours);
           if (validate && (!Number.isFinite(hours) || hours <= 0))
-            throw new Error(`Bot "${name}": rollup hours must be a positive number.`);
+            throw new Error(t('Bot "{name}": rollup hours must be a positive number.', { name }));
           entry.rollupHours = hours;
         }
         bots[name] = entry;
@@ -144,14 +145,14 @@ export class GovernanceState extends SettingState {
               host.endsWith(".") ||
               !/^[a-z0-9:[\]._-]+$/.test(host))
           )
-            throw new Error(label + ' contains invalid host "' + host + '". Use hostnames or IPs, not URLs.');
+            throw new Error(t('{label} contains invalid host "{host}". Use hostnames or IPs, not URLs.', { label, host }));
           return host;
         });
-      const allowedHosts = parse(this.draft.allowedHosts, "Allowlist");
-      const deniedHosts = parse(this.draft.deniedHosts, "Denylist");
+      const allowedHosts = parse(this.draft.allowedHosts, t("Allowlist"));
+      const deniedHosts = parse(this.draft.deniedHosts, t("Denylist"));
       const overlap = allowedHosts.find((host) => deniedHosts.includes(host));
       if (validate && overlap)
-        throw new Error(`Host "${overlap}" appears in both lists. Remove it from one list before saving.`);
+        throw new Error(t('Host "{host}" appears in both lists. Remove it from one list before saving.', { host: overlap }));
       return { allowedHosts, deniedHosts };
     }
     return structuredClone(this.draft);
@@ -171,9 +172,9 @@ export class GovernanceState extends SettingState {
       if (!pattern) return;
       const duplicate = patterns.slice(0, i).indexOf(pattern);
       if (duplicate >= 0)
-        warnings.push(`Rule ${i + 1} is unreachable because rule ${duplicate + 1} has the same pattern.`);
+        warnings.push(t("Rule {current} is unreachable because rule {index} has the same pattern.", { current: i + 1, index: duplicate + 1 }));
       const catchAll = patterns.slice(0, i).findIndex((p) => [".*", "^.*$", "[\\s\\S]*", "^[\\s\\S]*$"].includes(p));
-      if (catchAll >= 0) warnings.push(`Rule ${i + 1} is shadowed by catch-all rule ${catchAll + 1}.`);
+      if (catchAll >= 0) warnings.push(t("Rule {current} is shadowed by catch-all rule {index}.", { current: i + 1, index: catchAll + 1 }));
     });
     return warnings;
   }

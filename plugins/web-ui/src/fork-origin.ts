@@ -1,4 +1,5 @@
 import { html, nothing, type TemplateResult } from "lit";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 export interface ForkOriginView {
   title: string;
@@ -35,7 +36,7 @@ export function createForkOriginController<T>(options: {
       try {
         await options.navigate();
       } catch {
-        options.setError("You no longer have access to the original conversation.");
+        options.setError(t("You no longer have access to the original conversation."));
         options.redraw();
       }
     },
@@ -70,7 +71,7 @@ export function forkOriginView(view: ForkOriginView | null): TemplateResult | ty
   if (!view) return nothing;
   return html`<div class="fork-origin-row">
     <button class="fork-origin-badge" type="button" @click=${view.navigate}>
-      ${view.icon ?? nothing}<span>Forked from <bdi>${view.title}</bdi></span
+      ${view.icon ?? nothing}<span>${t("Forked from")} <bdi>${view.title}</bdi></span
       >${view.messageCount ? html`<span>· ${view.messageCount} messages</span>` : nothing}
     </button>
     <button class="fork-origin-toggle" type="button" @click=${view.toggle}>${view.expanded ? "hide" : "show"}</button>

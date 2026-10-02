@@ -1,5 +1,6 @@
 import { html, nothing, type TemplateResult } from "lit";
 import type { SuggestedActivity } from "../../chassis/src/suggested-activities.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 const icons: Record<string, string> = {
   schedule: "⏰",
@@ -17,8 +18,7 @@ export function suggestedActivities(
 ): TemplateResult | typeof nothing {
   if (!activities?.length) return nothing;
   return html`<section
-    class="suggested-activities ${collapsed ? "is-collapsed" : ""}"
-    aria-label="Suggested activities"
+    aria-label=${t("Suggested activities")}
     aria-hidden=${collapsed ? "true" : "false"}
     ?inert=${collapsed}
   >

@@ -4,6 +4,7 @@ import type { LedgerItem } from "./inbox";
 import { api } from "./core-bridge";
 import { listBackLink } from "./list-page";
 import { icon, initials, relTime } from "./ui";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 interface SentThreadMessage {
   from: string;
@@ -122,7 +123,7 @@ async function loadSentChat(draw: () => void, current = detailGeneration): Promi
       updateSentChat(result.item);
     }
   } catch (cause) {
-    if (current === detailGeneration) chatError = cause instanceof Error ? cause.message : "Couldn't load chat.";
+    if (current === detailGeneration) chatError = cause instanceof Error ? cause.message : t("Couldn't load chat.");
   } finally {
     if (current === detailGeneration) draw();
   }
@@ -132,8 +133,8 @@ export function sentChatTpl(draw: () => void, renderChat: (item: LedgerItem) => 
   const item = selectedSentChat();
   if (item) return renderChat(item);
   return html`<div class="inbox-chat">
-    <h2 class="inbox-chat-cta">Ask about this email</h2>
-    ${chatError ? html`<div role="alert">${chatError}<button class="btn" @click=${() => void loadSentChat(draw)}>Try again</button></div>` : html`<div role="status">Loading chat…</div>`}
+    <h2 class="inbox-chat-cta">${t("Ask about this email")}</h2>
+    ${chatError ? html`<div role="alert">${chatError}<button class="btn" @click=${() => void loadSentChat(draw)}>${t("Try again")}</button></div>` : html`<div role="status">${t("Loading chat…")}</div>`}
   </div>`;
 }
 
@@ -295,8 +296,8 @@ export function sentMailTpl(
   open: (message: SentEmail) => void = (message) => void openSentEmail(message, draw),
 ): TemplateResult {
   return html`
-    ${error ? html`<div class="inbox-notice" role="alert">${error} <button class="btn" ?disabled=${loading} @click=${() => void loadSentMail(draw, Boolean(nextPageToken))}>Try again</button></div>` : nothing}
-    ${!messages.length && !error ? html`<div class="empty compact">${loading ? "Loading sent mail…" : "No sent emails in this account."}</div>` : nothing}
+    ${error ? html`<div class="inbox-notice" role="alert">${error} <button class="btn" ?disabled=${loading} @click=${() => void loadSentMail(draw, Boolean(nextPageToken))}>${t("Try again")}</button></div>` : nothing}
+    ${!messages.length && !error ? html`<div class="empty compact">${loading ? t("Loading sent mail…") : t("No sent emails in this account.")}</div>` : nothing}
     <div class="inbox-list">
       ${messages.map(
         (message) =>
@@ -306,13 +307,13 @@ export function sentMailTpl(
                 class="inbox-item-row inbox-sent-row"
                 type="button"
                 @click=${() => open(message)}
-                aria-label=${`Open sent email: ${message.subject || "No subject"}`}
+                aria-label=${t("Open sent email: {subject}", { subject: message.subject || t("No subject") })}
               >
                 <span class="inbox-item-glyph">${icon(Mail, 14)}</span>
                 <span class="inbox-item-main">
                   <span class="inbox-item-top"
-                    ><span class="inbox-item-heading">To: ${message.to || "Undisclosed recipients"}</span
-                    ><span class="inbox-item-sub">${message.subject || "(No subject)"}</span></span
+                    ><span class="inbox-item-heading">${t("To: {recipients}", { recipients: message.to || t("Undisclosed recipients") })}</span
+                    ><span class="inbox-item-sub">${message.subject || t("(No subject)")}</span></span
                   >
                   <span class="inbox-item-snippet">${plainSnippet(message.snippet)}</span>
                 </span>
@@ -326,7 +327,7 @@ export function sentMailTpl(
           </div>`,
       )}
     </div>
-    ${nextPageToken ? html`<button class="btn inbox-sent-more" ?disabled=${loading} @click=${() => void loadSentMail(draw, true)}>${loading ? "Loading…" : "Load more"}</button>` : nothing}
+    ${nextPageToken ? html`<button class="btn inbox-sent-more" ?disabled=${loading} @click=${() => void loadSentMail(draw, true)}>${loading ? t("Loading…") : t("Load more")}</button>` : nothing}
   `;
 }
 
@@ -339,12 +340,12 @@ function sentMessageTpl(entry: SentThreadMessage): TemplateResult {
         <span class="inbox-context-at" title=${new Date(entry.sentAt).toLocaleString()}>${relTime(entry.sentAt)}</span>
       </div>
       <div class="inbox-sent-recipients">
-        To: ${entry.to}${entry.cc ? html`<span> · Cc: ${entry.cc}</span>` : nothing}
+        ${t("To: {recipients}", { recipients: entry.to })}${entry.cc ? html`<span>${t("· Cc: {recipients}", { recipients: entry.cc })}</span>` : nothing}
       </div>
-      <div class="inbox-context-text">${entry.body || "This email has no text body."}</div>
+      <div class="inbox-context-text">${entry.body || t("This email has no text body.")}</div>
       ${
         entry.attachments?.length
-          ? html`<div class="inbox-sent-attachments">Attachments: ${entry.attachments.join(", ")}</div>`
+          ? html`<div class="inbox-sent-attachments">${t("Attachments: {names}", { names: entry.attachments.join(", ") })}</div>`
           : nothing
       }
     </div>
@@ -371,25 +372,25 @@ export function sentEmailPageTpl(
         to: message.to,
         cc: detail.cc,
         sentAt: message.sentAt,
-        body: body || "This email has no text body.",
+        body: body || t("This email has no text body."),
         attachments: detail.attachments,
       },
     ];
   return html`
     <div class="pane-head inbox-item-head src-gmail">
       <div class="inbox-item-head-copy">
-        ${listBackLink("Sent", close)}
+        ${listBackLink(t("Sent"), close)}
         <h1 class="pane-title">
           <span class="inbox-item-glyph">${icon(Mail, 18)}</span>
-          <span>To: ${message.to || "Undisclosed recipients"}</span>
+          <span>${t("To: {recipients}", { recipients: message.to || t("Undisclosed recipients") })}</span>
           <span class="inbox-item-head-meta">
-            <span class="inbox-item-state">Sent</span>
+            <span class="inbox-item-state">${t("Sent")}</span>
             <span class="inbox-item-time" title=${new Date(message.sentAt).toLocaleString()}
               >${relTime(message.sentAt)}</span
             >
           </span>
         </h1>
-        <div class="pane-subtitle">${message.subject || "(No subject)"}</div>
+        <div class="pane-subtitle">${message.subject || t("(No subject)")}</div>
       </div>
     </div>
     <div class="inbox-surface inbox-item-surface">
@@ -397,11 +398,11 @@ export function sentEmailPageTpl(
         ${
           detailError
             ? html`<div class="inbox-notice" role="alert">
-                ${detailError} <button class="btn" @click=${() => void openSentEmail(message, draw)}>Try again</button>
+                ${detailError} <button class="btn" @click=${() => void openSentEmail(message, draw)}>${t("Try again")}</button>
               </div>`
             : nothing
         }
-        ${!detail && !detailError ? html`<div role="status" class="empty compact">Loading email…</div>` : nothing}
+        ${!detail && !detailError ? html`<div role="status" class="empty compact">${t("Loading email…")}</div>` : nothing}
         ${entries.length ? html`<div class="inbox-context">${entries.map(sentMessageTpl)}</div>` : nothing}
         ${draft ?? nothing}
         <div class="inbox-draft-head inbox-sent-actions">
@@ -411,7 +412,7 @@ export function sentEmailPageTpl(
             target="_blank"
             rel="noopener noreferrer"
           >
-            ${icon(ArrowUpRight, 12)}<span>Open in Gmail</span>
+            ${icon(ArrowUpRight, 12)}<span>${t("Open in {where}", { where: "Gmail" })}</span>
           </a>
         </div>
         ${aside ?? nothing}

@@ -2,6 +2,7 @@ import { html, render } from "lit";
 import { X, Link, Copy, Check, Users, Globe, ChevronDown } from "lucide";
 import { icon, toggleFormMenu, closeFormMenus } from "./ui";
 import { api, withBase } from "./core-bridge";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 interface ShareState {
   share: { token: string; audience: "internal" | "external"; createdAt: number } | null;
@@ -58,22 +59,22 @@ export async function openSessionShare(id: string): Promise<void> {
     try {
       state = await api<ShareState>(endpoint, { method: "POST", body: JSON.stringify({ audience }) });
     } catch (e) {
-      error = e instanceof Error ? e.message : "Could not create share.";
+      error = e instanceof Error ? e.message : t("Could not create share.");
     } finally {
       busy = false;
       draw();
     }
   };
   const draw = () => {
-    const saveLabel = state.share ? "Create new link" : "Create link";
+    const saveLabel = state.share ? t("Create new link") : t("Create link");
     const url = state.share
       ? new URL(withBase(`/share/${state.share.audience}/${state.share.token}`), location.origin).href
       : "";
     render(
       html`
         <div class="project-dialog-head">
-          <div><h2 id="session-share-heading">Share conversation</h2></div>
-          <button class="chip-x" type="button" aria-label="Close" @click=${close}>${icon(X, 16)}</button>
+          <div><h2 id="session-share-heading">${t("Share conversation")}</h2></div>
+          <button class="chip-x" type="button" aria-label=${t("Close")} @click=${close}>${icon(X, 16)}</button>
         </div>
         <div class="share-access-row">
           <span class="share-access-icon">${icon(audience === "external" ? Globe : Users, 18)}</span>
@@ -81,7 +82,7 @@ export async function openSessionShare(id: string): Promise<void> {
             <button
               class="btn menu-button share-audience-button"
               type="button"
-              aria-label="Who can view"
+              aria-label=${t("Who can view")}
               aria-haspopup="menu"
               aria-expanded="false"
               ?disabled=${busy}
@@ -95,13 +96,13 @@ export async function openSessionShare(id: string): Promise<void> {
                 options[event.key === "ArrowUp" ? options.length - 1 : 0]?.focus();
               }}
             >
-              <span>${audience === "external" ? "Anyone with the link" : "Anyone in your organization"}</span
+              <span>${audience === "external" ? t("Anyone with the link") : t("Anyone in your organization")}</span
               >${icon(ChevronDown, 14)}
             </button>
             <div
               class="menu-popover share-audience-menu"
               role="menu"
-              aria-label="Who can view"
+              aria-label=${t("Who can view")}
               hidden
               @keydown=${(event: KeyboardEvent) => {
                 const options = [
@@ -135,21 +136,21 @@ export async function openSessionShare(id: string): Promise<void> {
                     }}
                   >
                     ${icon(value === "external" ? Globe : Users, 16)}<span class="menu-option-label"
-                      >${value === "external" ? "Anyone with the link" : "Anyone in your organization"}</span
+                      >${value === "external" ? t("Anyone with the link") : t("Anyone in your organization")}</span
                     >${audience === value ? icon(Check, 15) : ""}
                   </button>`,
               )}
             </div>
           </div>
-          <span class="share-access-label">Can view</span>
+          <span class="share-access-label">${t("Can view")}</span>
         </div>
-        ${audience === "external" ? html`<p class="share-external-warning" role="status">⚠️ External. Double-check what you're sharing.</p>` : ""}
+        ${audience === "external" ? html`<p class="share-external-warning" role="status">${t("⚠️ External. Double-check what you're sharing.")}</p>` : ""}
         ${
           state.share
             ? html`
                 <div class="share-link-row project-name-field">
                   <input
-                    aria-label="Share link"
+                    aria-label=${t("Share link")}
                     readonly
                     .value=${url}
                     @click=${(e: Event) => (e.target as HTMLInputElement).select()}
@@ -163,20 +164,20 @@ export async function openSessionShare(id: string): Promise<void> {
                         await navigator.clipboard.writeText(url);
                         copied = true;
                       } catch {
-                        error = "Could not copy. Select and copy the link above.";
+                        error = t("Could not copy. Select and copy the link above.");
                       }
                       draw();
                     }}
                   >
-                    ${icon(copied ? Check : Copy, 14)}${copied ? "Copied" : "Copy link"}
+                    ${icon(copied ? Check : Copy, 14)}${copied ? t("Copied") : t("Copy link")}
                   </button>
                 </div>
               `
             : ""
         }
         <p class="share-privacy-note">
-          Subsequent messages will not be visible unless you re-share.
-          ${url ? html`<a class="as-link" href=${url} target="_blank" rel="noreferrer">Preview</a>` : ""}
+          ${t("Subsequent messages will not be visible unless you re-share.")}
+          ${url ? html`<a class="as-link" href=${url} target="_blank" rel="noreferrer">${t("Preview")}</a>` : ""}
         </p>
         ${error ? html`<div class="composer-error" role="alert">${error}</div>` : ""}
         <div class="project-dialog-actions actions">
@@ -186,7 +187,7 @@ export async function openSessionShare(id: string): Promise<void> {
             ?disabled=${busy}
             @click=${() => void change()}
           >
-            ${!state.share ? icon(Link, 14) : ""}${busy ? "Loading…" : saveLabel}
+            ${!state.share ? icon(Link, 14) : ""}${busy ? t("Loading…") : saveLabel}
           </button>
         </div>
       `,

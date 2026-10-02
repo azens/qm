@@ -2,6 +2,7 @@ import { choiceGroup, saveButton, settingStatus, saveFooter } from "./setting-co
 import { html, render, type TemplateResult } from "lit";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { states, patternError, type GovernanceState } from "./governance-state.ts";
 export {
   owns,
@@ -23,8 +24,8 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
       id="card-security-posture"
     >
       <div class="head">
-        <h2>Security posture</h2>
-        <p>Choose how the agent screens external content and when it requires your approval.</p>
+        <h2>${t("Security posture")}</h2>
+        <p>${t("Choose how the agent screens external content and when it requires your approval.")}</p>
       </div>
       <div class="body">
         <select
@@ -34,9 +35,9 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
           .value=${s.value("security-posture")}
           @change=${(event: Event) => changeField(s, "security-posture", event)}
         >
-          <option value="dangerous">Dangerous — automatic tools; deployment-required screening still applies</option>
-          <option value="auto">Auto — use the deployment’s configured screener</option>
-          <option value="strict">Strict — approve tool actions</option>
+          <option value="dangerous">${t("Dangerous — automatic tools; deployment-required screening still applies")}</option>
+          <option value="auto">${t("Auto — use the deployment’s configured screener")}</option>
+          <option value="strict">${t("Strict — approve tool actions")}</option>
         </select>
         ${choiceGroup(
           {
@@ -48,15 +49,15 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
           [
             [
               "auto",
-              "Auto",
-              "Default. Blocks private-network access. Screens external content when the deployment configures a screener; model screening is off by default.",
+              t("Auto"),
+              t("Default. Blocks private-network access. Screens external content when the deployment configures a screener; model screening is off by default."),
             ],
-            ["dangerous", "Dangerous", "No posture-based screening; deployment-required screening still applies."],
-            ["strict", "Strict", "Every tool action requires human approval."],
+            ["dangerous", t("Dangerous"), t("No posture-based screening; deployment-required screening still applies.")],
+            ["strict", t("Strict"), t("Every tool action requires human approval.")],
           ],
         )}
       </div>
-      ${saveFooter(s, "Apply", s.disabled)}
+      ${saveFooter(s, t("Apply"), s.disabled)}
     </section>`,
   "card-auto-flagger": (s) =>
     html`<section
@@ -64,17 +65,16 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
       id="card-auto-flagger"
     >
       <div class="head">
-        <h2>Auto flagger</h2>
+        <h2>${t("Auto flagger")}</h2>
         <p>
-          Model and prompt used when the deployment explicitly enables model screening. These settings do not enable
-          screening. The security boundary and required verdict format remain fixed.
+          ${t("Model and prompt used when the deployment explicitly enables model screening. These settings do not enable screening. The security boundary and required verdict format remain fixed.")}
         </p>
       </div>
       <div class="body">
         <div class="screening-details">
           <div class="governance-field-grid">
             <div>
-              <label for="auto-flagger-harness">Harness</label>
+              <label for="auto-flagger-harness">${t("Harness")}</label>
               <select
                 id="auto-flagger-harness"
                 .value=${s.value("auto-flagger-harness")}
@@ -84,7 +84,7 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
               </select>
             </div>
             <div>
-              <label for="auto-flagger-model">Model</label>
+              <label for="auto-flagger-model">${t("Model")}</label>
               <select
                 id="auto-flagger-model"
                 .value=${s.value("auto-flagger-model")}
@@ -95,7 +95,7 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
             </div>
           </div>
           <div class="governance-prompt">
-            <label for="auto-flagger-rubric">Quarantine prompt (classification rubric)</label>
+            <label for="auto-flagger-rubric">${t("Quarantine prompt (classification rubric)")}</label>
             <textarea
               id="auto-flagger-rubric"
               rows="6"
@@ -105,12 +105,12 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
             ></textarea>
           </div>
           <div class="screening-test-options">
-            <h3>Test Auto flagger</h3>
+            <h3>${t("Test Auto flagger")}</h3>
             <p class="screening-test-help">
-              Try the model and prompt above on recent screenings without applying changes.
+              ${t("Try the model and prompt above on recent screenings without applying changes.")}
             </p>
             <div class="screening-test-fields">
-              <label for="auto-flagger-window">Recent screenings to test</label>
+              <label for="auto-flagger-window">${t("Recent screenings to test")}</label>
               <div class="screening-count">
                 <input
                   id="auto-flagger-window"
@@ -126,18 +126,18 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
               </div>
               <label
                 class="screening-compare"
-                title="Also replay the configuration in effect today, so the flag rates are comparable"
+                title="${t("Also replay the configuration in effect today, so the flag rates are comparable")}"
               >
-                <input type="checkbox" id="auto-flagger-compare" />Compare with the currently applied configuration
+            ><input type="checkbox" id="auto-flagger-compare" />${t("Compare with the currently applied configuration")}
               </label>
-              <button id="auto-flagger-test" type="button">Run test</button>
+              <button id="auto-flagger-test" type="button">${t("Run test")}</button>
             </div>
           </div>
         </div>
       </div>
       <div class="foot">
-        <button id="auto-flagger-reset" type="button">Restore default</button>
-        ${saveButton(s, "Apply", s.disabled)} ${settingStatus(s)}
+        <button id="auto-flagger-reset" type="button">${t("Restore default")}</button>
+        ${saveButton(s, t("Apply"), s.disabled)} ${settingStatus(s)}
       </div>
       <div class="foot" id="auto-flagger-test-result" hidden>
         <span class="status" id="st-auto-flagger-test"></span>
@@ -149,11 +149,9 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
       id="card-approval-grant-modes"
     >
       <div class="head">
-        <h2>Approval grant options</h2>
+        <h2>${t("Approval grant options")}</h2>
         <p>
-          Which standing options an approval card offers besides "Allow once". Composes tighten-only with the org value;
-          disabling a mode also suspends existing grants of that mode until it is re-enabled. Predeclared command
-          approvals and strict-posture tool approvals both honor this.
+          ${t('Which standing options an approval card offers besides "Allow once". Composes tighten-only with the org value; disabling a mode also suspends existing grants of that mode until it is re-enabled. Predeclared command approvals and strict-posture tool approvals both honor this.')}
         </p>
       </div>
       <div class="body">
@@ -164,7 +162,7 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
             .checked=${s.value("approval-grant-session")}
             @change=${(event: Event) => changeField(s, "approval-grant-session", event)}
           />
-          Offer "Allow session" (grant lasts for the conversation)</label
+          ${t('Offer "Allow session" (grant lasts for the conversation)')}</label
         >
         <label
           ><input
@@ -173,10 +171,10 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
             .checked=${s.value("approval-grant-always")}
             @change=${(event: Event) => changeField(s, "approval-grant-always", event)}
           />
-          Offer "Allow always" (standing grant across turns)</label
+          ${t('Offer "Allow always" (standing grant across turns)')}</label
         >
       </div>
-      ${saveFooter(s, "Apply", s.disabled)}
+      ${saveFooter(s, t("Apply"), s.disabled)}
     </section>`,
   "card-command-policy": (s) =>
     html`<section
@@ -184,7 +182,7 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
       id="card-command-policy"
     >
       <div class="head">
-        <h2>Command policy</h2>
+        <h2>${t("Command policy")}</h2>
       </div>
       <div class="body">
         <div class="policy-rules" id="rules">
@@ -195,10 +193,10 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
           )}
         </div>
         <p class=${classMap({ hint: true, "rules-empty": true, hidden: s.rules.length > 0 })} id="rules-empty">
-          No command rules yet.
+          ${t("No command rules yet.")}
         </p>
         <div class="policy-actions">
-          <button id="add-rule" type="button" @click=${() => addRule(s)}>+ Add rule</button>
+          <button id="add-rule" type="button" @click=${() => addRule(s)}>${t("+ Add rule")}</button>
           <button
             id="policy-more"
             type="button"
@@ -208,15 +206,15 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
               s.render();
             }}
           >
-            Show ${s.rules.length - 3} more ${s.rules.length === 4 ? "rule" : "rules"}
+            ${t("Show {count} more {label}", { count: s.rules.length - 3, label: s.rules.length === 4 ? t("rule") : t("rules") })}
           </button>
-          <button id="policy-test-open" type="button">Test a command…</button>
+          <button id="policy-test-open" type="button">${t("Test a command…")}</button>
         </div>
         <div class="policy-warnings" id="policy-warnings" aria-live="polite">
           ${s.warnings.map((warning) => html`<div>${warning}</div>`)}
         </div>
       </div>
-      <div class="foot">${saveButton(s, "Save", s.disabled)}${settingStatus(s, "st-policy")}</div>
+      <div class="foot">${saveButton(s, t("Save"), s.disabled)}${settingStatus(s, "st-policy")}</div>
     </section>`,
   "card-ambient-policy": (s) =>
     html`<section
@@ -224,20 +222,23 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
       id="card-ambient-policy"
     >
       <div class="head">
-        <h2>Ambient reply policy</h2>
+        <h2>${t("Ambient reply policy")}</h2>
         <p>
-          What the agent proactively acts on in this channel. The standing order is plain prose the ambient judge weighs
-          each batch of new messages against. Empty means it stays silent unless addressed. The bot ledger says how each
-          automated poster is treated: <b>ignore</b> never wakes the judge, <b>rollup</b> batches its posts (judged at
-          most once per the given hours), <b>action</b> marks its posts as triggers to act on, <b>user</b> reads it like
-          a person.
+          ${t("What the agent proactively acts on in this channel. The standing order is plain prose the ambient judge weighs each batch of new messages against. Empty means it stays silent unless addressed. The bot ledger says how each automated poster is treated:")}
+          <b>${t("ignore")}</b>
+          ${t("never wakes the judge,")}
+          <b>${t("rollup")}</b>
+          ${t("batches its posts (judged at most once per the given hours),")}
+          <b>${t("action")}</b>
+          ${t("marks its posts as triggers to act on,")}
+          <b>${t("user")}</b>
+          ${t("reads it like a person.")}
         </p>
       </div>
       <div class="body">
-        <label for="ambient-enabled">Ambient behavior</label>
+        <label for="ambient-enabled">${t("Ambient behavior")}</label>
         <p class="hint" style="margin: 2px 0 6px">
-          When off, the agent never wakes on overheard messages in this channel; it only responds to direct @mentions.
-          Default: on for channels with 8 or fewer members, off for larger ones.
+          ${t("When off, the agent never wakes on overheard messages in this channel; it only responds to direct @mentions. Default: on for channels with 8 or fewer members, off for larger ones.")}
         </p>
         <select
           id="ambient-enabled"
@@ -245,14 +246,14 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
           .value=${s.draft.ambientEnabled == null ? "default" : String(s.draft.ambientEnabled ? "on" : "off")}
           @change=${(event: Event) => changeField(s, "ambient-enabled", event)}
         >
-          <option value="default">Default (by channel size)</option>
-          <option value="on">On</option>
-          <option value="off">Off</option>
+          <option value="default">${t("Default (by channel size)")}</option>
+          <option value="on">${t("On")}</option>
+          <option value="off">${t("Off")}</option>
         </select>
-        <label for="ambient-orders">Standing order</label>
+        <label for="ambient-orders">${t("Standing order")}</label>
         <textarea
           id="ambient-orders"
-          placeholder="(none, the agent stays silent here unless addressed)"
+          placeholder="${t("(none, the agent stays silent here unless addressed)")}"
           .value=${s.value("ambient-orders")}
           @input=${(event: Event) => changeField(s, "ambient-orders", event)}
         ></textarea>
@@ -260,9 +261,9 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
           <table class="rules">
             <thead>
               <tr>
-                <th style="width: 34%">Bot (author name)</th>
-                <th style="width: 30%">Handling</th>
-                <th>Rollup hours</th>
+                <th style="width: 34%">${t("Bot (author name)")}</th>
+                <th style="width: 30%">${t("Handling")}</th>
+                <th>${t("Rollup hours")}</th>
                 <th></th>
               </tr>
             </thead>
@@ -276,13 +277,13 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
           </table>
         </div>
         <p class=${classMap({ hint: true, "rules-empty": true, hidden: s.bots.length > 0 })} id="ambient-bots-empty">
-          No bots in the ledger yet.
+          ${t("No bots in the ledger yet.")}
         </p>
-        <button id="add-bot" type="button" @click=${() => addBot(s)} style="margin-top: 10px">+ Add bot</button>
+        <button id="add-bot" type="button" @click=${() => addBot(s)} style="margin-top: 10px">${t("+ Add bot")}</button>
       </div>
       <div class="foot">
-        <button type="button" class="viewlink" data-viewlink="judgments">View judgment log ›</button
-        >${saveButton(s, "Save", s.disabled)}${settingStatus(s)}
+        <button type="button" class="viewlink" data-viewlink="judgments">${t("View judgment log ›")}</button
+        >${saveButton(s, t("Save"), s.disabled)}${settingStatus(s)}
       </div>
     </section>`,
   "card-sharing-posture": (s) =>
@@ -291,8 +292,8 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
       id="card-sharing-posture"
     >
       <div class="head">
-        <h2>Sharing posture</h2>
-        <p>The organization is a ceiling. Personal and room scopes can opt out, and Isolated always wins.</p>
+        <h2>${t("Sharing posture")}</h2>
+        <p>${t("The organization is a ceiling. Personal and room scopes can opt out, and Isolated always wins.")}</p>
       </div>
       <div class="body">
         <p id="sharing-posture-effective">${sharingLabel(s)}</p>
@@ -303,8 +304,8 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
           .value=${s.value("sharing-posture")}
           @change=${(event: Event) => changeField(s, "sharing-posture", event)}
         >
-          <option value="isolated">Isolated</option>
-          <option value="open">Open</option>
+          <option value="isolated">${t("Isolated")}</option>
+          <option value="open">${t("Open")}</option>
         </select>
         ${choiceGroup(
           {
@@ -314,23 +315,23 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
             onChange: (event: Event) => changeField(s, "sharing-posture", event),
           },
           [
-            ["isolated", "Isolated", "Resources stay in their own scope unless explicitly shared."],
+            ["isolated", t("Isolated"), t("Resources stay in their own scope unless explicitly shared.")],
             [
               "open",
-              "Open",
-              "QM can use your saved memories, files, and skills across conversations when you ask it for help. In a group conversation, this could risk revealing private information to others.",
+              t("Open"),
+              t("QM can use your saved memories, files, and skills across conversations when you ask it for help. In a group conversation, this could risk revealing private information to others."),
             ],
           ],
         )}
       </div>
       <div class="foot">
-        ${saveButton(s, "Apply", s.disabled)}
+        ${saveButton(s, t("Apply"), s.disabled)}
         <button
           type="button"
           id="sharing-posture-inherit"
           ?hidden=${s.scope.startsWith("org:") || s.context.sharingPostureOverride == null}
         >
-          Follow organization
+          ${t("Follow organization")}
         </button>
         ${settingStatus(s)}
       </div>
@@ -341,7 +342,7 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
       id="card-egress"
     >
       <div class="head">
-        <h2>Egress policy</h2>
+        <h2>${t("Egress policy")}</h2>
       </div>
       <div class="body">
         <div
@@ -351,13 +352,13 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
         >
           <div>
             <strong
-              >${s.context.egressEnforcement?.reason === "control_plane_unconfigured" ? "Enforcement is not activated" : "Agent computer egress policy unavailable"}</strong
+              >${s.context.egressEnforcement?.reason === "control_plane_unconfigured" ? t("Enforcement is not activated") : t("Agent computer egress policy unavailable")}</strong
             ><span>${egressExplanation(s)}</span>
           </div>
         </div>
         <div class="egress-empty-state">
           <span class=${classMap({ hint: true, hidden: s.allowEditor || s.denyEditor })} id="egress-empty"
-            >No egress rules.</span
+            >${t("No egress rules.")}</span
           >
           <div class="egress-actions">
             <button
@@ -370,7 +371,7 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
                 s.render();
               }}
             >
-              + Denylist
+              ${t("+ Denylist")}
             </button>
             <button
               type="button"
@@ -382,12 +383,12 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
                 s.render();
               }}
             >
-              + Allowlist
+              ${t("+ Allowlist")}
             </button>
           </div>
         </div>
         <div class=${classMap({ "egress-editor": true, hidden: !s.denyEditor })} id="egress-deny-editor">
-          <label for="egress-deny">Denylist: hosts the agent may never reach</label>
+          <label for="egress-deny">${t("Denylist: hosts the agent may never reach")}</label>
           <textarea
             id="egress-deny"
             placeholder="ads.example.com&#10;pastebin.com"
@@ -397,7 +398,7 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
           ></textarea>
         </div>
         <div class=${classMap({ "egress-editor": true, hidden: !s.allowEditor })} id="egress-allow-editor">
-          <label for="egress">Allowlist: when present, only these outbound hosts may be reached</label>
+          <label for="egress">${t("Allowlist: when present, only these outbound hosts may be reached")}</label>
           <textarea
             id="egress"
             placeholder="example.com&#10;api.internal"
@@ -411,8 +412,8 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
         </div>
       </div>
       <div class="foot">
-        <button type="button" class="viewlink" data-viewlink="egress">View logs ›</button
-        >${saveButton(s, "Save policy", s.disabled)}${settingStatus(s)}
+        <button type="button" class="viewlink" data-viewlink="egress">${t("View logs ›")}</button
+        >${saveButton(s, t("Save policy"), s.disabled)}${settingStatus(s)}
       </div>
     </section>`,
   "card-governance-org-ambient": (s) =>
@@ -421,9 +422,9 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
       id="card-governance-org-ambient"
     >
       <div class="head">
-        <h2>Ambient reply policy</h2>
-        <p>@-mentions are always answered. Each ambient decision is recorded in the judgments log.</p>
-        <button type="button" class="viewlink" data-viewlink="judgments">View judgment log ›</button>
+        <h2>${t("Ambient reply policy")}</h2>
+        <p>${t("@-mentions are always answered. Each ambient decision is recorded in the judgments log.")}</p>
+        <button type="button" class="viewlink" data-viewlink="judgments">${t("View judgment log ›")}</button>
       </div>
       <div class="body">
         <select
@@ -433,8 +434,8 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
           .value=${s.draft.on ? "on" : "off"}
           @change=${(event: Event) => changeField(s, "governance-org-ambient", event)}
         >
-          <option value="on">Agent judges all messages and replies when useful</option>
-          <option value="off">Agent does not read messages or reply unless @-mentioned</option>
+          <option value="on">${t("Agent judges all messages and replies when useful")}</option>
+          <option value="off">${t("Agent does not read messages or reply unless @-mentioned")}</option>
         </select>
         ${choiceGroup(
           {
@@ -444,8 +445,8 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
             onChange: (event: Event) => changeField(s, "governance-org-ambient", event),
           },
           [
-            ["on", "Reply when useful", "Agent judges all messages and replies when useful"],
-            ["off", "Only when mentioned", "Agent does not read messages or reply unless @-mentioned"],
+            ["on", t("Reply when useful"), t("Agent judges all messages and replies when useful")],
+            ["off", t("Only when mentioned"), t("Agent does not read messages or reply unless @-mentioned")],
           ],
         )}
       </div>
@@ -457,7 +458,7 @@ const cards: Record<string, (s: GovernanceState) => TemplateResult> = {
           data-save="org-ambient"
           ?disabled=${!s.dirty || s.saving}
         >
-          Apply</button
+          ${t("Apply")}</button
         >${settingStatus(s, "st-governance-org-ambient")}
       </div>
     </section>`,
@@ -491,13 +492,15 @@ function harnessOptions(s: GovernanceState): string[] {
   return [...new Set<string>([...(s.context.harnessOptions || []), s.draft.harnessId].filter(Boolean))];
 }
 function sharingLabel(s: GovernanceState): string {
-  const title = (value: string) => value[0].toUpperCase() + value.slice(1);
-  const inherited = s.scope.startsWith("org:") ? "Default" : "Following organization";
-  return (
-    (s.context.sharingPostureOverride == null ? inherited : "Configured: " + title(s.context.sharingPostureOverride)) +
-    " · Effective: " +
-    title(s.context.sharingPosture || "isolated")
-  );
+  const title = (value: string) => t(value[0].toUpperCase() + value.slice(1));
+  const inherited = s.scope.startsWith("org:") ? t("Default") : t("Following organization");
+  return t("{configured} · effective: {posture}", {
+    configured:
+      s.context.sharingPostureOverride == null
+        ? inherited
+        : t("Configured: {posture}", { posture: title(s.context.sharingPostureOverride) }),
+    posture: title(s.context.sharingPosture || "isolated"),
+  });
 }
 let rowId = 0;
 function addRule(s: GovernanceState) {
@@ -521,18 +524,18 @@ function ruleTemplate(s: GovernanceState, r: GovernanceState["rules"][number], i
   return html`<div class=${classMap({ "policy-rule": true, hidden: !s.expanded && index >= 3 })}>
     <select class=${"policy-effect effect-control effect-" + r.decision} @change=${(e: Event) => change("decision", e)}>
       ${[
-        ["allow", "Allow"],
-        ["deny", "Deny"],
-        ["require_approval", "Require approval"],
+        ["allow", t("Allow")],
+        ["deny", t("Deny")],
+        ["require_approval", t("Require approval")],
       ].map(([value, label]) => html`<option value=${value} ?selected=${value === r.decision}>${label}</option>`)}
     </select>
     <input
       class="policy-pattern"
       type="text"
       .value=${r.pattern}
-      placeholder="regex"
+      placeholder="${t("regex")}"
       spellcheck="false"
-      aria-label="Command pattern"
+      aria-label="${t("Command pattern")}"
       aria-invalid=${String(!!patternError(r.pattern))}
       @input=${(e: Event) => change("pattern", e)}
     />
@@ -540,14 +543,14 @@ function ruleTemplate(s: GovernanceState, r: GovernanceState["rules"][number], i
       class="policy-reason"
       type="text"
       .value=${r.reason}
-      placeholder="Reason (optional)"
+      placeholder="${t("Reason (optional)")}"
       @input=${(e: Event) => change("reason", e)}
     />
     <button
       type="button"
       class="rowbtn danger"
-      title="Remove this command policy rule"
-      aria-label="Remove command policy rule"
+      aria-label="${t("Remove command policy rule")}"
+      title="${t("Remove this command policy rule")}"
       @click=${() => {
         s.rules = s.rules.filter((rule) => rule !== r);
         s.changed();
@@ -578,7 +581,7 @@ function botTemplate(s: GovernanceState, b: GovernanceState["bots"][number]) {
       <input
         type="text"
         .value=${b.name}
-        placeholder="e.g. GitHub"
+        placeholder="${t("e.g. GitHub")}"
         spellcheck="false"
         @input=${(e: Event) => change("name", e)}
       />
@@ -586,10 +589,10 @@ function botTemplate(s: GovernanceState, b: GovernanceState["bots"][number]) {
     <td>
       <select @change=${(e: Event) => change("mode", e)}>
         ${[
-          ["ignore", "ignore (never wakes the judge)"],
-          ["rollup", "rollup (batch, judge periodically)"],
-          ["action", "action (posts are triggers)"],
-          ["user", "user (read like a person)"],
+          ["ignore", t("ignore (never wakes the judge)")],
+          ["rollup", t("rollup (batch, judge periodically)")],
+          ["action", t("action (posts are triggers)")],
+          ["user", t("user (read like a person)")],
         ].map(([value, label]) => html`<option value=${value} ?selected=${b.mode === value}>${label}</option>`)}
       </select>
     </td>
@@ -608,14 +611,14 @@ function botTemplate(s: GovernanceState, b: GovernanceState["bots"][number]) {
       <button
         type="button"
         class="rowbtn danger"
-        title="Remove this bot from the ledger"
-        aria-label="Remove bot ledger entry"
+        title="${t("Remove this bot from the ledger")}"
+        aria-label="${t("Remove bot ledger entry")}"
         @click=${() => {
           s.bots = s.bots.filter((bot) => bot !== b);
           s.changed();
         }}
       >
-        Remove
+        ${t("Remove")}
       </button>
     </td>
   </tr>`;
@@ -624,13 +627,12 @@ function botTemplate(s: GovernanceState, b: GovernanceState["bots"][number]) {
 function egressExplanation(s: GovernanceState) {
   const enforcement = s.context.egressEnforcement || { backend: "unknown" };
   if (enforcement.reason === "control_plane_unconfigured")
-    return "Egress enforcement has not been activated for agent computers.";
+    return t("Egress enforcement has not been activated for agent computers.");
   const backend = String(enforcement.backend).replace(/(^|[-_ ])\w/g, (value) =>
     value.replace(/[-_]/, " ").toUpperCase(),
   );
-  return (
-    "Agent computers use " +
-    backend +
-    ", which cannot enforce host restrictions on all outbound traffic. A configured egress proxy still applies policy to traffic sent through it."
+  return t(
+    "Agent computers use {backend}, which cannot enforce host restrictions on all outbound traffic. A configured egress proxy still applies policy to traffic sent through it.",
+    { backend },
   );
 }

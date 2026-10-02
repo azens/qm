@@ -8,6 +8,7 @@ import { markdown } from "./message-markdown";
 import { sharedImagePolicy } from "./shared-image-policy";
 import { installMarkdownSanitizer } from "./markdown-sanitize";
 import { brandName, brandMark, attachmentGallery, chipBadge, icon, copyText } from "./ui";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 interface SharedTranscript {
   createdAt: number;
@@ -38,15 +39,15 @@ render(
           >${brandMark()}<span>${brandName()}</span></a
         >
         <div class="session-heading">
-          <span class="session-title">Shared conversation</span
-          ><span class="shared-view-badge">${icon(Lock, 12)}Read-only</span>
+          <span class="session-title">${t("Shared conversation")}</span
+          ><span class="shared-view-badge">${icon(Lock, 12)}${t("Read-only")}</span
         </div>
         <div class="topbar-actions">
           <theme-toggle .includeSystem=${true}></theme-toggle
           ><a class="btn compact" href=${base}>Open ${brandName()}${icon(ArrowUpRight, 14)}</a>
         </div>
       </header>
-      <main class="chat-scroll readonly-scroll" tabindex="0" aria-label="Conversation">
+      <main class="chat-scroll readonly-scroll" tabindex="0" aria-label=${t("Conversation")}>
         <div class="message-stack">
           ${
             transcript
@@ -75,23 +76,23 @@ render(
                         <div class=${message.role === "user" ? "pin-content" : "shared-message-content"}>
                           ${markdown(message.text)}
                         </div>
-                        ${message.role === "user" ? html`<button class="pin-toggle" type="button" hidden aria-expanded="false"><span class="pin-toggle-label">Show more</span>${icon(ChevronDown, 14)}</button>` : ""}
+                        ${message.role === "user" ? html`<button class="pin-toggle" type="button" hidden aria-expanded="false"><span class="pin-toggle-label">${t("Show more")}</span>${icon(ChevronDown, 14)}</button>` : ""}
                         ${message.role === "assistant" ? files : ""}
-                        ${message.role === "assistant" ? html`<div class="message-meta"><button class="msg-copy" aria-label="Copy message" title="Copy" @click=${(e: Event) => void copyText(message.text, e.currentTarget as HTMLButtonElement)}>${icon(Copy, 13)}${icon(Check, 13)}</button></div>` : ""}
+                        ${message.role === "assistant" ? html`<div class="message-meta"><button class="msg-copy" aria-label=${t("Copy message")} title=${t("Copy")} @click=${(e: Event) => void copyText(message.text, e.currentTarget as HTMLButtonElement)}>${icon(Copy, 13)}${icon(Check, 13)}</button></div>` : ""}
                       </div>
-                      ${message.role === "user" ? html`<div class="message-meta"><button class="msg-copy" aria-label="Copy message" title="Copy" @click=${(e: Event) => void copyText(message.text, e.currentTarget as HTMLButtonElement)}>${icon(Copy, 13)}${icon(Check, 13)}</button></div>` : ""}
+                      ${message.role === "user" ? html`<div class="message-meta"><button class="msg-copy" aria-label=${t("Copy message")} title=${t("Copy")} @click=${(e: Event) => void copyText(message.text, e.currentTarget as HTMLButtonElement)}>${icon(Copy, 13)}${icon(Check, 13)}</button></div>` : ""}
                     </article>
                   `;
                 })
               : html`<div class="empty-state">
-                  <h2>This link is unavailable</h2>
-                  <p>The conversation is unavailable or you may not have access.</p>
+                  <h2>${t("This link is unavailable")}</h2>
+                  <p>${t("The conversation is unavailable or you may not have access.")}</p>
                 </div>`
           }
         </div>
       </main>
       <footer class="shared-conversation-footer">
-        ${icon(Lock, 12)}${transcript ? `Shared snapshot · ${new Date(transcript.createdAt).toLocaleDateString()} · ${transcript.audience === "external" ? "Anyone with the link" : "Organization only"}` : "Shared conversation"}
+${icon(Lock, 12)}${transcript ? t("Shared snapshot · {date} · {audience}", { date: new Date(transcript.createdAt).toLocaleDateString(), audience: transcript.audience === "external" ? t("Anyone with the link") : t("Organization only") }) : t("Shared conversation")}
       </footer>
     </div>
   `,

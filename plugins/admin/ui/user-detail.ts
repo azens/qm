@@ -1,17 +1,29 @@
 import { html, nothing } from "lit";
 import { card, table, badge, renderer } from "./shared.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { formatNumber } from "../../chassis/src/i18n.ts";
+
+const GRANT_STATUS: Record<string, string> = {
+  active: "Active",
+  used: "Used",
+  expired: "Expired",
+  revoked: "Revoked",
+  unknown: "unknown",
+};
 
 export async function detail(root: HTMLElement, principal: string, s: Record<string, any>) {
   const paint = renderer(root);
-  const back = { label: "← Users", onClick: () => window.history.back() };
-  s.pageShell({ back, title: principal || "User" });
-  paint(html`<div class="detail">Loading…</div>`);
+  const back = { label: "← " + t("Users"), onClick: () => window.history.back() };
+  s.pageShell({ back, title: principal || t("User") });
+  paint(() => html`<div class="detail">${t("Loading…")}</div>`);
   const r = await s.api("GET", "/api/users/" + encodeURIComponent(principal));
   if (!s.current(principal)) return;
   if (!r.ok) {
-    paint(
+    paint(() =>
       html`<div class="detail">
-        ${r.status === 403 ? "You don't have admin access." : r.data?.message || `Failed to load user (${r.status}).`}
+        ${r.status === 403
+          ? t("You don't have admin access.")
+          : r.data?.message || t("Failed to load user ({status}).", { status: r.status })}
       </div>`,
     );
     return;
@@ -20,7 +32,7 @@ export async function detail(root: HTMLElement, principal: string, s: Record<str
   s.pageShell({
     back,
     title: d.displayName || d.principalId || principal,
-    context: [d.admin?.isAdmin ? s.labelRole(d.admin.role) : "member", d.scopeId || ""].filter(Boolean).join(" · "),
+    context: [d.admin?.isAdmin ? s.labelRole(d.admin.role) : t("member"), d.scopeId || ""].filter(Boolean).join(" · "),
   });
   const personalScope = d.scopeId || "personal:" + principal;
   let onboarding = d.onboarding || "not_started";
@@ -45,17 +57,20 @@ export async function detail(root: HTMLElement, principal: string, s: Record<str
   };
   async function setOnboarding(status: string) {
     busy = true;
-    hint = "Saving…";
+    hint = t("Saving…");
     draw();
     try {
       const result = await s.api("PUT", "/api/users/" + encodeURIComponent(principal) + "/onboarding", { status });
-      if (!result.ok) hint = result.data?.message || "Failed (" + result.status + ").";
+      if (!result.ok) hint = result.data?.message || t("Failed ({status}).", { status: result.status });
       else {
         onboarding = result.data?.status || status;
-        hint = status === "not_started" ? "Reset. Onboarding will run on this person's next DM." : "Saved.";
+        hint =
+          status === "not_started"
+            ? t("Reset. Onboarding will run on this person's next DM.")
+            : t("Saved.");
       }
     } catch {
-      hint = "Network error. Try again.";
+      hint = t("Network error. Try again.");
     } finally {
       busy = false;
       draw();
@@ -64,22 +79,22 @@ export async function detail(root: HTMLElement, principal: string, s: Record<str
   async function reset() {
     if (
       !s.confirm(
-        "Delete this person's personal DM sessions (transcripts included) and clear their onboarding?\n\nThis is irreversible. Their channel history is untouched. On their next web visit they'll see the new-user welcome greeting, then onboarding.",
+        t("Delete this person's personal DM sessions (transcripts included) and clear their onboarding?\n\nThis is irreversible. Their channel history is untouched. On their next web visit they'll see the new-user welcome greeting, then onboarding."),
       )
     )
       return;
     busy = true;
-    resetHint = "Resetting…";
+    resetHint = t("Resetting…");
     draw();
     try {
       const result = await s.api("POST", "/api/users/" + encodeURIComponent(principal) + "/reset");
-      if (!result.ok) resetHint = result.data?.message || "Failed (" + result.status + ").";
+      if (!result.ok) resetHint = result.data?.message || t("Failed ({status}).", { status: result.status });
       else if (s.current(principal)) {
         s.reload(principal);
         return;
       }
     } catch {
-      resetHint = "Network error. Try again.";
+      resetHint = t("Network error. Try again.");
     } finally {
       busy = false;
       draw();
@@ -104,8 +119,9 @@ export async function detail(root: HTMLElement, principal: string, s: Record<str
   }
   function keychain() {
     if (credentialError) return credentialError;
-    if (!credentials) return "Loading credentials and grants…";
-    if (credentials.enabled === false) return html`<div><p class="empty">Keychain is not enabled.</p></div>`;
+    if (!credentials) return t("Loading credentials and grants…");
+    if (credentials.enabled === false)
+      return html`<div><p class="empty">${t("Keychain is not enabled.")}</p></div>`;
     const creds = credentials.credentials || [];
     const grants = credentials.grants || [];
     const group: Record<string, number> = { active: 0, used: 1, expired: 2, revoked: 3 };
@@ -117,25 +133,25 @@ export async function detail(root: HTMLElement, principal: string, s: Record<str
     });
     return html`<div>
       ${card(
-        "Credentials (" + creds.length + ")",
-        "Logins this person registered in their keychain. Metadata only — secrets are never returned.",
+        t("Credentials ({count})", { count: formatNumber(creds.length) }),
+        t("Logins this person registered in their keychain. Metadata only — secrets are never returned."),
         table(
-          ["Service", "Kind", "Origin", "Account", "Added"],
+          [t("Service"), t("Kind"), t("Origin"), t("Account"), t("Added")],
           creds
             .slice()
             .sort((a: any, b: any) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0))
             .map((c: any) => [
               { node: stacked(c.service, c.id), cls: "mono" },
-              { node: muted(c.kind || "unknown") },
+              { node: muted(c.kind || t("unknown")) },
               { node: muted(c.origin || "-") },
               c.accountLabel || c.envKey || c.host || "-",
               { text: c.createdAt ? s.fmtTime(c.createdAt) : "-", cls: "num" },
             ]),
-          "No credentials registered.",
+          t("No credentials registered."),
         ),
       )}${card(
-        "Grants (" + grants.length + ")",
-        "Purpose-bound grants this person issued. Every use — standing or one-time — is audited.",
+        t("Grants ({count})", { count: formatNumber(grants.length) }),
+        t("Purpose-bound grants this person issued. Every use — standing or one-time — is audited."),
         html`<div>
           ${
             selectedGrant
@@ -149,31 +165,31 @@ export async function detail(root: HTMLElement, principal: string, s: Record<str
                         draw();
                       }}
                     >
-                      ‹ Back to grants
+                      ${t("‹ Back to grants")}
                     </button>
                   </p>
                   <p class="hint">
-                    ${credName(selectedGrant.credentialId) + " · " + (selectedGrant.mode || "?") + " · " + (selectedGrant.status || "?") + " · grant " + selectedGrant.id}
+                    ${credName(selectedGrant.credentialId) + " · " + (selectedGrant.mode || "?") + " · " + t(GRANT_STATUS[selectedGrant.status] || "unknown") + " · " + t("grant {id}", { id: selectedGrant.id })}
                   </p>
                   ${
                     usage === null
-                      ? html`<p class="empty">Loading usage…</p>`
+                      ? html`<p class="empty">${t("Loading usage…")}</p>`
                       : table(
-                          ["When", "Used by", "Scope"],
+                          [t("When"), t("Used by"), t("Scope")],
                           usage.map((e: any) => [
                             { text: s.fmtTime(e.ts), cls: "num" },
                             { node: stacked(e.principalId, "") },
                             { node: muted(e.scopeLabel || "-") },
                           ]),
-                          "No recorded uses of this grant.",
+                          t("No recorded uses of this grant."),
                         )
                   }`
               : html`<p class="kc-sortbar">
-                    Sort:
+                    ${t("Sort:")}
                     ${[
-                      ["default", "status group"],
-                      ["mode", "mode"],
-                      ["status", "status A-Z"],
+                      ["default", t("status group")],
+                      ["mode", t("mode")],
+                      ["status", t("status A-Z")],
                     ].map(
                       ([key, label], i) =>
                         html`${i ? " · " : ""}<button
@@ -189,27 +205,32 @@ export async function detail(root: HTMLElement, principal: string, s: Record<str
                     )}
                   </p>
                   ${table(
-                    ["Credential", "Mode", "Status", "Audience", "Purpose", "Uses"],
+                    [t("Credential"), t("Mode"), t("Status"), t("Audience"), t("Purpose"), t("Uses")],
                     sorted.map((g: any) => [
                       { node: stacked(credName(g.credentialId), g.credentialId), cls: "mono" },
-                      { node: muted(g.mode || "unknown") },
+                      { node: muted(g.mode || t("unknown")) },
                       {
                         node: html`<span
                           ><span class=${"kc-dot kc-dot-" + (g.status || "unknown")}></span
-                          >${g.status || "unknown"}</span
+                          >${t(GRANT_STATUS[g.status] || "unknown")}</span
                         >`,
                       },
                       { node: stacked(g.audienceScopeId, s.scopeKind(g.audienceScopeId)), cls: "mono" },
-                      { node: stacked(g.purpose || "-", g.usedBy ? "used by " + g.usedBy : "") },
+                      {
+                        node: stacked(
+                          g.purpose || "-",
+                          g.usedBy ? t("used by {who}", { who: g.usedBy }) : "",
+                        ),
+                      },
                       {
                         action: {
-                          label: "View usage ›",
-                          title: "Show recorded uses of this grant",
+                          label: t("View usage ›"),
+                          title: t("Show recorded uses of this grant"),
                           run: () => showUsage(g),
                         },
                       },
                     ]),
-                    "No grants.",
+                    t("No grants."),
                   )}`
           }
         </div>`,
@@ -223,48 +244,58 @@ export async function detail(root: HTMLElement, principal: string, s: Record<str
       allowN = cfg?.egress?.allowedHosts?.length || 0,
       denyN = cfg?.egress?.deniedHosts?.length || 0;
     const kinds: Record<string, string> = { completed: "ok", dismissed: "muted", pending: "warn", not_started: "info" };
-    paint(
+    paint(() =>
       html`<div class="detail">
         <div style="margin:0 0 14px">${s.webUiAsButton(d.principalId || principal)}</div>
-        <div class="user-resource-links" aria-label="Personal workspace">
+        <div class="user-resource-links" aria-label=${t("Personal workspace")}>
           ${[
             ["history", s.plural(d.stats?.sessions ?? 0, "conversation")],
-            ["files", "Files"],
-            ["deployments", "Apps"],
-            ["crons", "Crons"],
-            ["skills", "Skills"],
-            ["memory", "Memory"],
+            ["files", t("Files")],
+            ["deployments", t("Apps")],
+            ["crons", t("Crons")],
+            ["skills", t("Skills")],
+            ["memory", t("Memory")],
           ].map(([view, label]) => html`<a href=${s.stateToUrl({ view, scope: personalScope })}>${label} →</a>`)}
         </div>
         <div>${keychain()}</div>
         ${card(
-          "Configuration",
-          "Policy and connectors for this person's personal scope.",
+          t("Configuration"),
+          t("Policy and connectors for this person's personal scope."),
           html`<div>
               ${
                 !cfg
-                  ? html`<p class="empty">Config store not available.</p>`
+                  ? html`<p class="empty">${t("Config store not available.")}</p>`
                   : table(
-                      ["Setting", "Value"],
+                      [t("Setting"), t("Value")],
                       [
-                        ["Custom soul", { node: muted(cfg.hasSoul ? "set · v" + (cfg.soulVersion || 1) : "default") }],
                         [
-                          "Command policy",
-                          cfg.commandPolicy
-                            ? ruleN +
-                              " rule" +
-                              (ruleN === 1 ? "" : "s") +
-                              " · " +
-                              (cfg.commandPolicy.mode || "denylist")
-                            : "default",
+                          t("Custom soul"),
+                          { node: muted(cfg.hasSoul ? t("set · v{n}", { n: formatNumber(cfg.soulVersion || 1) }) : t("default")) },
                         ],
-                        ["Security posture", cfg.securityPosture || "auto"],
-                        ["Sharing posture", cfg.sharingPosture || "isolated"],
-                        ["Egress overrides", allowN || denyN ? allowN + " allow · " + denyN + " deny" : "none"],
-                        ["Base model", cfg.baseModel || "org default"],
-                        ["Connectors linked", String((cfg.connectors || []).length)],
+                        [
+                          t("Command policy"),
+                          cfg.commandPolicy
+                            ? t("{rules} · {mode}", {
+                                rules: t(ruleN === 1 ? "1 rule" : "{count} rules", { count: formatNumber(ruleN) }),
+                                mode: t(cfg.commandPolicy.mode || "denylist"),
+                              })
+                            : t("default"),
+                        ],
+                        [t("Security posture"), t(cfg.securityPosture || "auto")],
+                        [t("Sharing posture"), t(cfg.sharingPosture || "isolated")],
+                        [
+                          t("Egress overrides"),
+                          allowN || denyN
+                            ? t("{allow} allow · {deny} deny", {
+                                allow: formatNumber(allowN),
+                                deny: formatNumber(denyN),
+                              })
+                            : t("none"),
+                        ],
+                        [t("Base model"), t(cfg.baseModel || "org default")],
+                        [t("Connectors linked"), formatNumber((cfg.connectors || []).length)],
                       ],
-                      "No config.",
+                      t("No config."),
                     )
               }
             </div>
@@ -273,21 +304,21 @@ export async function detail(root: HTMLElement, principal: string, s: Record<str
               class="link"
               @click=${() => s.go({ view: "governance", scope: personalScope, session: null })}
             >
-              Manage in Governance →
+              ${t("Manage in Governance →")}
             </button>`,
         )}${card(
-          "Onboarding",
-          "Personal-DM onboarding state. Reset to re-trigger the flow on this person's next DM, or wipe their DMs to replay the full new-user experience.",
+          t("Onboarding"),
+          t("Personal-DM onboarding state. Reset to re-trigger the flow on this person's next DM, or wipe their DMs to replay the full new-user experience."),
           html`<div>
             <div class="obstatus">
-              Current status:
-              ${badge(onboarding === "not_started" ? "not started" : onboarding, kinds[onboarding] || "muted")}
+              ${t("Current status:")}
+              ${badge(onboarding === "not_started" ? t("not started") : t(onboarding), kinds[onboarding] || "muted")}
             </div>
             <div class="obactions">
               ${[
-                ["Reset (re-run on next DM)", "not_started"],
-                ["Mark completed", "completed"],
-                ["Mark dismissed", "dismissed"],
+                [t("Reset (re-run on next DM)"), "not_started"],
+                [t("Mark completed"), "completed"],
+                [t("Mark dismissed"), "dismissed"],
               ].map(
                 ([label, status], i) =>
                   html`<button
@@ -303,7 +334,7 @@ export async function detail(root: HTMLElement, principal: string, s: Record<str
             <p class="hint">${hint}</p>
             <div class="obdivider"></div>
             <button type="button" class="danger-link" ?disabled=${busy} @click=${reset}>
-              Reset to brand-new (delete this person's DMs) →
+              ${t("Reset to brand-new (delete this person's DMs) →")}
             </button>
             <p class="hint">${resetHint}</p>
           </div>`,
@@ -314,10 +345,10 @@ export async function detail(root: HTMLElement, principal: string, s: Record<str
   draw();
   try {
     const result = await s.api("GET", "/api/keychain?principal=" + encodeURIComponent(d.principalId || principal));
-    if (!result.ok) throw new Error(result.data?.message || "Failed to load credentials and grants.");
+    if (!result.ok) throw new Error(result.data?.message || t("Failed to load credentials and grants."));
     credentials = result.data || {};
   } catch (error) {
-    credentialError = (error as Error).message || "Failed to load credentials and grants.";
+    credentialError = (error as Error).message || t("Failed to load credentials and grants.");
   }
   draw();
 }

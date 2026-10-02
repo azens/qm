@@ -1,5 +1,6 @@
 import { toolCategory, toolRowKind, type TimelineItem, type ToolPayload, type ToolRowModel } from "./timeline.ts";
 import type { WorkBlock } from "./core-bridge.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 export type ActivityCategory = "read" | "search" | "execute" | "other";
 
@@ -52,7 +53,7 @@ export function activityDescription(
     return { category: "read", target: compactPath(words[3]!) };
   }
   if (words?.[0] === "rg" && words[1] === "--files" && words.length <= 3 && !words[2]?.startsWith("-")) {
-    return { category: "search", target: `files${words[2] ? ` in ${compactPath(words[2])}` : ""}` };
+    return { category: "search", target: searchTarget("files", words[2] ? compactPath(words[2]) : "") };
   }
   if (words && ["rg", "grep"].includes(words[0]!)) {
     const args = words.slice(1);
@@ -71,10 +72,14 @@ export function activityDescription(
     ]);
     while (args.length && flags.has(args[0]!)) args.shift();
     if (args.length >= 1 && args.length <= 2 && !args.some((arg) => arg.startsWith("-"))) {
-      return { category: "search", target: `${args[0]}${args[1] ? ` in ${compactPath(args[1])}` : ""}` };
+      return { category: "search", target: searchTarget(args[0]!, args[1] ? compactPath(args[1]) : "") };
     }
   }
   return { category: "execute", target: command.split("\n")[0] ?? "" };
+}
+
+function searchTarget(pattern: string, dir: string): string {
+  return dir ? t("{pattern} in {dir}", { pattern, dir }) : pattern;
 }
 
 export function activityLabel(row: ToolRowModel, status: WorkBlock["status"]): string | null {
@@ -88,27 +93,37 @@ export function activityLabel(row: ToolRowModel, status: WorkBlock["status"]): s
     toolCategory({ ...result, ...call }) === "execute" &&
     typeof result.code === "number" &&
     result.code !== 0
-      ? ` · exit ${result.code}`
+      ? ` · ${t("exit {code}", { code: result.code })}`
       : "";
   const purpose = typeof call.purpose === "string" ? call.purpose.trim() : "";
   if (purpose) {
-    if (state === "failed") return `${purpose} · Failed`;
-    if (state === "attempted") return `${purpose} · Unconfirmed`;
+    if (state === "failed") return t("{purpose} · Failed", { purpose });
+    if (state === "attempted") return t("{purpose} · Unconfirmed", { purpose });
     return purpose + exit;
   }
   if (category === "other") return null;
-  const verbs = {
-    read: { ok: "Read", running: "Reading", failed: "Failed to read", attempted: "Tried reading" },
-    search: {
-      ok: "Searched for",
-      running: "Searching for",
-      failed: "Failed searching for",
-      attempted: "Tried searching for",
+  const templates: Record<Exclude<ActivityCategory, "other">, Record<string, string>> = {
+    read: {
+      ok: "Read {target}",
+      running: "Reading {target}",
+      failed: "Failed to read {target}",
+      attempted: "Tried reading {target}",
     },
-    execute: { ok: "Ran", running: "Running", failed: "Failed running", attempted: "Tried running" },
+    search: {
+      ok: "Searched for {target}",
+      running: "Searching for {target}",
+      failed: "Failed searching for {target}",
+      attempted: "Tried searching for {target}",
+    },
+    execute: {
+      ok: "Ran {target}",
+      running: "Running {target}",
+      failed: "Failed running {target}",
+      attempted: "Tried running {target}",
+    },
   };
   if (state === "ok" && (category === "read" || category === "execute") && target) return target + exit;
-  return `${verbs[category][state]} ${target || (category === "execute" ? "command" : "file")}${exit}`;
+  return t(templates[category][state]!, { target: target || t(category === "execute" ? "command" : "file") }) + exit;
 }
 
 export function activityGroupSummary(
@@ -141,15 +156,18 @@ export function activityGroupSummary(
   }
   const active = running > 0;
   const phrases = [];
-  if (categories.has("read")) phrases.push(active ? "Reading files" : "Read files");
-  if (categories.has("search")) phrases.push(active ? "Searching files" : "Searched files");
-  if (categories.has("execute")) phrases.push(active ? "Running commands" : "Ran commands");
-  if (categories.has("other")) phrases.push(active ? "Using tools" : "Used tools");
-  const base = phrases.map((phrase, i) => (i ? phrase.toLowerCase() : phrase)).join(", ") || "Thought";
+  if (categories.has("read")) phrases.push(t(active ? "Reading files" : "Read files"));
+  if (categories.has("search")) phrases.push(t(active ? "Searching files" : "Searched files"));
+  if (categories.has("execute")) phrases.push(t(active ? "Running commands" : "Ran commands"));
+  if (categories.has("other")) phrases.push(t(active ? "Using tools" : "Used tools"));
+  const base =
+    phrases
+      .map((phrase, i) => (i ? phrase.toLowerCase() : phrase))
+      .join(t(", ")) || t("Thought");
   const notes = [
-    failed ? `${failed} failed` : "",
-    approvals ? "Approval needed" : "",
-    attempted ? `${attempted} unconfirmed` : "",
+    failed ? t("{count} failed", { count: failed }) : "",
+    approvals ? t("Approval needed") : "",
+    attempted ? t("{count} unconfirmed", { count: attempted }) : "",
   ].filter(Boolean);
   return {
     label: [base, ...notes].join(" · "),
@@ -162,7 +180,7 @@ export function activityGroupSummary(
 export function thinkingPresentation(text: string): { title: string; body: string } {
   const trimmed = text.trim();
   const heading = /^(?:#{1,6} +([^\n]+)|\*\*([^\n]+?)\*\*|__([^\n]+?)__)(?:\r?\n|$)/.exec(trimmed);
-  if (!heading) return { title: "Thinking", body: trimmed };
+  if (!heading) return { title: t("Thinking"), body: trimmed };
   const title = (heading[1] ?? heading[2] ?? heading[3]!).replace(/ +#+$/, "").trim();
   return { title, body: trimmed.slice(heading[0].length).trim() };
 }
@@ -180,34 +198,80 @@ export function sessionPresentation(
   const result = (row.result?.payload ?? {}) as ToolPayload & { title?: string; sessionId?: string };
   if (toolCategory({ ...result, ...call }) !== "session") return null;
   const action = call.interrupt === true ? "interrupt" : (call.action ?? result.action ?? "");
-  const actions: Record<string, [string, string, string]> = {
-    open: ["Created", "Creating", "create"],
-    write: ["Sent message to", "Sending message to", "send message to"],
-    send_message: ["Sent message to", "Sending message to", "send message to"],
-    followup_task: ["Continued", "Continuing", "continue"],
-    read: ["Read updates from", "Reading updates from", "read updates from"],
-    wait: ["Waited", "Waiting", "wait"],
-    interrupt: ["Interrupted", "Interrupting", "interrupt"],
-    close: ["Closed", "Closing", "close"],
-    list: ["Listed", "Listing", "list"],
-    new: ["Started", "Starting", "start"],
-    fork: ["Forked into", "Forking into", "fork into"],
+  const actions: Record<string, { ok: string; running: string; failed: string; attempted: string; bare: string }> = {
+    open: {
+      ok: "Created",
+      running: "Creating",
+      failed: "Failed to create",
+      attempted: "Tried to create",
+      bare: "create",
+    },
+    write: {
+      ok: "Sent message to",
+      running: "Sending message to",
+      failed: "Failed to send message to",
+      attempted: "Tried to send message to",
+      bare: "send message to",
+    },
+    send_message: {
+      ok: "Sent message to",
+      running: "Sending message to",
+      failed: "Failed to send message to",
+      attempted: "Tried to send message to",
+      bare: "send message to",
+    },
+    followup_task: {
+      ok: "Continued",
+      running: "Continuing",
+      failed: "Failed to continue",
+      attempted: "Tried to continue",
+      bare: "continue",
+    },
+    read: {
+      ok: "Read updates from",
+      running: "Reading updates from",
+      failed: "Failed to read updates from",
+      attempted: "Tried to read updates from",
+      bare: "read updates from",
+    },
+    wait: { ok: "Waited", running: "Waiting", failed: "Failed to wait", attempted: "Tried to wait", bare: "wait" },
+    interrupt: {
+      ok: "Interrupted",
+      running: "Interrupting",
+      failed: "Failed to interrupt",
+      attempted: "Tried to interrupt",
+      bare: "interrupt",
+    },
+    close: { ok: "Closed", running: "Closing", failed: "Failed to close", attempted: "Tried to close", bare: "close" },
+    list: { ok: "Listed", running: "Listing", failed: "Failed to list", attempted: "Tried to list", bare: "list" },
+    new: { ok: "Started", running: "Starting", failed: "Failed to start", attempted: "Tried to start", bare: "start" },
+    fork: {
+      ok: "Forked into",
+      running: "Forking into",
+      failed: "Failed to fork into",
+      attempted: "Tried to fork into",
+      bare: "fork into",
+    },
   };
   const verbs = actions[action];
   if (!verbs) return null;
   const state = toolRowKind(row, status);
-  let label = verbs[0];
-  if (state === "running") label = verbs[1];
-  else if (state === "failed") label = `Failed to ${verbs[2]}`;
-  else if (state === "attempted") label = `Tried to ${verbs[2]}`;
-  else if (state === "approval") label = `${row.pending ? "Approval needed" : "Approval requested"} to ${verbs[2]}`;
+  const label =
+    state === "running"
+      ? t(verbs.running)
+      : state === "failed"
+        ? t(verbs.failed)
+        : state === "attempted"
+          ? t(verbs.attempted)
+          : state === "approval"
+            ? t(row.pending ? "Approval needed to {action}" : "Approval requested to {action}", { action: t(verbs.bare) })
+            : t(verbs.ok);
   const target =
     result.title ||
     call.name ||
     call.target ||
     result.sessionId ||
-    ({ open: "subagent", new: "session", fork: "session", list: "sessions" } as Record<string, string>)[action] ||
-    "subagents";
+    t(({ open: "subagent", new: "session", fork: "session", list: "sessions" } as Record<string, string>)[action] ?? "subagents");
   const preview = ["write", "send_message", "followup_task"].includes(action)
     ? (call.text ?? call.task ?? "").replace(/\s+/g, " ").trim()
     : "";

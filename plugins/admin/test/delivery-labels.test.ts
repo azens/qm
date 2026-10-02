@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { translate } from "../../chassis/src/i18n.ts";
 import test from "node:test";
 
 const html = readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
@@ -10,7 +11,7 @@ const source = ["deliverySurfaceLabel", "deliveryLabel"]
     return match[0];
   })
   .join("\n");
-const labels = new Function(`${source}; return { deliverySurfaceLabel, deliveryLabel };`)();
+const labels = new Function("_t", `${source}; return { deliverySurfaceLabel, deliveryLabel };`)(translate);
 
 for (const [type, surface] of [
   ["web", "Web"],

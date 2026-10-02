@@ -2,6 +2,7 @@ import { choiceGroup, settingStatus, saveFooter } from "./setting-controls.ts";
 import { html, render, nothing } from "lit";
 import { classMap } from "lit/directives/class-map.js";
 import { repeat } from "lit/directives/repeat.js";
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { states, connectors, installation, emoji, context, type SlackSetting } from "./integrations-state.ts";
 export {
   configure,
@@ -30,11 +31,9 @@ cards["card-external-slack"] = () => {
     id="card-external-slack"
   >
     <div class="head">
-      <h2>External Slack audience</h2>
+      <h2>${t("External Slack audience")}</h2>
       <p>
-        Org-wide, default off. When on, internal members may chat with the agent in Slack rooms whose audience includes
-        an external user (Connect member or guest). Its replies, and anything it reads there, are visible to those
-        externals. Externals themselves still can't interact.
+        ${t("Org-wide, default off. When on, internal members may chat with the agent in Slack rooms whose audience includes an external user (Connect member or guest). Its replies, and anything it reads there, are visible to those externals. Externals themselves still can't interact.")}
       </p>
     </div>
     <div class="body">
@@ -53,16 +52,16 @@ cards["card-external-slack"] = () => {
           onChange: (event: Event) => s.change({ on: (event.target as HTMLInputElement).value === "on" }),
         },
         [
-          ["off", "Internal only", "Default. The agent stays silent in Slack rooms that include an external user."],
+          ["off", t("Internal only"), t("Default. The agent stays silent in Slack rooms that include an external user.")],
           [
             "on",
-            "Allow mixed rooms",
-            "Internal members can use the agent where externals are present. Externals still cannot interact.",
+            t("Allow mixed rooms"),
+            t("Internal members can use the agent where externals are present. Externals still cannot interact."),
           ],
         ],
       )}
     </div>
-    ${saveFooter(s, "Apply", !s.available)}
+    ${saveFooter(s, t("Apply"), !s.available)}
   </section>`;
 };
 cards["card-internal-member-overrides"] = () => {
@@ -72,12 +71,9 @@ cards["card-internal-member-overrides"] = () => {
     id="card-internal-member-overrides"
   >
     <div class="head">
-      <h2 id="internal-member-overrides-title">Internal member overrides</h2>
+      <h2 id="internal-member-overrides-title">${t("Internal member overrides")}</h2>
       <p id="internal-member-overrides-help">
-        Treat listed Slack users as internal members, including guests and people missing from the directory. This
-        grants internal-member access, not just permission to mention the agent. Rooms containing only internal members
-        may use organization credentials. Add only trusted colleagues. Enter one Slack user ID or Slack-profile email
-        per line (commas also accepted).
+        ${t("Treat listed Slack users as internal members, including guests and people missing from the directory. This grants internal-member access, not just permission to mention the agent. Rooms containing only internal members may use organization credentials. Add only trusted colleagues. Enter one Slack user ID or Slack-profile email per line (commas also accepted).")}
       </p>
     </div>
     <div class="body">
@@ -94,7 +90,7 @@ cards["card-internal-member-overrides"] = () => {
       ></textarea>
       <small class="muted" id="internal-member-overrides-count">${overrideCount(s)}</small>
     </div>
-    ${saveFooter(s, "Apply", !s.available)}
+    ${saveFooter(s, t("Apply"), !s.available)}
   </section>`;
 };
 cards["card-channel-header-pin-default"] = () => {
@@ -104,11 +100,9 @@ cards["card-channel-header-pin-default"] = () => {
     id="card-channel-header-pin-default"
   >
     <div class="head">
-      <h2>Pinned channel message</h2>
+      <h2>${t("Pinned channel message")}</h2>
       <p>
-        When QM joins an internal Slack channel, it can post and pin a message showing the active model and a link to
-        that channel’s settings. Turn this off to remove QM’s pinned message from channels using this default.
-        Individual channels can override it on their settings page.
+        ${t("When QM joins an internal Slack channel, it can post and pin a message showing the active model and a link to that channel’s settings. Turn this off to remove QM’s pinned message from channels using this default. Individual channels can override it on their settings page.")}
       </p>
     </div>
     <div class="body">
@@ -121,28 +115,27 @@ cards["card-channel-header-pin-default"] = () => {
         />
         <span class="setting-switch" aria-hidden="true"></span>
         <span class="setting-copy"
-          ><strong>Post and pin this message by default</strong
+          ><strong>${t("Post and pin this message by default")}</strong
           ><small
-            >Applies to channels without an explicit choice; flipping this updates existing channels within a
-            moment.</small
+            >${t("Applies to channels without an explicit choice; flipping this updates existing channels within a moment.")}</small
           ></span
         >
       </label>
       <figure class="slack-message-example">
-        <figcaption>Example · pinned in #product</figcaption>
+        <figcaption>${t("Example · pinned in #product")}</figcaption>
         <div class="slack-example-message">
           <span class="slack-example-avatar" aria-hidden="true">Q</span>
           <div>
             <strong>QM</strong> <span class="muted">APP</span>
-            <p>Using Sonnet here. <span class="slack-example-link">More settings</span></p>
+            <p>${t("Using Sonnet here.")} <span class="slack-example-link">${t("More settings")}</span></p>
           </div>
         </div>
         <p class="hint">
-          “More settings” opens this channel’s settings page. The model name follows the channel’s selected model.
+          ${t("“More settings” opens this channel’s settings page. The model name follows the channel’s selected model.")}
         </p>
       </figure>
     </div>
-    ${saveFooter(s, "Apply", !s.available)}
+    ${saveFooter(s, t("Apply"), !s.available)}
   </section>`;
 };
 cards["card-ack-emoji"] = () => {
@@ -152,17 +145,16 @@ cards["card-ack-emoji"] = () => {
     id="card-ack-emoji"
   >
     <div class="head">
-      <h2>Acknowledgment emoji</h2>
+      <h2>${t("Acknowledgment emoji")}</h2>
       <p>
-        The emoji the bot may react with to acknowledge a Slack message, org-wide. Add names from the workspace's emoji
-        (custom and standard). Remove every chip to restore the built-in rotation.
+        ${t("The emoji the bot may react with to acknowledge a Slack message, org-wide. Add names from the workspace's emoji (custom and standard). Remove every chip to restore the built-in rotation.")}
       </p>
     </div>
     <div class="body">
       <div id="ack-emoji-chips" style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center">
         ${emojiChips(s)}<span style="position: relative; display: inline-block">
           <button type="button" id="ack-emoji-open" @click=${() => toggleEmoji(s)} class="ghost" aria-haspopup="true">
-            + Add emoji
+            ${t("+ Add emoji")}
           </button>
           <div class=${classMap({ "emoji-picker": true, hidden: !emoji.open })} id="ack-emoji-picker">
             <input
@@ -174,7 +166,7 @@ cards["card-ack-emoji"] = () => {
                 s.render();
               }}
               @keydown=${(e: KeyboardEvent) => emojiKey(e, s)}
-              placeholder="Search emoji"
+              placeholder="${t("Search emoji")}"
               autocomplete="off"
             />
             <div class="emoji-picker-scroll" id="ack-emoji-results">${emojiResults(s)}</div>
@@ -182,18 +174,16 @@ cards["card-ack-emoji"] = () => {
         </span>
       </div>
     </div>
-    ${saveFooter(s, "Save", !s.available)}
+    ${saveFooter(s, t("Save"), !s.available)}
   </section>`;
 };
 cards["card-connectors"] = () => {
   const s = connectors;
   return html`<section class="card" id="card-connectors">
     <div class="head">
-      <h2>OAuth apps</h2>
+      <h2>${t("OAuth apps")}</h2>
       <p>
-        Each connector needs its own OAuth app's client ID and secret before anyone can link it. A connector stays
-        hidden in everyone's web UI until you set its client here. The secret is write-only and never displayed. Applies
-        org-wide.
+        ${t("Each connector needs its own OAuth app's client ID and secret before anyone can link it. A connector stays hidden in everyone's web UI until you set its client here. The secret is write-only and never displayed. Applies org-wide.")}
       </p>
     </div>
     <div class="body">
@@ -206,41 +196,41 @@ cards["card-connectors"] = () => {
     >
       <div class="sc-form-head">
         <p class="hint" id="conn-form-title">
-          ${s.editing ? "Editing " + context.connectorName(s.editing) : "Add a connector"}
+          ${s.editing ? t("Editing {name}", { name: context.connectorName(s.editing) }) : t("Add a connector")}
         </p>
         <span class=${"badge " + (s.editing ? "info" : "muted")} id="conn-form-mode"
-          >${s.editing ? "Editing" : "New"}</span
+          >${s.editing ? t("Editing") : t("New")}</span
         >
       </div>
       <label style="display: block; margin-bottom: 8px"
-        >Connector
+        >${t("Connector")}
         <select id="conn-provider" style="width: 100%"></select
       ></label>
       <div id="conn-guide" class="hint" style="margin: 0 0 12px">${connectorGuide()}</div>
       <label style="display: block; margin-bottom: 8px"
-        >Client ID
+        >${t("Client ID")}
         <input
           type="text"
           id="conn-client-id"
           .value=${s.draft.clientId}
           @input=${(e: Event) => s.change("clientId", (e.target as HTMLInputElement).value)}
           autocomplete="off"
-          placeholder="OAuth client ID"
+          placeholder="${t("OAuth client ID")}"
           style="width: 100%"
       /></label>
       <label style="display: block; margin-bottom: 8px"
-        >Client secret
+        >${t("Client secret")}
         <input
           type="password"
           id="conn-client-secret"
           .value=${s.draft.clientSecret}
           @input=${(e: Event) => s.change("clientSecret", (e.target as HTMLInputElement).value)}
           autocomplete="off"
-          placeholder=${s.editing && s.list.find((c) => c.provider === s.editing)?.hasSecret ? "•••• set (re-enter to replace)" : "(write-only)"}
+          placeholder=${s.editing && s.list.find((c) => c.provider === s.editing)?.hasSecret ? t("•••• set (re-enter to replace)") : t("(write-only)")}
           style="width: 100%"
       /></label>
       <p class="field-hint" id="conn-secret-hint">
-        ${s.editing ? "Saving requires the client secret. Re-enter it to keep this connector working." : "Secret values are write-only and will not be displayed after saving."}
+        ${s.editing ? t("Saving requires the client secret. Re-enter it to keep this connector working.") : t("Secret values are write-only and will not be displayed after saving.")}
       </p>
       <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 10px"
         ><input
@@ -250,20 +240,20 @@ cards["card-connectors"] = () => {
           .checked=${s.draft.enabled}
           @change=${(e: Event) => s.change("enabled", (e.target as HTMLInputElement).checked)}
         />
-        Enabled</label
+        ${t("Enabled")}</label
       >
     </div>
     <div class="foot">
       <button type="button" id="add-oauth-app" class=${s.editor ? "hidden" : ""} @click=${() => openConnector()}>
-        + Add OAuth app</button
+        ${t("+ Add OAuth app")}</button
       ><button
         class=${classMap({ primary: true, hidden: !s.editor })}
         id="conn-save"
         ?disabled=${s.saving}
         @click=${() => s.save()}
       >
-        ${s.editing ? "Save changes" : "Save connector"}</button
-      ><button class=${s.editor ? "" : "hidden"} id="conn-reset" @click=${() => s.reset()}>Cancel</button
+        ${s.editing ? t("Save changes") : t("Save connector")}</button
+      ><button class=${s.editor ? "" : "hidden"} id="conn-reset" @click=${() => s.reset()}>${t("Cancel")}</button
       >${settingStatus(s, "st-connectors")}
     </div>
   </section>`;
@@ -286,7 +276,7 @@ cards["card-slack-installation"] = () => {
             class=${d.installAvailable ? "" : "hidden"}
             id="slack-installation-start"
             ?disabled=${!!s.busy || (d.configured && d.source === "admin")}
-            title=${d.configured && d.source === "admin" ? "Remove your current connection before switching to the hosted app." : ""}
+            title=${d.configured && d.source === "admin" ? t("Remove your current connection before switching to the hosted app.") : ""}
             @click=${() => s.start()}
           >
             <svg width="20" height="20" viewBox="0 0 127 127" aria-hidden="true" focusable="false">
@@ -307,7 +297,7 @@ cards["card-slack-installation"] = () => {
                 fill="#ECB22E"
               />
             </svg>
-            <span id="slack-installation-start-label">${d.configured ? "Re-add to Slack" : "Add to Slack"}</span>
+            <span id="slack-installation-start-label">${d.configured ? t("Re-add to Slack") : t("Add to Slack")}</span>
           </button>
           <button
             class=${classMap({ danger: true, hidden: !d.configured })}
@@ -315,7 +305,7 @@ cards["card-slack-installation"] = () => {
             ?disabled=${!d.configured || !!s.busy}
             @click=${() => s.remove()}
           >
-            Disconnect
+            ${t("Disconnect")}
           </button>
         </div>
       </div>
@@ -327,11 +317,11 @@ cards["card-slack-installation"] = () => {
         }}
       >
         <summary>
-          <span id="slack-own-app-label">${d.installAvailable ? "Use your own Slack app" : "Set up Slack"}</span>
+          <span id="slack-own-app-label">${d.installAvailable ? t("Use your own Slack app") : t("Set up Slack")}</span>
           <span class="slack-guide-arrow" aria-hidden="true">›</span>
         </summary>
         <p>
-          Give your bot its own name and identity. Start with our preconfigured manifest, then connect your app below.
+          ${t("Give your bot its own name and identity. Start with our preconfigured manifest, then connect your app below.")}
         </p>
         <ol>
           <li>
@@ -340,33 +330,28 @@ cards["card-slack-installation"] = () => {
               href=${d.createUrl || "https://api.slack.com/apps?new_app=1"}
               target="_blank"
               rel="noopener noreferrer"
-              >Create your preconfigured Slack app ↗</a
-            >. Choose your company workspace, review the permissions, and click <strong>Create</strong>. The manifest
-            sets up the bot, message events, buttons, and Socket Mode for you.
+              >${t("Create your preconfigured Slack app ↗")}</a
+            >. ${t("Choose your company workspace, review the permissions, and click")} <strong>${t("Create")}</strong>. ${t("The manifest sets up the bot, message events, buttons, and Socket Mode for you.")}
           </li>
           <li>
-            In <strong>OAuth &amp; Permissions</strong>, click <strong>Install to Workspace</strong> and approve access.
-            Copy the <strong>Bot User OAuth Token</strong> starting with <code>xoxb-</code>.
+            ${t("In")} <strong>OAuth &amp; Permissions</strong>, ${t("click")} <strong>${t("Install to Workspace")}</strong> ${t("and approve access.")}
+            ${t("Copy the")} <strong>${t("Bot User OAuth Token")}</strong> ${t("starting with")} <code>xoxb-</code>.
           </li>
           <li>
-            In <strong>Basic Information → App-Level Tokens</strong>, click <strong>Generate Token and Scopes</strong>.
-            Name it <strong>QM connection</strong>, add <code>connections:write</code>, and generate it. Copy the token
-            starting with <code>xapp-</code>.
+            ${t("In")} <strong>Basic Information → App-Level Tokens</strong>, ${t("click")} <strong>${t("Generate Token and Scopes")}</strong>.
+            ${t("Name it")} <strong>QM connection</strong>, ${t("add")} <code>connections:write</code>, ${t("and generate it. Copy the token starting with")} <code>xapp-</code>.
           </li>
           <li>
-            Paste both tokens below and click <strong>Validate and connect</strong>. Keep this page open while you work
-            in Slack. Tokens must come from the same app.
+            ${t("Paste both tokens below and click")} <strong>${t("Validate and connect")}</strong>. ${t("Keep this page open while you work in Slack. Tokens must come from the same app.")}
           </li>
           <li>
-            Invite your new bot to a channel, mention it, then send it a DM to check both surfaces. It only sees
-            conversations it can access; older history may be incomplete.
+            ${t("Invite your new bot to a channel, mention it, then send it a DM to check both surfaces. It only sees conversations it can access; older history may be incomplete.")}
           </li>
         </ol>
         <p class="hint">
-          Replacing a connected app changes the bot identity. Invite the new bot to your channels and start a new DM
-          with it. The old app stays installed until a workspace admin removes it.
+          ${t("Replacing a connected app changes the bot identity. Invite the new bot to your channels and start a new DM with it. The old app stays installed until a workspace admin removes it.")}
           <span id="slack-hosted-switch" class=${d.installAvailable ? "" : "hidden"}
-            >To switch back to the QM app, disconnect here first, then choose Add to Slack.</span
+            >${t("To switch back to the QM app, disconnect here first, then choose Add to Slack.")}</span
           >
         </p>
         <button
@@ -379,11 +364,11 @@ cards["card-slack-installation"] = () => {
             document.getElementById("card-slack-installation")?.scrollIntoView({ behavior: "smooth", block: "start" });
           }}
         >
-          I have both tokens
+          ${t("I have both tokens")}
         </button>
         <div class=${s.editor ? "" : "hidden"} id="slack-token-editor">
           <label style="display: block; margin-bottom: 8px"
-            >Bot User OAuth Token
+            >${t("Bot User OAuth Token")}
             <input
               type="password"
               id="slack-bot-token"
@@ -397,7 +382,7 @@ cards["card-slack-installation"] = () => {
               style="width: 100%"
           /></label>
           <label style="display: block; margin-bottom: 8px"
-            >App-Level Token
+            >${t("App-Level Token")}
             <input
               type="password"
               id="slack-app-token"
@@ -411,8 +396,7 @@ cards["card-slack-installation"] = () => {
               style="width: 100%"
           /></label>
           <p class="field-hint">
-            Use an app-level token with <code>connections:write</code>. Saving activates or reloads the Slack surface
-            within a few seconds.
+            ${t("Use an app-level token with")} <code>connections:write</code>. ${t("Saving activates or reloads the Slack surface within a few seconds.")}
           </p>
           <button
             class=${classMap({ primary: true, hidden: !s.editor })}
@@ -420,7 +404,7 @@ cards["card-slack-installation"] = () => {
             ?disabled=${!!s.busy}
             @click=${() => s.save()}
           >
-            Validate and connect
+            ${t("Validate and connect")}
           </button>
         </div>
       </details>
@@ -430,7 +414,7 @@ cards["card-slack-installation"] = () => {
 };
 function overrideCount(s: SlackSetting) {
   const n = s.collect().members!.length;
-  return n ? n + " override" + (n === 1 ? "" : "s") : "No overrides configured.";
+  return n ? n + " " + (n === 1 ? t("override") : t("overrides")) : t("No overrides configured.");
 }
 function openConnector(connector?: Parameters<typeof connectors.edit>[0]) {
   connectors.edit(connector);
@@ -443,7 +427,7 @@ function badge(text: string, tone: string) {
   return html`<span class=${"badge " + tone}>${text}</span>`;
 }
 function connectorRows() {
-  if (!connectors.displayed.length) return "No connectors configured. Add one below to make it linkable in the web UI.";
+  if (!connectors.displayed.length) return t("No connectors configured. Add one below to make it linkable in the web UI.");
   return repeat(
     connectors.displayed,
     (c) => c.provider,
@@ -454,14 +438,22 @@ function connectorRows() {
             <strong>${context.connectorName(c.provider)}</strong><span class="credential-slug">${c.provider}</span>
           </div>
           <div class="hint">
-            ${c.inherited ? "Configured by deployment secrets" : "client " + (c.clientId || "None") + (c.updatedBy ? " · by " + c.updatedBy : "") + (c.updatedAt ? " · " + context.fmtTime(c.updatedAt) : "")}
+            ${c.inherited
+              ? t("Configured by deployment secrets")
+              : [
+                  t("client {client}", { client: c.clientId || t("None") }),
+                  c.updatedBy ? t("by {user}", { user: c.updatedBy }) : "",
+                  c.updatedAt ? context.fmtTime(c.updatedAt) : "",
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
           </div>
           <div class="credential-badges">
-            ${badge(c.enabled === false ? "Disabled" : "Enabled", c.enabled === false ? "warn" : "ok")}${badge(c.inherited || c.hasSecret ? "Secret set" : "Secret missing", c.inherited || c.hasSecret ? "ok" : "err")}
+            ${badge(c.enabled === false ? t("Disabled") : t("Enabled"), c.enabled === false ? "warn" : "ok")}${badge(c.inherited || c.hasSecret ? t("Secret set") : t("Secret missing"), c.inherited || c.hasSecret ? "ok" : "err")}
           </div>
         </div>
         <div class="credential-actions">
-          ${c.inherited ? html`<button type="button" @click=${() => openConnector(c)}>Override here</button>` : html`<button type="button" @click=${() => openConnector(c)}>Edit</button><button type="button" class="rowbtn danger" title="Delete connector" aria-label=${"Delete " + context.connectorName(c.provider)} @click=${() => connectors.remove(c.provider)}>Delete</button>`}
+          ${c.inherited ? html`<button type="button" @click=${() => openConnector(c)}>${t("Override here")}</button>` : html`<button type="button" @click=${() => openConnector(c)}>${t("Edit")}</button><button type="button" class="rowbtn danger" title="${t("Delete connector")}" aria-label=${t("Delete {name}", { name: context.connectorName(c.provider) })} @click=${() => connectors.remove(c.provider)}>${t("Delete")}</button>`}
         </div>
       </div>`,
   );
@@ -470,17 +462,17 @@ function connectorGuide() {
   const c = connectors.catalog.find((c) => c.provider === connectors.draft.provider);
   if (!c?.setupGuide) return nothing;
   return html`<a href=${c.setupGuide.url} target="_blank" rel="noopener noreferrer"
-      >${"Open " + c.setupGuide.console + " ↗"}</a
+      >${t("Open {console} ↗", { console: c.setupGuide.console })}</a
     >
-    <div>${"Callback URL: " + location.origin + "/v1/connectors/oauth/" + c.redirectPath}</div>
-    <div>${c.scopes?.length ? "Scopes: " + c.scopes.join(", ") : "Scopes are selected in the provider."}</div>
+    <div>${t("Callback URL:") + " " + location.origin + "/v1/connectors/oauth/" + c.redirectPath}</div>
+    <div>${c.scopes?.length ? t("Scopes: {scopes}", { scopes: c.scopes.join(", ") }) : t("Scopes are selected in the provider.")}</div>
     <ol>
       ${c.setupGuide.steps.map((step) => html`<li>${step}</li>`)}
     </ol>`;
 }
 function builtIns() {
   return html`<section class="card" id="card-built-in-connectors">
-    <div class="head"><h2>Built-in connectors</h2></div>
+    <div class="head"><h2>${t("Built-in connectors")}</h2></div>
     <div class=${connectors.catalog.length ? "" : "hint"} id="built-in-connectors">
       ${
         connectors.catalog.length
@@ -491,12 +483,12 @@ function builtIns() {
                 html`<div class="credential-row">
                   <div class="credential-main">
                     <strong>${context.connectorName(c.provider)}</strong>
-                    <div class="hint">${c.configured ? "Available to users" : "Requires an OAuth app"}</div>
+                    <div class="hint">${c.configured ? t("Available to users") : t("Requires an OAuth app")}</div>
                   </div>
-                  ${badge(c.configured ? "Configured" : "Not configured", c.configured ? "ok" : "muted")}
+                  ${badge(c.configured ? t("Configured") : t("Not configured"), c.configured ? "ok" : "muted")}
                 </div>`,
             )
-          : "No built-in connectors are available."
+          : t("No built-in connectors are available.")
       }
     </div>
   </section>`;
@@ -517,7 +509,7 @@ function emojiChips(s: SlackSetting) {
           >${emoji.catalog[name] ? html`<img src=${emoji.catalog[name]} alt=${name} class="ack-emoji-img" style="margin-right:4px" />` : (emoji.standard.find((e) => e[0] === name)?.[1] || "") + " "}${":" + name + ":"}</span
         ><button
           type="button"
-          aria-label=${"Remove " + name}
+          aria-label=${t("Remove {name}", { name })}
           style="border:0;background:none;cursor:pointer;padding:0;font-size:14px;line-height:1"
           @click=${() =>
             emojiChanged(
@@ -549,10 +541,10 @@ function emojiResults(s: SlackSetting) {
     sections.get(entry[2])!.push(entry);
   }
   if (!sections.size)
-    return html`<div class="emoji-picker-empty">${"No emoji match “" + emoji.query.trim() + "”"}</div>`;
+    return html`<div class="emoji-picker-empty">${t("No emoji match “{query}”", { query: emoji.query.trim() })}</div>`;
   return [...sections].map(
     ([title, entries]) =>
-      html`<div class="emoji-picker-section">${title}</div>
+      html`<div class="emoji-picker-section">${t(title)}</div>
         <div class="emoji-picker-grid">
           ${entries.map(
             ([name, glyph]) =>
@@ -632,12 +624,12 @@ export function mountBuiltIns() {
 }
 
 function installationTitle(data: Record<string, any>) {
-  if (data.configured) return data.teamName || data.teamId || "Slack workspace";
-  return data.source === "invalid_environment" ? "Finish connecting your app" : "Connect your workspace";
+  if (data.configured) return data.teamName || data.teamId || t("Slack workspace");
+  return data.source === "invalid_environment" ? t("Finish connecting your app") : t("Connect your workspace");
 }
 function installationDescription(data: Record<string, any>) {
-  if (data.configured) return data.source === "service" ? "QM app" : "Custom app";
+  if (data.configured) return data.source === "service" ? t("QM app") : t("Custom app");
   return data.installAvailable
-    ? "Add the QM app or connect your own below."
-    : "Create a Slack app from our manifest, then connect it here.";
+    ? t("Add the QM app or connect your own below.")
+    : t("Create a Slack app from our manifest, then connect it here.");
 }

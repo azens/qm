@@ -8,6 +8,9 @@ import { icon } from "./ui";
 import { ADMIN_HOME_URL, appState, can, signOut } from "./shell";
 import { sessionsState, setWebOnly } from "./sessions";
 import { errMessage } from "../../chassis/src/errors";
+import { t } from "../../chassis/src/i18n-lit.ts";
+import { onLocaleChange } from "../../chassis/src/i18n.ts";
+import { createLocaleSwitcher, type LocaleSwitcher } from "../../chassis/src/locale-switcher.ts";
 import { importTheme, isPalette, themeCss, themeTokens, type Palette } from "./theme-import";
 
 export type ThemeChoice = "light" | "dark" | "system" | "custom";
@@ -19,14 +22,24 @@ const THEME_FILE_ACCEPT = ".itermcolors,.plist,.json,.jsonc,application/json,tex
 
 const QM_MAC_DOWNLOAD_URL = "https://github.com/yc-software/qm/releases/download/desktop-v0.1.0/QM-mac-arm64.zip";
 
-const THEME_OPTIONS: Array<{ value: ThemeChoice; label: string; glyph: IconNode }> = [
-  { value: "light", label: "Light", glyph: Sun },
-  { value: "dark", label: "Dark", glyph: Moon },
-  { value: "system", label: "System", glyph: Monitor },
-];
+function themeOptions(): Array<{ value: ThemeChoice; label: string; glyph: IconNode }> {
+  return [
+    { value: "light", label: t("Light"), glyph: Sun },
+    { value: "dark", label: t("Dark"), glyph: Moon },
+    { value: "system", label: t("Theme setting System"), glyph: Monitor },
+  ];
+}
+
+function surfaceOptions(): Array<{ webOnly: boolean; label: string }> {
+  return [
+    { webOnly: false, label: t("All conversations") },
+    { webOnly: true, label: t("Web only") },
+  ];
+}
 
 let settingsHost: HTMLElement | null = null;
 let themeImportError: string | null = null;
+let localeSwitcher: LocaleSwitcher | null = null;
 
 export function storedTheme(): ThemeChoice {
   try {
@@ -180,16 +193,18 @@ function themeRow(): TemplateResult {
   const custom = storedCustomTheme();
   const note = themeImportError
     ? html`<span class="settings-row-error">${themeImportError}</span>`
-    : "System follows your device's light or dark setting. Import an iTerm2 .itermcolors or a VS Code color theme .json to paint the app with its palette.";
+    : t(
+        "System follows your device's light or dark setting. Import an iTerm2 .itermcolors or a VS Code color theme .json to paint the app with its palette.",
+      );
   return html`
     <div class="settings-row">
       <div class="settings-row-copy">
-        <div class="settings-row-title">Theme</div>
+        <div class="settings-row-title">${t("Theme")}</div>
         <div class="settings-row-note">${note}</div>
       </div>
       <div class="settings-theme-controls">
-        <div class="settings-choice" role="radiogroup" aria-label="Theme">
-          ${THEME_OPTIONS.map((option) => themeOption(option.value, current, option.label, icon(option.glyph, 15)))}
+        <div class="settings-choice" role="radiogroup" aria-label=${t("Theme")}>
+          ${themeOptions().map((option) => themeOption(option.value, current, option.label, icon(option.glyph, 15)))}
           ${custom ? themeOption("custom", current, custom.name, themeSwatches(custom)) : nothing}
         </div>
         <div class="settings-theme-import">
@@ -208,7 +223,7 @@ function themeRow(): TemplateResult {
                 ?.querySelector<HTMLInputElement>(".theme-file-input")
                 ?.click()}
           >
-            ${custom ? "Replace theme file" : "Import theme file"}
+            ${custom ? t("Replace theme file") : t("Import theme file")}
           </button>
           ${
             custom
@@ -216,10 +231,10 @@ function themeRow(): TemplateResult {
                   <button
                     class="settings-theme-link"
                     type="button"
-                    aria-label="Remove imported theme"
+                    aria-label=${t("Remove imported theme")}
                     @click=${() => removeCustomTheme()}
                   >
-                    Remove
+                    ${t("Remove")}
                   </button>
                 `
               : nothing
@@ -230,20 +245,17 @@ function themeRow(): TemplateResult {
   `;
 }
 
-const SURFACE_OPTIONS: Array<{ webOnly: boolean; label: string }> = [
-  { webOnly: false, label: "All conversations" },
-  { webOnly: true, label: "Web only" },
-];
-
 function sidebarSurfaceRow(): TemplateResult {
   return html`
     <div class="settings-row">
       <div class="settings-row-copy">
-        <div class="settings-row-title">Sidebar conversations</div>
-        <div class="settings-row-note">Web only hides the Slack channels and DMs the agent also works in.</div>
+        <div class="settings-row-title">${t("Sidebar conversations")}</div>
+        <div class="settings-row-note">
+          ${t("Web only hides the Slack channels and DMs the agent also works in.")}
+        </div>
       </div>
-      <div class="settings-choice" role="radiogroup" aria-label="Sidebar conversations">
-        ${SURFACE_OPTIONS.map(
+      <div class="settings-choice" role="radiogroup" aria-label=${t("Sidebar conversations")}>
+        ${surfaceOptions().map(
           (option) => html`
             <button
               class="settings-choice-option ${sessionsState.webOnly === option.webOnly ? "selected" : ""}"
@@ -342,15 +354,15 @@ function aiAccountsRow(): TemplateResult {
   return html`
     <div class="settings-row">
       <div class="settings-row-copy">
-        <div class="settings-row-title">AI access</div>
-        <div class="settings-row-note">Use company access or your own subscription.</div>
-        ${aiError ? html`<div class="settings-row-error" role="alert">${aiError} <button class="settings-theme-link" ?disabled=${aiSaving} @click=${loadAiStatus}>Retry</button></div>` : nothing}
+        <div class="settings-row-title">${t("AI access")}</div>
+        <div class="settings-row-note">${t("Use company access or your own subscription.")}</div>
+        ${aiError ? html`<div class="settings-row-error" role="alert">${aiError} <button class="settings-theme-link" ?disabled=${aiSaving} @click=${loadAiStatus}>${t("Retry")}</button></div>` : nothing}
       </div>
       <div class="settings-ai-controls">
-        <div class="settings-choice" role="group" aria-label="AI access">
+        <div class="settings-choice" role="group" aria-label=${t("AI access")}>
           ${(
             [
-              ["company", "Company"],
+              ["company", t("Company")],
               ["anthropic", "Claude"],
               ["openai", "ChatGPT / Codex"],
             ] as const
@@ -368,7 +380,7 @@ function aiAccountsRow(): TemplateResult {
             `,
           )}
         </div>
-        ${aiStatus?.account === "anthropic" || aiStatus?.account === "openai" ? html`<button class="settings-theme-link" ?disabled=${aiBusy || aiSaving} @click=${() => openModelConnectManager(aiStatus!.account as "anthropic" | "openai")}>Connection settings</button>` : nothing}
+        ${aiStatus?.account === "anthropic" || aiStatus?.account === "openai" ? html`<button class="settings-theme-link" ?disabled=${aiBusy || aiSaving} @click=${() => openModelConnectManager(aiStatus!.account as "anthropic" | "openai")}>${t("Connection settings")}</button>` : nothing}
       </div>
     </div>
   `;
@@ -378,11 +390,11 @@ function adminRow(): TemplateResult {
   return html`
     <div class="settings-row">
       <div class="settings-row-copy">
-        <div class="settings-row-title">Admin</div>
-        <div class="settings-row-note">Org settings, people, and policy.</div>
+        <div class="settings-row-title">${t("Admin console")}</div>
+        <div class="settings-row-note">${t("Org settings, people, and policy.")}</div>
       </div>
       <a class="btn settings-row-action" href=${ADMIN_HOME_URL}>
-        ${icon(ShieldUser, 15)}<span>Open admin</span>${icon(ExternalLink, 14)}
+        ${icon(ShieldUser, 15)}<span>${t("Open admin")}</span>${icon(ExternalLink, 14)}
       </a>
     </div>
   `;
@@ -392,11 +404,11 @@ function desktopRow(): TemplateResult {
   return html`
     <div class="settings-row">
       <div class="settings-row-copy">
-        <div class="settings-row-title">Desktop app</div>
-        <div class="settings-row-note">QM for Mac. Requires Apple Silicon and macOS 13 or later.</div>
+        <div class="settings-row-title">${t("Desktop app")}</div>
+        <div class="settings-row-note">${t("QM for Mac. Requires Apple Silicon and macOS 13 or later.")}</div>
       </div>
       <a class="btn settings-row-action" href=${QM_MAC_DOWNLOAD_URL} target="_blank" rel="noreferrer noopener">
-        ${icon(Download, 15)}<span>Download for Mac</span>
+        ${icon(Download, 15)}<span>${t("Download for Mac")}</span>
       </a>
     </div>
   `;
@@ -407,13 +419,13 @@ function accountRow(): TemplateResult {
   return html`
     <div class="settings-row">
       <div class="settings-row-copy">
-        <div class="settings-row-title">Account</div>
+        <div class="settings-row-title">${t("Account")}</div>
         <div class="settings-row-note">
-          ${me?.displayName?.trim() || me?.user || "Not signed in"}${me?.org ? ` · ${me.org}` : ""}
+          ${me?.displayName?.trim() || me?.user || t("Not signed in")}${me?.org ? ` · ${me.org}` : ""}
         </div>
       </div>
       <button class="btn settings-row-action" type="button" @click=${() => void signOut()}>
-        ${icon(LogOut, 15)}<span>Sign out</span>
+        ${icon(LogOut, 15)}<span>${t("Sign out")}</span>
       </button>
     </div>
   `;
@@ -422,10 +434,11 @@ function accountRow(): TemplateResult {
 function settingsPane(): TemplateResult {
   return html`
     <div class="list-page-head">
-      <h1 class="pane-title">Settings</h1>
+      <h1 class="pane-title">${t("Settings")}</h1>
     </div>
     <div class="settings-group">
-      ${aiAccountsRow()} ${themeRow()} ${sidebarSurfaceRow()} ${can("admin") ? adminRow() : nothing} ${desktopRow()}
+      ${aiAccountsRow()} ${themeRow()} ${localeRow()} ${sidebarSurfaceRow()}
+      ${can("admin") ? adminRow() : nothing} ${desktopRow()}
       ${accountRow()}
       <div class="settings-row settings-slack-account">
         <qm-slack-account .user=${`${appState.me?.org}:${appState.me?.user}`}></qm-slack-account>
@@ -443,6 +456,29 @@ function settingsPane(): TemplateResult {
   `;
 }
 
+function localeRow(): TemplateResult {
+  return html`
+    <div class="settings-row">
+      <div class="settings-row-copy">
+        <div class="settings-row-title">${t("Language")}</div>
+        <div class="settings-row-note">${t("The language the web UI and its notifications are shown in.")}</div>
+      </div>
+      <div class="settings-choice">
+        <div class="settings-locale-switch"></div>
+      </div>
+    </div>
+  `;
+}
+
+function mountLocaleSwitcher(): void {
+  const host = settingsHost?.querySelector<HTMLElement>(".settings-locale-switch");
+  if (!host) return;
+  localeSwitcher ??= createLocaleSwitcher();
+  host.replaceChildren(localeSwitcher.element);
+}
+
+onLocaleChange(drawSettings);
+
 function drawSettings(): void {
   if (appState.currentView !== "settings" || !appState.mainEl) return;
   if (!settingsHost || settingsHost.parentElement !== appState.mainEl) {
@@ -451,6 +487,7 @@ function drawSettings(): void {
     appState.mainEl.replaceChildren(settingsHost);
   }
   render(settingsPane(), settingsHost);
+  mountLocaleSwitcher();
 }
 
 export function renderSettings(): void {

@@ -23,6 +23,7 @@ import {
 } from "./composer-loadout";
 import { modelSupportsFastMode } from "./pi-models";
 import { errMessage } from "../../chassis/src/errors";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 const INHERIT = "";
 
@@ -252,9 +253,9 @@ export function contextModelSection(scopeId: string): TemplateResult | typeof no
   picker.place();
   return html`
     <section class="context-panel context-model" aria-labelledby="context-model-title">
-      <h2 class="context-panel-title" id="context-model-title">Model</h2>
-      ${stalePin ? html`<span class="context-model-status">${labelForRuntime(config, config.scopeOverride!)} (no longer offered)</span>` : nothing}
-      ${!option && !stalePin ? html`<span class="context-model-status">${labelForRuntime(config, config.effective)} (no longer offered)</span>` : nothing}
+      <h2 class="context-panel-title" id="context-model-title">${t("Model")}</h2>
+      ${stalePin ? html`<span class="context-model-status">${labelForRuntime(config, config.scopeOverride!)} ${t("(no longer offered)")}</span>` : nothing}
+      ${!option && !stalePin ? html`<span class="context-model-status">${labelForRuntime(config, config.effective)} ${t("(no longer offered)")}</span>` : nothing}
       ${picker.render(undefined, option, contextModelState.saving)}
       ${
         contextModelState.notice

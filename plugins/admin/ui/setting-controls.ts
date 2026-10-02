@@ -2,14 +2,15 @@ import { ifDefined } from "lit/directives/if-defined.js";
 import { html } from "lit";
 import { classMap } from "lit/directives/class-map.js";
 import type { SettingState } from "./setting-state.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
-export function saveButton(s: SettingState, label = "Apply", disabled = false) {
+export function saveButton(s: SettingState, label?: string, disabled = false) {
   return html`<button
     class=${classMap({ primary: true, dirty: s.dirty })}
     data-save=${s.key}
     ?disabled=${!s.dirty || s.saving || disabled}
   >
-    ${label}
+    ${label ?? t("Apply")}
   </button>`;
 }
 
@@ -17,9 +18,10 @@ export function settingStatus(s: Pick<SettingState, "message" | "tone"> & { key?
   return html`<span class=${classMap({ status: true, [s.tone]: !!s.tone })} id=${id}>${s.message}</span>`;
 }
 
-export function saveFooter(s: SettingState, label = "Apply", disabled = false) {
+export function saveFooter(s: SettingState, label?: string, disabled = false) {
   return html`<div class="foot">${saveButton(s, label, disabled)}${settingStatus(s)}</div>`;
 }
+
 
 export function choiceGroup(
   options: {

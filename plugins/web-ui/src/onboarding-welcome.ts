@@ -29,6 +29,8 @@ import {
   type PreviewAttempt,
   type PickerState,
 } from "./connection-preview";
+import { LocaleController, t } from "../../chassis/src/i18n-lit.ts";
+import { composioUnavailableMessage } from "./composio-errors.ts";
 
 export class OnboardingWelcome extends LitElement {
   static properties = {
@@ -102,7 +104,9 @@ export class OnboardingWelcome extends LitElement {
     this.authorizing = "";
     this.authorizationError = "";
     this.connectionOutcome = "";
+    this.addController(this.locale);
   }
+  private readonly locale = new LocaleController(this);
   protected createRenderRoot(): HTMLElement {
     return this;
   }
@@ -116,7 +120,7 @@ export class OnboardingWelcome extends LitElement {
         cache: "no-store",
         signal: AbortSignal.timeout(10000),
       });
-      if (!response.ok) throw Error("Slack status unavailable");
+      if (!response.ok) throw Error(t("Slack status unavailable"));
       this.workspaceConnected = (await response.json()).workspaceInstalled === true;
       this.workspaceError = false;
     } catch {
@@ -227,14 +231,14 @@ export class OnboardingWelcome extends LitElement {
       const seen = new Set<string>();
       let cursor = "";
       do {
-        if (seen.has(cursor) || seen.size >= 100) throw new Error("Could not finish checking connected apps.");
+        if (seen.has(cursor) || seen.size >= 100) throw new Error(t("Could not finish checking connected apps."));
         seen.add(cursor);
         const response = await fetch(`${this.base}api/composio/connections?${new URLSearchParams({ cursor })}`, {
           signal: controller.signal,
         });
         const result = await response.json();
         if (!response.ok || !Array.isArray(result.items))
-          throw new Error("Could not check connected apps. Please try again.");
+          throw new Error(t("Could not check connected apps. Please try again."));
         accounts.push(...result.items);
         cursor = typeof result.nextCursor === "string" ? result.nextCursor : "";
       } while (cursor);
@@ -260,7 +264,7 @@ export class OnboardingWelcome extends LitElement {
       if (controller.signal.aborted || !this.isConnected) return;
       this.connections = [];
       this.connectionOutcome = "";
-      this.connectionError = error instanceof Error ? error.message : "Could not check connected apps.";
+      this.connectionError = error instanceof Error ? error.message : t("Could not check connected apps.");
       await this.updateComplete;
       this.drawPicker();
     }
@@ -275,25 +279,27 @@ export class OnboardingWelcome extends LitElement {
     let cursor = "";
     try {
       do {
-        if (cursors.has(cursor)) throw new Error("Could not finish loading apps. Please try again.");
+        if (cursors.has(cursor)) throw new Error(t("Could not finish loading apps. Please try again."));
         cursors.add(cursor);
         const response = await fetch(`${this.base}api/composio/toolkits?${new URLSearchParams({ cursor })}`, {
           signal: controller.signal,
         });
         const result = await response.json();
         if (!response.ok)
-          throw new Error(result.message ?? "App connections are unavailable right now. Please try again.");
+          throw new Error(
+            composioUnavailableMessage(result) ?? t("App connections are unavailable right now. Please try again."),
+          );
         for (const item of result.items as Array<{ id: string; name: string; description: string }>) {
           if (item.id !== "slack" && !services.some((service) => service.id === item.id))
             services.push({ ...item, popularity: 100000 - services.length });
         }
         cursor = typeof result.nextCursor === "string" ? result.nextCursor : "";
-        if (cursors.size > 100) throw new Error("Could not finish loading apps. Please try again.");
+        if (cursors.size > 100) throw new Error(t("Could not finish loading apps. Please try again."));
       } while (cursor);
       this.services = services;
     } catch (error) {
       if (controller.signal.aborted) return;
-      this.error = error instanceof Error ? error.message : "Could not load apps. Please try again.";
+      this.error = error instanceof Error ? error.message : t("Could not load apps. Please try again.");
     }
     if (!this.isConnected || controller.signal.aborted) return;
     this.loading = false;
@@ -338,14 +344,15 @@ export class OnboardingWelcome extends LitElement {
         body: JSON.stringify({ toolkit: service.id, returnTo: location.pathname + location.search, state }),
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.message ?? "Could not open authorization. Please try again.");
+      if (!response.ok)
+        throw new Error(composioUnavailableMessage(result) ?? t("Could not open authorization. Please try again."));
       if (typeof result.accountId !== "string" || !/^ca_[a-zA-Z0-9_-]+$/.test(result.accountId))
-        throw new Error("Could not start authorization. Please try again.");
+        throw new Error(t("Could not start authorization. Please try again."));
       saveConnectionAttempt({ ...attempt, accountId: result.accountId });
       window.location.assign(result.url);
     } catch (error) {
       this.authorizationError =
-        error instanceof Error ? error.message : "Could not open authorization. Please try again.";
+        error instanceof Error ? error.message : t("Could not open authorization. Please try again.");
     } finally {
       this.authorizing = "";
     }
@@ -353,34 +360,34 @@ export class OnboardingWelcome extends LitElement {
   protected render() {
     if (this.preview && previewParameters().has("connectionConsent")) {
       return html`<section class="connection-consent-preview">
-        <span class="connection-preview-label">Provider simulation · No account access</span>
-        <h1>${this.consent ? `Connect ${this.consent.service.name}` : "This preview has expired"}</h1>
+        <span class="connection-preview-label">${t("Provider simulation · No account access")}</span>
+        <h1>${this.consent ? t("Connect {name}", { name: this.consent.service.name }) : t("This preview has expired")}</h1>
         <p>
-          This stands in for the provider’s consent page. Choose an outcome to return to QM through the callback URL.
+          ${t("This stands in for the provider’s consent page. Choose an outcome to return to QM through the callback URL.")}
         </p>
         ${
           this.consent
             ? html`<div class="connection-preview-actions">
                   <button class="btn" @click=${() => finishPreviewAttempt(this.consent!, "success")}>
-                    Approve connection
+                    ${t("Approve connection")}
                   </button>
-                  <button class="btn" @click=${() => finishPreviewAttempt(this.consent!, "cancelled")}>Cancel</button>
+                  <button class="btn" @click=${() => finishPreviewAttempt(this.consent!, "cancelled")}>${t("Cancel")}</button>
                   <button class="btn" @click=${() => finishPreviewAttempt(this.consent!, "failed")}>
-                    Simulate provider error
+                    ${t("Simulate provider error")}
                   </button>
                 </div>
                 <details>
-                  <summary>Callback URL</summary>
+                  <summary>${t("Callback URL")}</summary>
                   <code>${this.consent.callbackUrl}</code>
                 </details>`
             : nothing
         }
-        <a href="?connectionDemo=1">Back to QM</a>
+        <a href="?connectionDemo=1">${t("Back to QM")}</a>
       </section>`;
     }
     const name = this.me?.displayName?.trim().split(/\s+/)[0];
     const cohort = this.me?.welcomeCohort;
-    const serviceName = this.retryService?.name ?? "App";
+    const serviceName = this.retryService?.name ?? t("App");
     const connected = this.preview
       ? previewConnections(this.previewUser())
       : this.connections.map((account) => account.toolkit);
@@ -390,33 +397,41 @@ export class OnboardingWelcome extends LitElement {
     const outcome = {
       "": { title: "", detail: "" },
       checking: {
-        title: `Checking ${serviceName} connection…`,
-        detail: "Confirming access before marking it connected.",
+        title: t("Checking {name} connection…", { name: serviceName }),
+        detail: t("Confirming access before marking it connected."),
       },
       success: {
-        title: `${serviceName} connected`,
+        title: t("{name} connected", { name: serviceName }),
         detail: "",
       },
       cancelled: {
-        title: `${serviceName} wasn’t connected`,
-        detail: "You cancelled authorization. You can try again whenever you’re ready.",
+        title: t("{name} wasn’t connected", { name: serviceName }),
+        detail: t("You cancelled authorization. You can try again whenever you’re ready."),
       },
-      expired: { title: "This connection attempt has expired", detail: "Choose an app below to start again." },
+      expired: {
+        title: t("This connection attempt has expired"),
+        detail: t("Choose an app below to start again."),
+      },
       failed: {
-        title: `Couldn’t connect ${serviceName}`,
-        detail: "We couldn’t confirm an active connection yet. Try checking again, or restart authorization.",
+        title: t("Couldn’t connect {name}", { name: serviceName }),
+        detail: t("We couldn’t confirm an active connection yet. Try checking again, or restart authorization."),
       },
     }[this.connectionOutcome];
     return html`<section class="welcome-content">
-      ${this.preview ? html`<div class="connection-preview-label">Connection preview · No accounts are linked <button @click=${() => resetPreview(this.previewUser())}>Reset</button></div>` : nothing}
+      ${this.preview
+        ? html`<div class="connection-preview-label">
+            ${t("Connection preview · No accounts are linked")}
+            <button @click=${() => resetPreview(this.previewUser())}>${t("Reset")}</button>
+          </div>`
+        : nothing}
       ${
         this.setupOnly
           ? nothing
-          : html`<h1 class="welcome-beat" style="--welcome-delay:0ms">${name ? `Hi, ${name}.` : "Hi there."}</h1>
+          : html`<h1 class="welcome-beat" style="--welcome-delay:0ms">${name ? t("Hi, {name}.", { name }) : t("Hi there.")}</h1>
               ${
                 cohort
                   ? html`<div class="welcome-cohort welcome-beat" style="--welcome-delay:700ms">
-                      <span class="welcome-cohort-label">Welcome to ${cohort}!</span
+                      <span class="welcome-cohort-label">${t("Welcome to {cohort}!", { cohort })}</span
                       ><span class="welcome-champagne" aria-hidden="true">🥂</span>
                       ${Array.from({ length: 18 }, (_, i) => {
                         const side = i % 2 ? 1 : -1;
@@ -434,22 +449,19 @@ export class OnboardingWelcome extends LitElement {
               ${
                 cohort
                   ? html`<p class="welcome-beat" style="--welcome-delay:2400ms">
-                        And welcome to QM, the agent harness we use to run YC.
+                        ${t("And welcome to QM, the agent harness we use to run YC.")}
                       </p>
                       <p class="welcome-beat" style="--welcome-delay:2600ms">
-                        Use it to research customers and investors, fundraise, and automate the everyday work of running
-                        ${this.me?.companyName?.trim() || "your company"}.
-                        ${this.onMoreIdeas ? html`<button type="button" class="welcome-more-ideas" ?disabled=${this.ideasDisabled} @click=${this.onMoreIdeas}>More ideas</button>` : nothing}
+                        ${t("Use it to research customers and investors, fundraise, and automate the everyday work of running {company}", { company: this.me?.companyName?.trim() || t("your company") })}.
+                        ${this.onMoreIdeas ? html`<button type="button" class="welcome-more-ideas" ?disabled=${this.ideasDisabled} @click=${this.onMoreIdeas}>${t("More ideas")}</button>` : nothing}
                       </p>
                       <p class="welcome-beat" style="--welcome-delay:2800ms">
-                        Think of it as your YC partner in a box. The more you use QM, the more context we have, the more
-                        we can help.
+                        ${t("Think of it as your YC partner in a box. The more you use QM, the more context we have, the more we can help.")}
                       </p>`
                   : html`<p class="welcome-beat" style="--welcome-delay:400ms">
-                        Welcome to QM, your agent harness. Use it to research customers, build tools, and automate the
-                        everyday work of running ${this.me?.companyName?.trim() || "your company"}.
+                        ${t("Welcome to QM, your agent harness. Use it to research customers, build tools, and automate the everyday work of running {company}", { company: this.me?.companyName?.trim() || t("your company") })}
                       </p>
-                      <p class="welcome-beat" style="--welcome-delay:700ms">The easiest way to get up and running:</p>`
+                      <p class="welcome-beat" style="--welcome-delay:700ms">${t("The easiest way to get up and running:")}</p>`
               }`
       }
       ${
@@ -464,8 +476,19 @@ export class OnboardingWelcome extends LitElement {
             ></qm-onboarding-slack>`
           : nothing
       }
-      ${this.widget === "slack-account" && this.workspaceError ? html`<p role="status">Could not check Slack setup. <button class="btn" @click=${() => void this.refreshWorkspace()}>Try again</button></p>` : nothing}
-      ${this.widget === "slack-account" && this.workspaceConnected === false ? html`<p role="status">QM needs to be added to your company’s Slack workspace before you can link your account. Ask an administrator to finish setup.</p>` : nothing}
+      ${this.widget === "slack-account" && this.workspaceError
+        ? html`<p role="status">
+            ${t("Could not check Slack setup.")}
+            <button class="btn" @click=${() => void this.refreshWorkspace()}>${t("Try again")}</button>
+          </p>`
+        : nothing}
+      ${this.widget === "slack-account" && this.workspaceConnected === false
+        ? html`<p role="status">
+            ${t(
+              "QM needs to be added to your company’s Slack workspace before you can link your account. Ask an administrator to finish setup.",
+            )}
+          </p>`
+        : nothing}
       <div class="welcome-beat" style=${`--welcome-delay:${cohort ? 3250 : 1100}ms`}>
         ${this.workspaceConnected && this.widget !== "apps" && (["slack", "slack-account"].includes(this.widget) || (!this.loading && !this.error)) ? html`<qm-slack-account .user=${this.previewUser()}></qm-slack-account>` : nothing}
       </div>
@@ -473,11 +496,13 @@ export class OnboardingWelcome extends LitElement {
         ["slack", "slack-account"].includes(this.widget)
           ? nothing
           : html`<div class="welcome-beat" style=${`--welcome-delay:${cohort ? 3450 : 1300}ms`}>
-              ${this.loading ? html`<div class="welcome-load" role="status">Loading your available apps…</div>` : nothing}
+              ${this.loading
+                ? html`<div class="welcome-load" role="status">${t("Loading your available apps…")}</div>`
+                : nothing}
               ${
                 this.error
                   ? html`<div class="welcome-load">
-                      <strong>Connect your apps</strong>
+                      <strong>${t("Connect your apps")}</strong>
                       <p role="status">${this.error}</p>
                       <button
                         type="button"
@@ -488,7 +513,7 @@ export class OnboardingWelcome extends LitElement {
                           void this.refreshWorkspace();
                         }}
                       >
-                        Try again
+                        ${t("Try again")}
                       </button>
                     </div>`
                   : nothing
@@ -503,12 +528,23 @@ export class OnboardingWelcome extends LitElement {
                     >
                       <strong>${outcome.title}</strong>
                       ${outcome.detail ? html`<p>${outcome.detail}</p>` : nothing}
-                      ${["cancelled", "failed"].includes(this.connectionOutcome) && this.retryService ? html`<button class="btn" @click=${() => this.authorize({ ...this.retryService!, description: "", popularity: 0 })}>Try again</button>` : nothing}
+                      ${["cancelled", "failed"].includes(this.connectionOutcome) && this.retryService
+                        ? html`<button class="btn" @click=${() => this.authorize({ ...this.retryService!, description: "", popularity: 0 })}>
+                            ${t("Try again")}
+                          </button>`
+                        : nothing}
                     </div>`
                   : nothing
               }
-              ${this.connectionError && !this.error && !this.loading ? html`<div class="welcome-connection-status" role="status">${this.connectionError} <button class="btn" @click=${() => void this.loadConnections()}>Check again</button></div>` : nothing}
-              ${!this.preview && this.connectionOutcome === "failed" ? html`<button class="btn" @click=${() => void this.loadConnections()}>Check again</button>` : nothing}
+              ${this.connectionError && !this.error && !this.loading
+                ? html`<div class="welcome-connection-status" role="status">
+                    ${this.connectionError}
+                    <button class="btn" @click=${() => void this.loadConnections()}>${t("Check again")}</button>
+                  </div>`
+                : nothing}
+              ${!this.preview && this.connectionOutcome === "failed"
+                ? html`<button class="btn" @click=${() => void this.loadConnections()}>${t("Check again")}</button>`
+                : nothing}
               <div class="welcome-picker" ?inert=${Boolean(this.authorizing)}></div>
               ${
                 connectedServices.length
@@ -517,7 +553,7 @@ export class OnboardingWelcome extends LitElement {
                     </div>`
                   : nothing
               }
-              ${this.authorizing ? html`<p class="welcome-connection-status" role="status">Opening ${this.authorizing}…</p>` : nothing}
+              ${this.authorizing ? html`<p class="welcome-connection-status" role="status">${t("Opening {name}…", { name: this.authorizing })}</p>` : nothing}
               ${this.authorizationError ? html`<p class="welcome-connection-status" role="alert">${this.authorizationError}</p>` : nothing}
             </div>`
       }

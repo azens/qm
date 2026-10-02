@@ -1,5 +1,6 @@
 import { html, render } from "lit";
 import { appState, replacePanePreservingFocus } from "./shell";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 export function renderCalendar(): void {
   if (appState.currentView !== "calendar" || !appState.mainEl) return;
@@ -8,9 +9,9 @@ export function renderCalendar(): void {
   render(
     html`
       <div class="pane-head">
-        <h1 class="pane-title">Calendar</h1>
+        <h1 class="pane-title">${t("Calendar")}</h1>
       </div>
-      <div class="empty compact">Coming soon.</div>
+      <div class="empty compact">${t("Coming soon.")}</div>
     `,
     host,
   );

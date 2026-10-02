@@ -1,3 +1,5 @@
+import { t } from "../../chassis/src/i18n-lit.ts";
+
 export interface GoalStripState {
   objective: string;
   status: "active" | "paused" | "complete";
@@ -59,9 +61,9 @@ export function goalFloorLabel(floor: Record<string, unknown> | null): string | 
   const ms = num(floor.minMs);
   if (ms !== null) parts.push(goalElapsedLabel(0, ms));
   const turns = num(floor.minTurns);
-  if (turns !== null) parts.push(`${turns} turns`);
+  if (turns !== null) parts.push(t("{turns} turns", { turns }));
   const tokens = num(floor.minTokens);
-  if (tokens !== null) parts.push(`${tokens.toLocaleString()} tokens`);
+  if (tokens !== null) parts.push(t("{tokens} tokens", { tokens: tokens.toLocaleString() }));
   const usd = num(floor.minUsd);
   if (usd !== null) parts.push(`$${usd}`);
   return parts.length ? parts.join(", ") : null;
@@ -69,11 +71,16 @@ export function goalFloorLabel(floor: Record<string, unknown> | null): string | 
 
 export function goalElapsedLabel(startedAt: number, now: number): string {
   const s = Math.max(0, Math.round((now - startedAt) / 1000));
-  if (s < 60) return `${s}s`;
+  if (s < 60) return t("{seconds}s", { seconds: s });
   const m = Math.floor(s / 60);
-  if (m < 60) return s % 60 ? `${m}m ${s % 60}s` : `${m}m`;
+  if (m < 60)
+    return s % 60
+      ? t("{minutes}m {seconds}s", { minutes: m, seconds: s % 60 })
+      : t("{minutes}m", { minutes: m });
   const h = Math.floor(m / 60);
-  return m % 60 ? `${h}h ${m % 60}m` : `${h}h`;
+  return m % 60
+    ? t("{hours}h {minutes}m", { hours: h, minutes: m % 60 })
+    : t("{hours}h", { hours: h });
 }
 
 export function goalObjectiveLabel(objective: string, max = 120): string {
@@ -85,6 +92,6 @@ export function goalObjectiveLabel(objective: string, max = 120): string {
 }
 
 export function goalWorkedLabel(workedMs: number, floor?: string | null): string {
-  const worked = `${goalElapsedLabel(0, workedMs)} worked`;
-  return floor ? `${worked} · ${floor} floor` : worked;
+  const worked = t("{duration} worked", { duration: goalElapsedLabel(0, workedMs) });
+  return floor ? t("{worked} · {floor} floor", { worked, floor }) : worked;
 }

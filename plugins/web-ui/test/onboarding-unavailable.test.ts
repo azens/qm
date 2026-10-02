@@ -9,7 +9,11 @@ test("unavailable connections produce one setup message and recover together", a
   globalThis.fetch = async (input, init) => {
     if (unavailable && String(input).includes("/api/composio/"))
       return Response.json(
-        { message: "App connections aren’t available for your account yet. Ask your administrator to enable them." },
+        {
+          error: "composio_unavailable",
+          unavailable_code: "composio_not_enabled",
+          message: "App connections aren’t available for your account yet. Ask your administrator to enable them.",
+        },
         { status: 403 },
       );
     return previousFetch(input, init);

@@ -7,6 +7,7 @@ import { openSessionInto } from "./sessions";
 import { appState, can } from "./shell-state";
 import type { AssistantSidebarContext } from "./assistant-sidebar";
 import { brandName } from "./ui";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 class InboxChat extends LitElement {
   static properties = { context: { attribute: false } };
@@ -57,7 +58,7 @@ class InboxChat extends LitElement {
       const session = sessions.find((entry) => entry.threadRef === threadRef);
       if (this.conversation !== conversation || !current()) return;
       if (session) await openSessionInto(conversation, session, undefined, undefined, false);
-      else conversation.mountContinuable(threadRef, null, null, [], "Inbox");
+      else conversation.mountContinuable(threadRef, null, null, [], t("Inbox"));
     } catch {
       if (this.conversation !== conversation || !current()) return;
       conversation.mountLoadError(() => {
@@ -91,7 +92,6 @@ export function inboxChat(
   return html`<qm-inbox-chat
     .context=${context}
     class="inbox-index-chat"
-    role="complementary"
-    aria-label="Inbox assistant"
+    aria-label=${t("Inbox assistant")}
   ></qm-inbox-chat>`;
 }

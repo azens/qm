@@ -19,8 +19,8 @@ test("settings navigation never starts the all-scopes history scan", () => {
     let scans = 0;
     let settings = 0;
     const node = { classList: { toggle() {} } };
-    const context = vm.createContext({
-      governanceUI: { transcript: { cancel() {} } },
+    const context = vm.createContext({ _t: (key: string, vars?: Record<string, string | number>) => key.replace(/\{(\w+)\}/g, (m, name) => String(vars?.[name] ?? m)),
+      governanceUI: { formatNumber: (v: number, opts?: { style?: string }) => (opts?.style === "percent" ? (v * 100).toFixed(1) + "%" : String(v)), pluralize: (c: number, forms: any) => (forms.one ?? forms.other), transcript: { cancel() {} } },
       transcriptObserver: null,
       adminPreviewTheme: null,
       syncAdminTheme() {},
@@ -60,7 +60,7 @@ test("catalog completion appends options only to the requesting settings view", 
     const options = [{ id: "configured", name: "Configured" }];
     const harnessOptions = [...options];
     let rendered = 0;
-    const context = vm.createContext({
+    const context = vm.createContext({ _t: (key: string, vars?: Record<string, string | number>) => key.replace(/\{(\w+)\}/g, (m, name) => String(vars?.[name] ?? m)),
       r: { data: { modelCatalogRefreshing: true } },
       requestId: 1,
       governanceReq: 1,
@@ -123,7 +123,7 @@ test("branding saves commit the Lit draft and preserve unrelated settings", asyn
       const button = f.document.createElement("button");
       button.dataset.save = "branding";
       f.root.append(button);
-      const context = vm.createContext({
+      const context = vm.createContext({ _t: (key: string, vars?: Record<string, string | number>) => key.replace(/\{(\w+)\}/g, (m, name) => String(vars?.[name] ?? m)),
         document: f.document,
         governanceUI: f.ui,
         scope: "org:test",
@@ -194,7 +194,7 @@ test("usage completion preserves credentials on failure and ignores stale scope,
   for (const state of ["current", "failed", "scope", "view", "reload"]) {
     const pending = Promise.withResolvers<unknown>();
     let renders = 0;
-    const context = vm.createContext({
+    const context = vm.createContext({ _t: (key: string, vars?: Record<string, string | number>) => key.replace(/\{(\w+)\}/g, (m, name) => String(vars?.[name] ?? m)),
       scope: "org:example",
       view: "credentials",
       governanceReq: 1,
@@ -235,7 +235,7 @@ test("credential request displays loading, then a visible retry on failure", asy
     const pending = Promise.withResolvers<unknown>();
     let retries = 0;
     f.ui.settings.configureCredentials({ reload: () => retries++, label: String, formatTime: String });
-    const context = vm.createContext({
+    const context = vm.createContext({ _t: (key: string, vars?: Record<string, string | number>) => key.replace(/\{(\w+)\}/g, (m, name) => String(vars?.[name] ?? m)),
       scope: "org:example",
       view: "credentials",
       governanceReq: 0,
@@ -273,7 +273,7 @@ test("admin requests convert rejected fetches and interrupted bodies into failur
       },
     }),
   ]) {
-    const context = vm.createContext({ fetch, API_BASE: "" });
+    const context = vm.createContext({ _t: (key: string, vars?: Record<string, string | number>) => key.replace(/\{(\w+)\}/g, (m, name) => String(vars?.[name] ?? m)), fetch, API_BASE: "" });
     vm.runInContext(extract("async function api(", "async function openWebUiAs("), context);
     const result = await vm.runInContext('api("GET", "/api/scopes/org:example")', context);
     assert.equal(result.ok, false);
@@ -315,7 +315,7 @@ test("models view loads and saves purpose cards through the real page handlers",
       fallbackRuntime: null,
     };
     const requests: any[] = [];
-    const context = vm.createContext({
+    const context = vm.createContext({ _t: (key: string, vars?: Record<string, string | number>) => key.replace(/\{(\w+)\}/g, (m, name) => String(vars?.[name] ?? m)),
       document: f.document,
       governanceUI: f.ui,
       requestedView: "models",

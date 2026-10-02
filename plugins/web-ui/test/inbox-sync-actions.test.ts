@@ -27,7 +27,7 @@ test("a pending inbox migration lives in the sync line instead of a banner", () 
   assert.match(source, /tooltip: moving \? MIGRATION_HINT : "Sync now"/);
   assert.match(
     source,
-    /<span class="inbox-sync-status" role=\$\{moving \? "status" : nothing\}>\$\{moving \? MIGRATION_STATUS : status\}<\/span>/,
+    /<span class="inbox-sync-status" role=\$\{moving \? "status" : nothing\}>\$\{moving \? t\(MIGRATION_STATUS\) : status\}<\/span>/,
   );
   assert.match(source, /inboxState\.migrationPending \? MIGRATION_STATUS : "Sync not set up"/);
   assert.match(source, /\$\{inboxState\.migrationPending \? tip\(MIGRATION_HINT\) : nothing\}/);

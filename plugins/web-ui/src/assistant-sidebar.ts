@@ -4,6 +4,7 @@ import { Send } from "lucide";
 import { markdown } from "./message-markdown";
 import { icon } from "./ui";
 import { tip } from "./tooltip";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 type Content = TemplateResult | DirectiveResult | typeof nothing;
 
@@ -75,7 +76,7 @@ export function assistantSidebar(options: {
     @drop=${options.onDrop}
   >
     ${options.overlay ?? nothing}
-    <section class="chat-scroll inbox-chat-log" tabindex="0" aria-label="Conversation">
+    <section class="chat-scroll inbox-chat-log" tabindex="0" aria-label=${t("Conversation")}>
       <div class="message-stack">${options.messages}</div>
     </section>
     ${options.status ?? nothing}
@@ -84,9 +85,9 @@ export function assistantSidebar(options: {
       ${
         options.send || options.showPrompts
           ? html`<div class="inbox-chat-suggestions">
-              ${options.send ? html`<button class="inbox-suggest-chip primary" type="button" ?disabled=${options.send.disabled} ${tip("Send the draft with your instructions")} @click=${options.send.run}>${icon(Send, 12)}<span>Send it</span></button>` : nothing}
+              ${options.send ? html`<button class="inbox-suggest-chip primary" type="button" ?disabled=${options.send.disabled} ${tip(t("Send the draft with your instructions"))} @click=${options.send.run}>${icon(Send, 12)}<span>${t("Send it")}</span></button>` : nothing}
               <div class="inbox-edit-suggestions">
-                ${(options.showPrompts ? assistantPrompts(options.context) : []).map((prompt) => html`<button class="inbox-suggest-chip inbox-chat-suggestion" type="button" ?disabled=${options.busy} @click=${(event: MouseEvent) => options.onPrompt(prompt, event)}>${prompt}</button>`)}
+                ${(options.showPrompts ? assistantPrompts(options.context) : []).map((prompt) => html`<button class="inbox-suggest-chip inbox-chat-suggestion" type="button" ?disabled=${options.busy} @click=${(event: MouseEvent) => options.onPrompt(t(prompt), event)}>${t(prompt)}</button>`)}
               </div>
             </div>`
           : nothing

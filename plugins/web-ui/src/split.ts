@@ -80,6 +80,7 @@ import {
   archiveSessionById,
   syncWorkingPulse,
 } from "./sessions";
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { conversationBackground, rowIndicators, type RowIndicators } from "./session-list";
 import { scopeToolCount, setScopedSession, type SessionTool } from "./session-scope";
 import {
@@ -329,7 +330,7 @@ function ensureCanvas(): boolean {
 function paneSeedTitle(params: PaneParams): string {
   const entry = paneKindEntry(params);
   if (entry) return entry.kind.title(entry.id);
-  return params.sessionId ? "Conversation" : "New session";
+  return params.sessionId ? t("Conversation") : t("New session");
 }
 
 function addPane(
@@ -576,7 +577,7 @@ function focusExistingPane(existing: () => IDockviewPanel | null, exceptPaneId?:
   if (!dup) return false;
   if (dup.id !== exceptPaneId) {
     activatePanel(dup);
-    canvasToast("Already open in a pane");
+    canvasToast(t("Already open in a pane"));
   }
   return true;
 }
@@ -764,8 +765,8 @@ function zoneTpl(edge: DropEdge, label: string, onDrop: () => void): TemplateRes
 
 function splitZonesTpl(act: (edge: DropEdge) => () => void): TemplateResult {
   return html`
-    ${zoneTpl("left", "Split left", act("left"))} ${zoneTpl("right", "Split right", act("right"))}
-    ${zoneTpl("top", "Split up", act("top"))} ${zoneTpl("bottom", "Split down", act("bottom"))}
+    ${zoneTpl("left", t("Split left"), act("left"))} ${zoneTpl("right", t("Split right"), act("right"))}
+    ${zoneTpl("top", t("Split up"), act("top"))} ${zoneTpl("bottom", t("Split down"), act("bottom"))}
   `;
 }
 
@@ -775,14 +776,14 @@ function paneZonesTpl(paneId: string): TemplateResult | typeof nothing {
   const showing = drag.existing();
   if (showing)
     return showing.id === paneId
-      ? zoneTpl("center", "Show here", () => {
+      ? zoneTpl("center", t("Show here"), () => {
           endPaneDrag();
           focusPane(paneId);
         })
       : nothing;
   const act = paneZoneAct(paneId);
   const canSplit = dockApi.panels.length < MAX_PANES && dockApi.groups.length < MAX_TILES;
-  return html`${zoneTpl("center", "Replace pane", act("center"))} ${canSplit ? splitZonesTpl(act) : nothing}`;
+  return html`${zoneTpl("center", t("Replace pane"), act("center"))} ${canSplit ? splitZonesTpl(act) : nothing}`;
 }
 
 function paneZoneAct(paneId: string): (edge: DropEdge) => () => void {
@@ -860,7 +861,7 @@ function paneTitle(panel: IDockviewPanel): string {
   if (entry) return entry.kind.title(entry.id);
   const session = paneSession(panel);
   if (session) return sessionTitle(session);
-  return params.sessionId ? "Conversation" : "New session";
+  return params.sessionId ? t("Conversation") : t("New session");
 }
 
 function paneKindBadge(panel: IDockviewPanel): number {
@@ -879,14 +880,16 @@ function paneCrumb(panel: IDockviewPanel): string | null {
   return scopeTitle(scope, context?.name ?? null);
 }
 
-const PANE_TOOLS: { tool: SessionTool; glyph: IconNode; label: string }[] = [
-  { tool: "crons", glyph: Clock3, label: "Crons" },
-  { tool: "apps", glyph: Rocket, label: "Apps" },
-  { tool: "files", glyph: Files, label: "Files" },
-  { tool: "skills", glyph: Box, label: "Skills" },
-  { tool: "memory", glyph: Brain, label: "Memory" },
-  { tool: "keychain", glyph: KeyRound, label: "Your keychain" },
-];
+function paneTools(): { tool: SessionTool; glyph: IconNode; label: string }[] {
+  return [
+    { tool: "crons", glyph: Clock3, label: t("Crons") },
+    { tool: "apps", glyph: Rocket, label: t("Apps") },
+    { tool: "files", glyph: Files, label: t("Files") },
+    { tool: "skills", glyph: Box, label: t("Skills") },
+    { tool: "memory", glyph: Brain, label: t("Memory") },
+    { tool: "keychain", glyph: KeyRound, label: t("Your keychain") },
+  ];
+}
 
 function openPaneTool(panel: IDockviewPanel, tool: SessionTool): void {
   const params = panelParams(panel);
@@ -896,7 +899,7 @@ function openPaneTool(panel: IDockviewPanel, tool: SessionTool): void {
     scopeId: scope,
     sessionId: params.sessionId ?? session?.id ?? null,
     threadRef: params.threadRef ?? null,
-    title: session?.title?.trim() || "New chat",
+    title: session?.title?.trim() || t("New chat"),
     crumb: paneCrumb(panel),
   });
   if (scope && (tool === "crons" || tool === "files" || tool === "apps")) contextsState.selected = scope;
@@ -1099,8 +1102,8 @@ function sessionActionItems(sessionId: string, panelId: string): SessionAction[]
   const items: SessionAction[] = [];
   if (parent) {
     items.push({
-      label: `Back to ${sessionTitle(parent)}`,
-      aria: `Back to parent: ${sessionTitle(parent)}`,
+      label: t("Back to {session}", { session: sessionTitle(parent) }),
+      aria: t("Back to parent: {session}", { session: sessionTitle(parent) }),
       glyph: ArrowUpLeft,
       run: () => {
         focusPane(panelId);
@@ -1110,7 +1113,7 @@ function sessionActionItems(sessionId: string, panelId: string): SessionAction[]
   }
   items.push(
     {
-      label: "Share conversation",
+      label: t("Share conversation"),
       glyph: Link,
       cls: "split-tab-share",
       run: () => {
@@ -1118,7 +1121,7 @@ function sessionActionItems(sessionId: string, panelId: string): SessionAction[]
       },
     },
     {
-      label: "Archive session",
+      label: t("Archive session"),
       glyph: Archive,
       cls: "split-tab-archive",
       run: () => {
@@ -1204,8 +1207,8 @@ class PaneTab implements ITabRenderer {
                   ><button
                     class="icon-btn subtle split-tab-close"
                     type="button"
-                    ${tip("Close pane")}
-                    aria-label="Close pane"
+                    ${tip(t("Close pane"))}
+                    aria-label=${t("Close pane")}
                     @click=${(e: Event) => {
                       e.stopPropagation();
                       closePanels([panel]);
@@ -1232,7 +1235,7 @@ class PaneTab implements ITabRenderer {
     render(
       html`
         ${working ? html`<span class="working-mark" ${ref(syncWorkingPulse)}>${workingWave()}</span>` : nothing}
-        ${awaiting ? html`<span class="awaiting-dot" aria-label="Waiting for your reply"></span>` : nothing}
+        ${awaiting ? html`<span class="awaiting-dot" aria-label=${t("Waiting for your reply")}></span>` : nothing}
         ${
           background
             ? html`<span class="bg-chip" aria-label=${background.label} ${tip(background.label)}
@@ -1277,8 +1280,8 @@ class PaneTab implements ITabRenderer {
                         ><button
                           class="icon-btn subtle split-tab-more"
                           type="button"
-                          ${tip("Session actions")}
-                          aria-label="Session actions"
+                          ${tip(t("Session actions"))}
+                          aria-label=${t("Session actions")}
                           aria-haspopup="menu"
                           @click=${(e: Event) => {
                             e.stopPropagation();
@@ -1292,8 +1295,8 @@ class PaneTab implements ITabRenderer {
                 <button
                   class="icon-btn subtle split-tab-close"
                   type="button"
-                  ${tip("Close pane")}
-                  aria-label="Close pane"
+                  ${tip(t("Close pane"))}
+                  aria-label=${t("Close pane")}
                   @click=${(e: Event) => {
                     e.stopPropagation();
                     closePanels([panel]);
@@ -1337,7 +1340,7 @@ class StripDrop implements IHeaderActionsRenderer {
     const group = this.group;
     render(
       group && stripJoinable()
-        ? zoneTpl("center", "Open as tab", () => {
+        ? zoneTpl("center", t("Open as tab"), () => {
             const drag = paneDrag;
             endPaneDrag();
             const anchor = group.activePanel ?? group.panels[0];
@@ -1428,10 +1431,15 @@ class GroupActions implements IHeaderActionsRenderer {
             ${ref(this.placeMenu)}
             @click=${(e: Event) => e.stopPropagation()}
           >
-            ${PANE_TOOLS.map(
-              (t) => html`
-                <button class="session-menu-option" type="button" role="menuitem" @click=${() => runTool(t.tool)}>
-                  ${icon(t.glyph, 15)}<span>${t.label}</span>
+            ${paneTools().map(
+              (tool) => html`
+                <button
+                  class="session-menu-option"
+                  type="button"
+                  role="menuitem"
+                  @click=${() => runTool(tool.tool)}
+                >
+                  ${icon(tool.glyph, 15)}<span>${tool.label}</span>
                 </button>
               `,
             )}
@@ -1445,7 +1453,7 @@ class GroupActions implements IHeaderActionsRenderer {
                 splitPane();
               }}
             >
-              ${icon(Plus, 15)}<span>Split with a new session</span>
+              ${icon(Plus, 15)}<span>${t("Split with a new session")}</span>
             </button>
             <button
               class="session-menu-option"
@@ -1458,7 +1466,7 @@ class GroupActions implements IHeaderActionsRenderer {
               }}
             >
               ${icon(maximized ? Shrink : Expand, 15)}<span
-                >${maximized ? "Restore to grid (Esc)" : "Focus over the grid"}</span
+                >${maximized ? t("Restore to grid (Esc)") : t("Focus over the grid")}</span
               >
             </button>
           </div>
@@ -1481,7 +1489,7 @@ class GroupActions implements IHeaderActionsRenderer {
         },
       },
       {
-        label: "Close pane",
+        label: t("Close pane"),
         glyph: icon(X, 15),
         cls: " split-group-close",
         run: () => {
@@ -1494,8 +1502,8 @@ class GroupActions implements IHeaderActionsRenderer {
       html`<button
         class="icon-btn subtle${b.cls ?? ""}"
         type="button"
-        ${tip(b.label)}
-        aria-label=${b.label}
+        ${tip(t(b.label))}
+        aria-label=${t(b.label)}
         @click=${b.run}
       >
         ${b.glyph}
@@ -1532,16 +1540,18 @@ class GroupActions implements IHeaderActionsRenderer {
       html`${
           single
             ? html`<span class="split-single-tools">
-                ${PANE_TOOLS.map((t) => {
-                  const count = scope ? scopeToolCount(t.tool, scope, () => this.draw()) : null;
+                ${paneTools().map((tool) => {
+                  const count = scope ? scopeToolCount(tool.tool, scope, () => this.draw()) : null;
                   return html`<button
                     class="session-tool"
                     type="button"
-                    aria-label=${t.label}
-                    ${tip(t.label)}
-                    @click=${() => runTool(t.tool)}
+                    aria-label=${tool.label}
+                    ${tip(tool.label)}
+                    @click=${() => runTool(tool.tool)}
                   >
-                    ${icon(t.glyph, 15)}${count ? html`<span class="session-tool-count">${count}</span>` : nothing}
+                    ${icon(tool.glyph, 15)}${count
+                      ? html`<span class="session-tool-count">${count}</span>`
+                      : nothing}
                   </button>`;
                 })}
               </span>`
@@ -1549,8 +1559,8 @@ class GroupActions implements IHeaderActionsRenderer {
                 <button
                   class="icon-btn subtle split-tools-btn ${this.menuOpen ? "active" : ""}"
                   type="button"
-                  ${tip("Tools")}
-                  aria-label="Tools"
+                  ${tip(t("Tools"))}
+                  aria-label=${t("Tools")}
                   aria-haspopup="menu"
                   aria-expanded=${this.menuOpen ? "true" : "false"}
                   @click=${() => {

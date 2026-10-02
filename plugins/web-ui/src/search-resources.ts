@@ -1,4 +1,5 @@
 import { deepLinkPath } from "./deep-link.ts";
+import { t } from "../../chassis/src/i18n-lit.ts";
 
 export interface ResourceHit {
   title: string;
@@ -17,11 +18,11 @@ export interface ResourceSearchResponse {
   limited?: string[];
 }
 const labels: Record<string, string> = {
-  skills: "Skills",
+  skills: t("Skills"),
   crons: "Crons",
-  deploys: "Apps",
-  webhooks: "Webhooks",
-  contexts: "Projects",
+  deploys: t("Apps"),
+  webhooks: t("Webhooks"),
+  contexts: t("Projects"),
 };
 
 export function resourceResults(

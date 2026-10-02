@@ -140,7 +140,7 @@ test("keychain overview wires managed connector grants into account controls", (
 
 test("destructive controls settle duplicate attempts while a mutation is busy", () => {
   assert.match(connectorsSource, /\?disabled=\$\{keychainOperations\.mutationInFlight\}/);
-  assert.match(connectorsSource, /connectorNotice = "Another keychain change is still in progress\."/);
+  assert.match(connectorsSource, /connectorNotice = t\("Another keychain change is still in progress\."\)/);
   assert.equal(connectorsSource.match(/const operation = beginKeychainMutation\(\)/g)?.length, 3);
   assert.equal(
     connectorsSource.match(/if \(keychainOperations\.finishMutation\(operation\)\) drawConnectors\(\)/g)?.length,
@@ -151,8 +151,8 @@ test("destructive controls settle duplicate attempts while a mutation is busy", 
 test("keychain rows reserve success badges for actionable states", () => {
   assert.doesNotMatch(connectorsSource, /Stored securely/);
   assert.doesNotMatch(connectorsSource, />Connected<\/span>/);
-  assert.match(connectorsSource, /expired \? html`<span class="kc-state warning">Expired<\/span>` : ""/);
-  assert.match(connectorsSource, /<span class="kc-state warning">Reconnect needed<\/span>/);
+  assert.match(connectorsSource, /expired \? html`<span class="kc-state warning">\$\{t\("Expired"\)\}<\/span>` : ""/);
+  assert.match(connectorsSource, /<span class="kc-state warning">\$\{t\("Reconnect needed"\)\}<\/span>/);
 });
 
 test("keychain index keeps operational state and removes redundant explanatory copy", () => {
@@ -160,9 +160,9 @@ test("keychain index keeps operational state and removes redundant explanatory c
   assert.doesNotMatch(connectorsSource, /Provider APIs the agent can use as you/);
   assert.doesNotMatch(connectorsSource, /API keys, tokens, and files you added/);
   assert.doesNotMatch(connectorsSource, /kc-summary|kc-resource-description|No audited use yet|Last used |Added \$\{/);
-  assert.match(connectorsSource, /class="kc-access-label">Access/);
-  assert.match(connectorsSource, /expires \$\{fmtDate\(/);
-  assert.match(connectorsSource, />\s*Revoke\s*</);
+  assert.match(connectorsSource, /class="kc-access-label">\$\{t\("Access"\)\}/);
+  assert.match(connectorsSource, /\$\{t\("expires"\)\} \$\{fmtDate\(grant\.expiresAt\)\}/);
+  assert.match(connectorsSource, />\s*\$\{t\("Revoke"\)\}\s*</);
   assert.match(connectorsSource, /encrypted one-time page next/);
 });
 
@@ -185,10 +185,10 @@ test("keychain page renders loading placeholders instead of empty states while l
   assert.match(connectorsSource, /connectorsLoading && !connectorsEverLoaded/);
   assert.match(connectorsSource, /keysLoading && !keysEverLoaded/);
   assert.match(connectorsSource, /keysLoading = true;\s*\n\s*drawConnectors\(\)/);
-  assert.match(connectorsSource, /if \(accountsLoading\) accountsContent = loadingPlaceholder\("Loading accounts/);
+  assert.match(connectorsSource, /if \(accountsLoading\) accountsContent = loadingPlaceholder\(t\("Loading accounts/);
   assert.match(
     connectorsSource,
-    /if \(keysLoadingFresh\) credentialsContent = loadingPlaceholder\("Loading credentials/,
+    /if \(keysLoadingFresh\) credentialsContent = loadingPlaceholder\(t\("Loading credentials/,
   );
 
   assert.match(

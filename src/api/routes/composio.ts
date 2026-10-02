@@ -12,6 +12,17 @@ import { sendJson } from "../http.ts";
 import { activePrincipal, audit } from "./shared.ts";
 import type { ApiCtx, Route } from "./route.ts";
 
+export type ComposioUnavailableCode = "composio_not_enabled" | "composio_upstream_failed";
+
+function composioUnavailable(
+  ctx: ApiCtx,
+  status: number,
+  unavailableCode: ComposioUnavailableCode,
+  message: string,
+): void {
+  sendJson(ctx.res, status, { error: "composio_unavailable", unavailable_code: unavailableCode, message });
+}
+
 export function composioUserId(org: string, principal: string): string {
   return `qm_${createHash("sha256")
     .update(JSON.stringify([org, principal]))
@@ -113,15 +124,22 @@ async function credential(ctx: ApiCtx): Promise<{ key: string; principal: string
     (c) => c.enabled && c.hasSecret && c.delivery === "env" && c.envKey === "COMPOSIO_API_KEY" && allowed.has(c.slug),
   );
   if (records.length !== 1) {
-    sendJson(ctx.res, records.length ? 409 : 403, {
-      error: "composio_unavailable",
-      message: "App connections aren’t available for your account yet. Ask your administrator to enable them.",
-    });
+    composioUnavailable(
+      ctx,
+      records.length ? 409 : 403,
+      "composio_not_enabled",
+      "App connections aren’t available for your account yet. Ask your administrator to enable them.",
+    );
     return null;
   }
   const record = await ctx.deps.serviceCreds!.getServiceCredentialSecret(org, records[0]!.slug);
   if (!record?.enabled || record.delivery !== "env" || record.envKey !== "COMPOSIO_API_KEY" || !record.secret) {
-    sendJson(ctx.res, 403, { error: "composio_unavailable" });
+    composioUnavailable(
+      ctx,
+      403,
+      "composio_not_enabled",
+      "App connections aren’t available for your account yet. Ask your administrator to enable them.",
+    );
     return null;
   }
   return { key: record.secret, principal };
@@ -172,7 +190,7 @@ async function catalog(ctx: ApiCtx): Promise<void> {
       nextCursor: typeof data.next_cursor === "string" ? data.next_cursor : null,
     });
   } catch {
-    return sendJson(ctx.res, 502, { error: "composio_unavailable", message: "Could not load apps. Please try again." });
+    return composioUnavailable(ctx, 502, "composio_upstream_failed", "Could not load apps. Please try again.");
   }
 }
 
@@ -299,10 +317,7 @@ async function connections(ctx: ApiCtx): Promise<void> {
       nextCursor: typeof data.next_cursor === "string" ? data.next_cursor : null,
     });
   } catch {
-    return sendJson(ctx.res, 502, {
-      error: "composio_unavailable",
-      message: "Could not check connected apps. Please try again.",
-    });
+    return composioUnavailable(ctx, 502, "composio_upstream_failed", "Could not check connected apps. Please try again.");
   }
 }
 

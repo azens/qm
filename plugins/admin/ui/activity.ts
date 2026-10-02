@@ -1,4 +1,5 @@
 import { html } from "lit";
+import { t } from "../../chassis/src/i18n-lit.ts";
 import { bareCard, table, pager, mount } from "./shared.ts";
 
 export function errors(root: HTMLElement, data: any, s: Record<string, any>) {
@@ -8,10 +9,10 @@ export function errors(root: HTMLElement, data: any, s: Record<string, any>) {
   const offset = data.offset || 0;
   s.defaultShell({ count: s.plural(total, "error") });
   const content = table(
-    ["Category", "Code", "Message", ...(s.all ? ["Scope"] : []), "Session", "Time"],
+    [t("Category"), t("Code"), t("Message"), ...(s.all ? [t("Scope")] : []), t("Session"), t("Time")],
     rows.map((e: any) => {
       const scope = /^(personal|channel|team|org|group):.+/.test(e.scopeLabel || "") ? e.scopeLabel : null;
-      const text = e.message || "(no message)";
+      const text = e.message || t("(no message)");
       return [
         e.category || "uncategorized",
         { text: e.code || "—", cls: "mono" },
@@ -23,42 +24,41 @@ export function errors(root: HTMLElement, data: any, s: Record<string, any>) {
           </details>`,
         },
         ...(s.all
-          ? [scope ? { node: s.navLink(s.shortName(scope), { view: "errors", scope }) } : e.scopeLabel || "System"]
+          ? [scope ? { node: s.navLink(s.shortName(scope), { view: "errors", scope }) } : e.scopeLabel || t("System")]
           : []),
         e.sessionId
-          ? { node: s.navLink("View session", { view: "history", scope: scope || s.scope, session: e.sessionId }) }
+          ? { node: s.navLink(t("View session"), { view: "history", scope: scope || s.scope, session: e.sessionId }) }
           : "—",
         time(e.ts, s),
       ];
     }),
-    s.all ? "No errors recorded." : "No errors recorded for this scope.",
+    s.all ? t("No errors recorded.") : t("No errors recorded for this scope."),
     undefined,
     { wrapClass: "errors-table " + (s.all ? "errors-all" : "errors-scoped") },
   );
   const pages = () => pager(total, limit, offset, (page) => s.go({ view: "errors", scope: s.scope, page }));
-  mount(root, html`${pages()}${bareCard(content)}${pages()}`);
+  mount(root, () => html`${pages()}${bareCard(content)}${pages()}`);
 }
 
 export function audit(root: HTMLElement, data: any, s: Record<string, any>) {
   const events = data.events || [];
   s.defaultShell({ count: s.plural(events.length, "event") });
-  mount(
-    root,
+  mount(root, () =>
     bareCard(
       table(
-        ["Admin", "Action", "Resource", ...(s.all ? ["Scope"] : []), "Time"],
+        [t("Administrator"), t("Action"), t("Resource"), ...(s.all ? [t("Scope")] : []), t("Time")],
         events.map((e: any) => [
           { text: e.principalId, cls: "mono" },
           {
             node: html`<span class=${/revoke|delete|deny|fail/.test(String(e.action || "")) ? "flag-err" : "subline"}
-              >${e.action || "event"}</span
+              >${e.action || t("event")}</span
             >`,
           },
           { text: e.status ? e.resource + " (" + e.status + ")" : e.resource || "", cls: "mono" },
           ...(s.all ? [s.shortName(e.scopeLabel)] : []),
           time(e.ts, s),
         ]),
-        s.all ? "No admin activity yet." : "No admin activity for this scope.",
+        s.all ? t("No admin activity yet.") : t("No admin activity for this scope."),
       ),
     ),
   );
@@ -69,18 +69,17 @@ export function egress(root: HTMLElement, data: any, s: Record<string, any>) {
   const sources = data.bySource || {};
   s.defaultShell({
     stats: [
-      [String(data.total ?? rows.length), "Calls"],
-      [String(data.denied ?? 0), "denied requests"],
-      [String(data.hosts ?? 0), "Hosts"],
-      [String(sources.broker ?? 0), "broker requests"],
-      [String(sources.firewall ?? 0), "firewall requests"],
+      [String(data.total ?? rows.length), t("Calls")],
+      [String(data.denied ?? 0), t("denied requests")],
+      [String(data.hosts ?? 0), t("Hosts")],
+      [String(sources.broker ?? 0), t("broker requests")],
+      [String(sources.firewall ?? 0), t("firewall requests")],
     ],
   });
-  mount(
-    root,
+  mount(root, () =>
     bareCard(
       table(
-        ["Host", "Status", "Source", ...(s.all ? ["Scope"] : []), "Principal", "Detail", "Time"],
+        [t("Host"), t("Status"), t("Source"), ...(s.all ? [t("Scope")] : []), t("Principal"), t("Detail"), t("Time")],
         rows.map((r: any) => [
           { text: r.host, cls: "mono" },
           {
@@ -88,11 +87,11 @@ export function egress(root: HTMLElement, data: any, s: Record<string, any>) {
           },
           { node: html`<span class="subline">${r.source || "firewall"}</span>` },
           ...(s.all ? [s.shortName(r.scopeLabel)] : []),
-          { text: r.principalId || "None", cls: "mono" },
+          { text: r.principalId || t("None"), cls: "mono" },
           { text: s.egressDetail(r), cls: "mono" },
           time(r.ts, s),
         ]),
-        "No egress in this scope yet.",
+        t("No egress in this scope yet."),
       ),
     ),
   );
@@ -100,10 +99,10 @@ export function egress(root: HTMLElement, data: any, s: Record<string, any>) {
 
 function egressStatus(row: any) {
   let tone = row.status === "error" ? "flag-err" : "subline";
-  let label = row.status && row.status !== "ok" ? row.status : "allowed";
+  let label = row.status && row.status !== "ok" ? row.status : t("allowed");
   if (row.allowed === false) {
     tone = "flag-warn";
-    label = row.status || "denied";
+    label = row.status || t("denied");
   }
   return html`<span class=${tone}>${label}</span>`;
 }

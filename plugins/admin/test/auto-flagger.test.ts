@@ -65,9 +65,9 @@ class Element {
 
 function fixture(data: Record<string, unknown> = {}, scope = "org:example") {
   const elements: Record<string, Element> = {};
-  const context = vm.createContext({
+  const context = vm.createContext({ _t: (key: string, vars?: Record<string, string | number>) => key.replace(/\{(\w+)\}/g, (m, name) => String(vars?.[name] ?? m)),
     governanceReq: 1,
-    governanceUI: { collect: () => ({ harnessId: "pi", modelId: "model-a", rubric: "Default rubric" }) },
+    governanceUI: { formatNumber: (v: number, opts?: { style?: string }) => (opts?.style === "percent" ? (v * 100).toFixed(1) + "%" : String(v)), pluralize: (c: number, forms: any) => (forms.one ?? forms.other), collect: () => ({ harnessId: "pi", modelId: "model-a", rubric: "Default rubric" }) },
     refreshModelChoices: [],
     scope,
     scopeChanged: true,

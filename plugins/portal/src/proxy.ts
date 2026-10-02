@@ -1,8 +1,25 @@
 import { request as httpRequest, type IncomingMessage, type ServerResponse } from "node:http";
 import { signedHeaders } from "../../chassis/src/core-client.ts";
+import { LOCALE_COOKIE } from "../../chassis/src/i18n.ts";
 import { mintPortalIdentity, PORTAL_IDENTITY_HEADER } from "../../chassis/src/portal-identity.ts";
 
 const IDENTITY_TTL_MS = 60_000;
+
+const FORWARDED_CLIENT_COOKIES: Record<string, true> = { [LOCALE_COOKIE]: true };
+
+function mergeClientCookies(req: IncomingMessage, minted: string): string {
+  const jar = req.headers.cookie;
+  if (typeof jar !== "string") return minted;
+  const mintedNames = new Set(minted.split(";").map((pair) => pair.slice(0, pair.indexOf("=")).trim()));
+  const forwarded = jar
+    .split(";")
+    .map((pair) => pair.trim())
+    .filter((pair) => {
+      const name = pair.slice(0, pair.indexOf("=")).trim();
+      return FORWARDED_CLIENT_COOKIES[name] === true && !mintedNames.has(name);
+    });
+  return [minted, ...forwarded].join("; ");
+}
 
 const FORWARD_REQUEST_HEADERS = [
   "content-type",
@@ -111,11 +128,11 @@ export interface SurfaceTarget {
 
 export function proxyToSurface(req: IncomingMessage, res: ServerResponse, t: SurfaceTarget): void {
   const upstream = new URL(t.upstreamBase);
-  const cookie =
+  const minted =
     `${t.cookieName}=${encodeURIComponent(t.principal)}` +
     (t.displayName ? `; ${t.cookieName}_name=${encodeURIComponent(t.displayName)}` : "") +
     (t.impersonator ? `; webui_impersonator=${encodeURIComponent(t.impersonator)}` : "");
-  const base: Record<string, string> = { host: upstream.host, cookie };
+  const base: Record<string, string> = { host: upstream.host, cookie: mergeClientCookies(req, minted) };
   if (t.identitySecret) {
     const now = t.nowMs ?? Date.now();
     base[PORTAL_IDENTITY_HEADER] = mintPortalIdentity(

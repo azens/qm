@@ -1,5 +1,6 @@
 import { buildGovernanceUI } from "./governance-bundle.ts";
 import { reportBackendError } from "../../chassis/src/error-reporting.ts";
+import { adminScriptHash } from "./csp.ts";
 import "./instrument.ts";
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { AsyncLocalStorage } from "node:async_hooks";
@@ -44,10 +45,9 @@ const BASE_HTML = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..
       "</style>",
   );
 const BRAND_MARK = readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../public/brand-mark.svg"));
-const ADMIN_SCRIPT = BASE_HTML.match(/<script>([\s\S]*?)<\/script>/i)?.[1] ?? "";
 const ADMIN_CSP = [
   "default-src 'self'",
-  `script-src 'sha256-${createHash("sha256").update(ADMIN_SCRIPT).digest("base64")}'`,
+  `script-src 'sha256-${adminScriptHash(BASE_HTML)}'`,
   "style-src 'unsafe-inline'",
   "img-src 'self' data: https:", // https: so Slack workspace emoji previews (emoji.slack-edge.com) render
   "connect-src 'self'",

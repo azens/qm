@@ -67,8 +67,19 @@ export async function readBody(req: IncomingMessage, maxBytes = Infinity): Promi
 }
 
 export function cookie(req: IncomingMessage, name: string): string | null {
-  const m = (req.headers.cookie ?? "").match(new RegExp(`(?:^|;\\s*)${name}=([^;]+)`));
-  return m ? decodeURIComponent(m[1] ?? "") || null : null;
+  const jar = req.headers.cookie;
+  if (typeof jar !== "string") return null;
+  for (const part of jar.split(";")) {
+    const separator = part.indexOf("=");
+    if (separator < 0) continue;
+    if (part.slice(0, separator).trim() !== name) continue;
+    try {
+      return decodeURIComponent(part.slice(separator + 1).trim()) || null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
 }
 
 export function escapeHtml(s: string): string {

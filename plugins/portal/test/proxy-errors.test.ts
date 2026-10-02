@@ -88,6 +88,27 @@ test("no display name on the session means no name cookie is forwarded", async (
   assert.doesNotMatch(body.cookie ?? "", /webuiuser_name=/);
 });
 
+test("the browser's locale cookie reaches the upstream so its shell can negotiate the language", async () => {
+  const r = await fetch(`${base}/web-ui/api/echo-cookie`, {
+    headers: { cookie: `${sessionCookie("U1")}; qm_locale=zh-CN`, "accept-language": "en-US,en;q=0.9" },
+  });
+  const body = (await r.json()) as { cookie: string | null };
+  assert.match(body.cookie ?? "", /qm_locale=zh-CN/, "the upstream sees the locale the browser chose");
+});
+
+test("a client cannot forge the identity cookie or smuggle other cookies upstream", async () => {
+  const r = await fetch(`${base}/web-ui/api/echo-cookie`, {
+    headers: { cookie: `${sessionCookie("U1")}; webuiuser=attacker; webui_impersonator=root; qm_locale=zh-CN` },
+  });
+  const body = (await r.json()) as { cookie: string | null };
+  const cookie = body.cookie ?? "";
+  assert.equal(cookie.match(/(?:^|;\s*)webuiuser=/g)?.length, 1, "the minted identity cookie appears exactly once");
+  assert.match(cookie, /(?:^|;\s*)webuiuser=U1(?:;|$)/);
+  assert.doesNotMatch(cookie, /attacker/);
+  assert.doesNotMatch(cookie, /webui_impersonator/);
+  assert.match(cookie, /qm_locale=zh-CN/, "the non-authenticating locale cookie still rides along");
+});
+
 test("deployment proxy binds source auth and portal identity to the signed-in principal", async () => {
   const r = await fetch(`${base}/d/app/hello?x=1`, { headers: { cookie: sessionCookie("U1") } });
   const body = (await r.json()) as { url: string; headers: Record<string, string> };

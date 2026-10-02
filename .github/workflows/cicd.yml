@@ -245,6 +245,9 @@ jobs:
       - name: Oxlint
         if: needs.reuse.outputs.reusable != 'true'
         run: npm run lint:ox
+      - name: i18n catalog coverage
+        if: needs.reuse.outputs.reusable != 'true'
+        run: npm run i18n:audit:check
 
   core-postgres:
     name: Core Postgres tests
